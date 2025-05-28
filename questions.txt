@@ -1,0 +1,63 @@
+ICR is what I've been referring to the most so it'll be mentioned a lot here.
+The questions are wide ranging.
+
+Re analysed data according to code
+
+Why are there so many missing values? Their abscence makes it difficult to calculate
+meaningful results.
+    Should they be considered zero or none?
+    Should they be imputed? Would that work with so little data? What is imputation for?
+    Is the method of imputing data what we want? Linear imputation.
+
+How to determine what is signficant? The values set for ICR reveal little.
+The ICR paper seems to say the various limits (q < 0.01 for yes, q > 0.01 and std dev < 0.05
+for no) were determined by GO term enrichment analysis but the supplementary data (3) is hard to
+interpret.
+
+Why was Nocodozole used? How should the data be analysed?
+
+The stage names aren't related to a cell cycle stage like the ICR ones.
+    ICR states 'The cell cycle phase for each timepoint was defined by a combination of
+    flow cytometry profiles and protein abundance data from the MS analysis'.
+    If none, how do we know what percentage of the cells were actually synchronised?
+    ICR paper says using flow cytometry before MS analysis reveals G1 cells only 8-16%
+    of S and G2/M cells.
+Why are there so many Palbs? ICR says it works on G1 but not others.
+
+
+
+Is there any data about the data capture process available?
+
+What proportion of the paper should be about the cell cycle in general, and what to the experiment?
+
+What is Figure 4 c?
+
+Should I do a comparisong with other papers, as per ICR? Maybe just with one paper?
+
+min-max and impute values are calculated differently in proteo and phospho. And position_abundances?
+    Which is correct?
+    Proteo uses ABUNDANCES_NORMALISED_LOG2_MEAN
+    Phospho uses ABUNDANCES_NORMALISED_MIN_MAX
+
+What should phosphosite be for SL?
+Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?
+
+What to do about all the bugs? Mention them in the paper?
+    Should I leave in all the code for ICR, such as for generating correct results?
+
+Bugs:
+
+Mean
+Median
+Variation in imputed and min-max between protein and phospho
+The linear imputation wraps round at the upper end
+Various values not calculated when they could be do to try-except structure
+
+ICR paper says:
+
+'Additionally, we detected 15,424 phosphorylation events, with 13,299
+con dently assigned to a speci c residue, also exhibiting high repro-
+ducibility within the replicates of each time point (Fig. 1D).'
+    How was this done? Fig 1D is a PCA chart.
+
+How does kinase prediction work?

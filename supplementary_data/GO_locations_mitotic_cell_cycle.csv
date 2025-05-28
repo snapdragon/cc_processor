@@ -1,0 +1,318 @@
+id,location_name,count,accession_numbers
+GO:0005829,cytosol,65,"['P41208', 'Q9UL46', 'Q9UKG1', 'P06730', 'P38936', 'Q6P1J9', 'Q9Y6A5', 'P49427', 'O14974', 'Q9ULW0', 'P31350', 'P53041', 'O14777', 'Q9Y6G9', 'Q96DE5', 'Q12959', 'Q8TD19', 'Q13616', 'P06493', 'Q9BSJ2', 'P04083', 'Q08209', 'P42771', 'Q53HL2', 'Q14203', 'Q93034', 'P68366', 'P23921', 'P49459', 'P52732', 'O60216', 'O00560', 'O95067', 'Q06124', 'P17252', 'P15170', 'Q96EB6', 'P24385', 'P62826', 'Q13042', 'Q15018', 'P24941', 'Q9UM13', 'Q04637', 'Q9UJX4', 'Q8NHZ8', 'Q8TBC4', 'P30622', 'P50570', 'P06400', 'P05067', 'P53350', 'Q00534', 'P46940', 'P00533', 'P62258', 'O00571', 'P07437', 'Q06323', 'P35222', 'O00743', 'Q13620', 'P68371', 'P29590', 'Q92785']"
+GO:0005634,nucleus,59,"['P41208', 'Q9UKG1', 'P06730', 'O60885', 'P38936', 'Q6P1J9', 'P49427', 'O43823', 'Q9ULW0', 'Q9BUF5', 'P53041', 'O14777', 'Q12959', 'Q8TD19', 'Q13616', 'P06493', 'O43660', 'P04083', 'P18754', 'Q13509', 'Q13619', 'P42771', 'Q93034', 'Q8TDX7', 'P51808', 'P52732', 'O60216', 'O00560', 'O95067', 'Q06124', 'Q96EB6', 'P24385', 'P62826', 'Q15018', 'P24941', 'Q04637', 'Q13885', 'Q9UJX4', 'Q8TBC4', 'P30622', 'P12270', 'Q9BQE3', 'P06400', 'P51531', 'P53350', 'Q00534', 'P46940', 'Q13523', 'P00533', 'P62258', 'O14497', 'O00571', 'P07437', 'Q969G3', 'P35222', 'Q13620', 'P68371', 'P29590', 'Q92785']"
+GO:0005737,cytoplasm,58,"['Q9UL46', 'Q9UKG1', 'P06730', 'P38936', 'Q9Y6A5', 'O43823', 'O14974', 'Q9BUF5', 'Q14978', 'O75717', 'Q12959', 'Q13616', 'P06493', 'P04083', 'P18754', 'Q13509', 'Q13619', 'Q08209', 'P42771', 'Q14203', 'P68366', 'Q8TDX7', 'P51808', 'O00560', 'O95067', 'Q06124', 'P17252', 'P15170', 'Q96EB6', 'P24385', 'P62826', 'Q13042', 'Q15018', 'P24941', 'Q04637', 'Q13885', 'Q9BTW9', 'Q8TBC4', 'P12270', 'Q9BQE3', 'P50570', 'P06400', 'P05556', 'P05067', 'P53350', 'O14745', 'Q00534', 'P46940', 'P00533', 'P62258', 'O00571', 'P07437', 'Q06323', 'P35222', 'O00743', 'Q14160', 'P68371', 'P29590']"
+GO:0005654,nucleoplasm,56,"['P41208', 'Q9UL46', 'O60885', 'P38936', 'Q6P1J9', 'P49427', 'O43823', 'O14974', 'Q9ULW0', 'Q14978', 'P31350', 'P53041', 'O14777', 'O75717', 'Q96DE5', 'P35244', 'Q13616', 'P06493', 'Q9BSJ2', 'O43660', 'P04083', 'P18754', 'Q13619', 'Q08209', 'Q53HL2', 'Q8TDX7', 'P49459', 'O60216', 'O00560', 'Q06124', 'P17252', 'Q96EB6', 'P24385', 'P62826', 'Q13042', 'P24941', 'Q9UM13', 'Q9Y570', 'Q9UJX4', 'Q8NHZ8', 'P12270', 'P51948', 'P06400', 'P51531', 'P53350', 'Q00534', 'Q13523', 'O14497', 'Q06323', 'Q969G3', 'P35222', 'O00743', 'Q13620', 'Q14160', 'P29590', 'Q92785']"
+GO:0070062,extracellular exosome,27,"['Q9UL46', 'Q9UKG1', 'P06730', 'Q9BUF5', 'Q12959', 'P06493', 'P04083', 'Q13509', 'P35241', 'P68366', 'O00560', 'P17252', 'P62826', 'Q13885', 'P50570', 'P05556', 'P05067', 'O14745', 'P46940', 'P62258', 'O00571', 'P07437', 'Q06323', 'P35222', 'Q13620', 'Q14160', 'P68371']"
+GO:0016020,membrane,20,"['Q9UL46', 'Q9UKG1', 'O43823', 'O14777', 'Q9Y6G9', 'P06493', 'Q9BSJ2', 'Q14203', 'P52732', 'O60216', 'O00560', 'O95067', 'P62826', 'Q04637', 'P05556', 'P05067', 'O14745', 'P00533', 'P62258', 'P35222']"
+GO:0005886,plasma membrane,20,"['Q9UKG1', 'O14974', 'P53041', 'Q9Y6G9', 'Q12959', 'Q13616', 'P04083', 'Q08209', 'P35241', 'O00560', 'P17252', 'P30622', 'P50570', 'P05556', 'P05067', 'P46940', 'P00533', 'O00571', 'P35222', 'Q14160']"
+GO:0005813,centrosome,19,"['P41208', 'O14974', 'O14777', 'Q9Y6G9', 'P06493', 'Q9BSJ2', 'Q14203', 'Q8TDX7', 'O95067', 'Q13042', 'P24941', 'Q9BTW9', 'P30622', 'P50570', 'P53350', 'Q00534', 'O00571', 'P35222', 'Q92785']"
+GO:0005874,microtubule,18,"['Q9ULW0', 'Q9BUF5', 'Q9Y6G9', 'Q12959', 'Q13509', 'Q14203', 'P68366', 'Q8TDX7', 'P52732', 'Q15018', 'Q13885', 'Q9BTW9', 'P30622', 'Q9BQE3', 'P50570', 'P46940', 'P07437', 'P68371']"
+GO:0015630,microtubule cytoskeleton,13,"['Q9ULW0', 'Q9BUF5', 'Q13509', 'Q53HL2', 'Q14203', 'P68366', 'O95067', 'Q13885', 'P30622', 'Q9BQE3', 'P53350', 'P07437', 'P68371']"
+GO:0000785,chromatin,12,"['O60885', 'P18754', 'P49459', 'O60216', 'Q96EB6', 'P62826', 'P06400', 'P51531', 'P53350', 'O14497', 'Q969G3', 'Q92785']"
+GO:0032991,protein-containing complex,12,"['P38936', 'P53041', 'P18754', 'Q53HL2', 'P52732', 'Q06124', 'P62826', 'Q8TBC4', 'P00533', 'P07437', 'Q969G3', 'P35222']"
+GO:0072686,mitotic spindle,12,"['Q9Y6A5', 'Q9ULW0', 'Q9BUF5', 'P06493', 'Q13509', 'Q14203', 'P52732', 'Q13042', 'Q13885', 'P12270', 'P07437', 'P68371']"
+GO:0000922,spindle pole,11,"['Q9Y6A5', 'Q9ULW0', 'Q9Y6G9', 'Q9BSJ2', 'Q14203', 'Q8TDX7', 'P52732', 'O60216', 'Q15018', 'P53350', 'P35222']"
+GO:0000776,kinetochore,11,"['O14974', 'O14777', 'Q9Y6G9', 'Q96DE5', 'Q14203', 'P51808', 'P30622', 'P12270', 'P53350', 'Q13523', 'Q969G3']"
+GO:0036064,ciliary basal body,10,"['P41208', 'Q9Y6A5', 'Q9BSJ2', 'Q14203', 'P23921', 'P52732', 'P17252', 'Q15018', 'P00533', 'P35222']"
+GO:0005925,focal adhesion,10,"['O14974', 'P04083', 'P35241', 'O00560', 'P50570', 'P05556', 'P46940', 'P00533', 'P62258', 'P35222']"
+GO:0005730,nucleolus,9,"['P38936', 'O43823', 'O14974', 'Q14978', 'P42771', 'Q53HL2', 'Q96EB6', 'P62826', 'P29590']"
+GO:0043231,intracellular membrane-bounded organelle,8,"['Q9UKG1', 'Q9Y6A5', 'P53041', 'P52732', 'P51531', 'P05067', 'P35222', 'Q92785']"
+GO:0048471,perinuclear region of cytoplasm,8,"['P06730', 'Q12959', 'P17252', 'P05556', 'P05067', 'O14745', 'P00533', 'P35222']"
+GO:0045171,intercellular bridge,8,"['Q9ULW0', 'Q9BUF5', 'Q13509', 'Q53HL2', 'Q14203', 'Q13885', 'P07437', 'P68371']"
+GO:0030496,midbody,8,"['P06493', 'Q53HL2', 'P35241', 'O60216', 'P62826', 'P50570', 'P53350', 'P46940']"
+GO:0005739,mitochondrion,8,"['P06493', 'Q08209', 'P23921', 'Q06124', 'P17252', 'Q96EB6', 'O00571', 'O00743']"
+GO:0001726,ruffle,7,"['Q9UKG1', 'P35241', 'P30622', 'P05556', 'O14745', 'Q00534', 'P46940']"
+GO:0000307,cyclin-dependent protein kinase holoenzyme complex,7,"['P38936', 'P06493', 'O95067', 'P24385', 'P24941', 'P51948', 'Q00534']"
+GO:0005912,adherens junction,7,"['Q12959', 'P04083', 'P35241', 'O00560', 'Q9BTW9', 'P35222', 'Q14160']"
+GO:0005576,extracellular region,7,"['P04083', 'P68366', 'O00560', 'P05067', 'O00571', 'P07437', 'P68371']"
+GO:0005768,endosome,6,"['Q9UKG1', 'P04083', 'P24941', 'P50570', 'P05067', 'P00533']"
+GO:0098978,glutamatergic synapse,6,"['Q9UKG1', 'P06730', 'Q12959', 'Q08209', 'P35222', 'Q14160']"
+GO:0005819,spindle,6,"['Q9ULW0', 'Q14203', 'P52732', 'Q9UJX4', 'P06400', 'P53350']"
+GO:0016323,basolateral plasma membrane,6,"['Q12959', 'P04083', 'P46940', 'P00533', 'P35222', 'Q14160']"
+GO:0045121,membrane raft,6,"['Q12959', 'O00560', 'P05556', 'P05067', 'P00533', 'P07437']"
+GO:0031965,nuclear membrane,6,"['O43660', 'O00560', 'P24385', 'P12270', 'P00533', 'P29590']"
+GO:0030027,lamellipodium,6,"['Q13509', 'P35241', 'P05556', 'O00571', 'P35222', 'Q14160']"
+GO:0005635,nuclear envelope,6,"['Q14203', 'P23921', 'Q96EB6', 'P62826', 'P24941', 'P12270']"
+GO:0005814,centriole,5,"['P41208', 'Q14203', 'P62826', 'P50570', 'P53350']"
+GO:0031901,early endosome membrane,5,"['Q9UKG1', 'P04083', 'P05067', 'P00533', 'P29590']"
+GO:0016607,nuclear speck,5,"['P06730', 'P49427', 'O14777', 'O43660', 'Q13523']"
+GO:0005794,Golgi apparatus,5,"['Q9Y6A5', 'Q12959', 'P50570', 'P05067', 'P00533']"
+GO:0005680,anaphase-promoting complex,5,"['Q96DE5', 'Q13042', 'Q9UM13', 'Q9UJX4', 'Q8NHZ8']"
+GO:0016324,apical plasma membrane,5,"['Q12959', 'P04083', 'P35241', 'O14745', 'P46940']"
+GO:0005789,endoplasmic reticulum membrane,5,"['Q12959', 'P06493', 'O00560', 'P00533', 'P29590']"
+GO:0016328,lateral plasma membrane,5,"['Q12959', 'P04083', 'Q9BTW9', 'P46940', 'P35222']"
+GO:0005615,extracellular space,5,"['P04083', 'P35241', 'O00560', 'P05067', 'P00533']"
+GO:0005929,cilium,5,"['Q14203', 'P68366', 'Q9BQE3', 'P00533', 'P35222']"
+GO:0045202,synapse,5,"['O00560', 'P50570', 'P05556', 'P05067', 'P35222']"
+GO:0016514,SWI/SNF complex,5,"['P06400', 'P51531', 'O14497', 'Q969G3', 'Q92785']"
+GO:0000781,"chromosome, telomeric region",4,"['Q6P1J9', 'P06493', 'P24941', 'P29590']"
+GO:0016363,nuclear matrix,4,"['O43823', 'O60216', 'Q969G3', 'P29590']"
+GO:0005923,bicellular tight junction,4,"['Q12959', 'P24385', 'Q9BTW9', 'P35222']"
+GO:0030054,cell junction,4,"['Q12959', 'P00533', 'P35222', 'Q14160']"
+GO:0005783,endoplasmic reticulum,4,"['Q12959', 'P17252', 'P05067', 'P62258']"
+GO:0043005,neuron projection,4,"['Q12959', 'Q14203', 'P50570', 'P46940']"
+GO:0042383,sarcolemma,4,"['Q12959', 'P04083', 'Q08209', 'P05556']"
+GO:0005815,microtubule organizing center,4,"['Q9BSJ2', 'Q8TDX7', 'O95067', 'P24385']"
+GO:0009986,cell surface,4,"['P04083', 'P05556', 'P05067', 'P00533']"
+GO:0030424,axon,4,"['Q13509', 'Q14203', 'P05067', 'P46940']"
+GO:0071944,cell periphery,4,"['Q13509', 'P35241', 'O14745', 'P35222']"
+GO:0030175,filopodium,4,"['Q13509', 'P35241', 'P05556', 'O14745']"
+GO:0005938,cell cortex,4,"['Q14203', 'P30622', 'P46940', 'P35222']"
+GO:0005856,cytoskeleton,4,"['P68366', 'O00560', 'P07437', 'P68371']"
+GO:0042470,melanosome,4,"['O00560', 'P62826', 'P05556', 'P62258']"
+GO:0055037,recycling endosome,4,"['P62826', 'P50570', 'P05556', 'P05067']"
+GO:0071565,nBAF complex,4,"['P51531', 'O14497', 'Q969G3', 'Q92785']"
+GO:0045177,apical part of cell,3,"['P41208', 'P35241', 'P35222']"
+GO:0015629,actin cytoskeleton,3,"['Q9UKG1', 'O14974', 'O14745']"
+GO:0010008,endosome membrane,3,"['Q9UKG1', 'P05556', 'P00533']"
+GO:0036464,cytoplasmic ribonucleoprotein granule,3,"['P06730', 'P46940', 'P07437']"
+GO:0010494,cytoplasmic stress granule,3,"['P06730', 'Q04637', 'O00571']"
+GO:0005694,chromosome,3,"['O60885', 'P18754', 'O60216']"
+GO:0000794,condensed nuclear chromosome,3,"['O60885', 'P18754', 'O60216']"
+GO:0034451,centriolar satellite,3,"['Q9Y6A5', 'P23921', 'P53350']"
+GO:0030018,Z disc,3,"['O14974', 'Q08209', 'P35222']"
+GO:0001650,fibrillar center,3,"['Q14978', 'O43660', 'Q96EB6']"
+GO:0000775,"chromosome, centromeric region",3,"['O14777', 'Q53HL2', 'O60216']"
+GO:0005868,cytoplasmic dynein complex,3,"['Q9Y6G9', 'P51808', 'P12270']"
+GO:0005911,cell-cell junction,3,"['Q12959', 'P35222', 'Q14160']"
+GO:0035748,myelin sheath abaxonal region,3,"['Q12959', 'P05556', 'Q14160']"
+GO:0031982,vesicle,3,"['P04083', 'Q9BQE3', 'O14745']"
+GO:0043025,neuronal cell body,3,"['Q13509', 'Q14203', 'P23921']"
+GO:0043197,dendritic spine,3,"['Q08209', 'P05556', 'P05067']"
+GO:0098685,Schaffer collateral - CA1 synapse,3,"['Q08209', 'P05556', 'P35222']"
+GO:0035578,azurophil granule lumen,3,"['O00560', 'P07437', 'P68371']"
+GO:1903561,extracellular vesicle,3,"['O00560', 'Q13885', 'P68371']"
+GO:0016605,PML body,3,"['Q96EB6', 'P06400', 'P29590']"
+GO:0140092,bBAF complex,3,"['P51531', 'O14497', 'Q969G3']"
+GO:0035060,brahma complex,3,"['P51531', 'O14497', 'Q969G3']"
+GO:0071564,npBAF complex,3,"['P51531', 'O14497', 'Q969G3']"
+GO:0043235,receptor complex,3,"['P05556', 'P05067', 'P00533']"
+GO:0097386,glial cell projection,2,"['P41208', 'P05556']"
+GO:0044615,nuclear pore nuclear basket,2,"['P41208', 'P12270']"
+GO:0008537,proteasome activator complex,2,"['Q9UL46', 'Q06323']"
+GO:0000502,proteasome complex,2,"['Q9UL46', 'Q06323']"
+GO:0005769,early endosome,2,"['Q9UKG1', 'P05067']"
+GO:0097708,intracellular vesicle,2,"['Q9UKG1', 'P00533']"
+GO:0012506,vesicle membrane,2,"['Q9UKG1', 'P04083']"
+GO:0016281,eukaryotic translation initiation factor 4F complex,2,"['P06730', 'Q04637']"
+GO:0000793,condensed chromosome,2,"['O43823', 'P24941']"
+GO:0015030,Cajal body,2,"['Q14978', 'P24941']"
+GO:0005971,ribonucleoside-diphosphate reductase complex,2,"['P31350', 'P23921']"
+GO:0043204,perikaryon,2,"['P53041', 'P05067']"
+GO:0000940,outer kinetochore,2,"['O14777', 'P53350']"
+GO:0030666,endocytic vesicle membrane,2,"['Q9Y6G9', 'P50570']"
+GO:0030667,secretory granule membrane,2,"['Q9Y6G9', 'P46940']"
+GO:0009898,cytoplasmic side of plasma membrane,2,"['Q12959', 'P46940']"
+GO:0001772,immunological synapse,2,"['Q12959', 'Q14160']"
+GO:0014704,intercalated disc,2,"['Q12959', 'P05556']"
+GO:0031594,neuromuscular junction,2,"['Q12959', 'P05556']"
+GO:0097060,synaptic membrane,2,"['Q12959', 'P05556']"
+GO:0019005,SCF ubiquitin ligase complex,2,"['Q13616', 'Q93034']"
+GO:0005881,cytoplasmic microtubule,2,"['Q9BSJ2', 'Q9BQE3']"
+GO:0071013,catalytic step 2 spliceosome,2,"['O43660', 'Q13523']"
+GO:0001891,phagocytic cup,2,"['P04083', 'P50570']"
+GO:0030425,dendrite,2,"['Q13509', 'P05067']"
+GO:0030426,growth cone,2,"['Q13509', 'P46940']"
+GO:0080008,Cul4-RING E3 ubiquitin ligase complex,2,"['Q13619', 'Q13620']"
+GO:0031464,Cul4A-RING E3 ubiquitin ligase complex,2,"['Q13619', 'Q13620']"
+GO:0051233,spindle midzone,2,"['Q53HL2', 'P53350']"
+GO:0031252,cell leading edge,2,"['Q14203', 'O00571']"
+GO:0032154,cleavage furrow,2,"['P35241', 'P05556']"
+GO:0030864,cortical actin cytoskeleton,2,"['P35241', 'P46940']"
+GO:0005902,microvillus,2,"['P35241', 'O14745']"
+GO:0031966,mitochondrial membrane,2,"['P17252', 'P62258']"
+GO:0000791,euchromatin,2,"['Q96EB6', 'P35222']"
+GO:0097131,cyclin D1-CDK6 complex,2,"['P24385', 'Q00534']"
+GO:0001673,male germ cell nucleus,2,"['P62826', 'P24941']"
+GO:0005643,nuclear pore,2,"['P62826', 'P12270']"
+GO:0036126,sperm flagellum,2,"['P62826', 'P68371']"
+GO:0005667,transcription regulator complex,2,"['P24941', 'P35222']"
+GO:0005905,clathrin-coated pit,2,"['P50570', 'P05067']"
+GO:0000139,Golgi membrane,2,"['P50570', 'P00533']"
+GO:0014069,postsynaptic density,2,"['P50570', 'Q14160']"
+GO:0045211,postsynaptic membrane,2,"['P50570', 'P35222']"
+GO:0098793,presynapse,2,"['P50570', 'Q14160']"
+GO:0032587,ruffle membrane,2,"['P05556', 'P00533']"
+GO:0005641,nuclear envelope lumen,2,"['P05067', 'P07437']"
+GO:0031528,microvillus membrane,2,"['O14745', 'P35222']"
+GO:0034750,Scrib-APC-beta-catenin complex,2,"['P35222', 'Q14160']"
+GO:0097729,9+2 motile cilium,1,['P41208']
+GO:0032391,photoreceptor connecting cilium,1,['P41208']
+GO:0070390,transcription export complex 2,1,['P41208']
+GO:0071942,XPC complex,1,['P41208']
+GO:0031410,cytoplasmic vesicle,1,['Q9UKG1']
+GO:0032009,early phagosome,1,['Q9UKG1']
+GO:0044354,macropinosome,1,['Q9UKG1']
+GO:0033391,chromatoid body,1,['P06730']
+GO:0000932,P-body,1,['P06730']
+GO:0098794,postsynapse,1,['P06730']
+GO:0016442,RISC complex,1,['P06730']
+GO:0016604,nuclear body,1,['P38936']
+GO:0070557,PCNA-p21 complex,1,['P38936']
+GO:0016593,Cdc73/Paf1 complex,1,['Q6P1J9']
+GO:0001939,female pronucleus,1,['O43823']
+GO:0031672,A band,1,['O14974']
+GO:0043292,contractile muscle fiber,1,['O14974']
+GO:0072357,PTW/PP1 phosphatase complex,1,['O14974']
+GO:0001725,stress fiber,1,['O14974']
+GO:0043203,axon hillock,1,['Q9ULW0']
+GO:0101031,protein folding chaperone complex,1,['P53041']
+GO:1990635,proximal dendrite,1,['P53041']
+GO:0031262,Ndc80 complex,1,['O14777']
+GO:0101003,ficolin-1-rich granule membrane,1,['Q9Y6G9']
+GO:0055038,recycling endosome membrane,1,['Q9Y6G9']
+GO:0043596,nuclear replication fork,1,['O75717']
+GO:0005604,basement membrane,1,['Q12959']
+GO:0031253,cell projection membrane,1,['Q12959']
+GO:0043219,lateral loop,1,['Q12959']
+GO:0097025,MPP7-DLG1-LIN7 complex,1,['Q12959']
+GO:0033268,node of Ranvier,1,['Q12959']
+GO:0098839,postsynaptic density membrane,1,['Q12959']
+GO:0005662,DNA replication factor A complex,1,['P35244']
+GO:0035861,site of double-strand break,1,['P35244']
+GO:0031461,cullin-RING ubiquitin ligase complex,1,['Q13616']
+GO:1990452,Parkin-FBXW7-Cul1 ubiquitin ligase complex,1,['Q13616']
+GO:0097121,cyclin A1-CDK1 complex,1,['P06493']
+GO:0097122,cyclin A2-CDK1 complex,1,['P06493']
+GO:0097125,cyclin B1-CDK1 complex,1,['P06493']
+GO:0005759,mitochondrial matrix,1,['P06493']
+GO:0005876,spindle microtubule,1,['P06493']
+GO:0000930,gamma-tubulin complex,1,['Q9BSJ2']
+GO:0000974,Prp19 complex,1,['O43660']
+GO:0005681,spliceosomal complex,1,['O43660']
+GO:0071007,U2-type catalytic step 2 spliceosome,1,['O43660']
+GO:0062023,collagen-containing extracellular matrix,1,['P04083']
+GO:0001533,cornified envelope,1,['P04083']
+GO:0031514,motile cilium,1,['P04083']
+GO:0005955,calcineurin complex,1,['Q08209']
+GO:0019897,extrinsic component of plasma membrane,1,['Q08209']
+GO:0008287,protein serine/threonine phosphatase complex,1,['Q08209']
+GO:0035985,senescence-associated heterochromatin focus,1,['P42771']
+GO:0010369,chromocenter,1,['Q53HL2']
+GO:0032133,chromosome passenger complex,1,['Q53HL2']
+GO:0099738,cell cortex region,1,['Q14203']
+GO:0120103,centriolar subdistal appendage,1,['Q14203']
+GO:0030286,dynein complex,1,['Q14203']
+GO:0005875,microtubule associated complex,1,['Q14203']
+GO:0035371,microtubule plus-end,1,['Q14203']
+GO:0031466,Cul5-RING ubiquitin ligase complex,1,['Q93034']
+GO:0090734,site of DNA damage,1,['Q93034']
+GO:0051286,cell tip,1,['P35241']
+GO:0120044,stereocilium base,1,['P35241']
+GO:0030315,T-tubule,1,['P35241']
+GO:0033503,HULC complex,1,['P49459']
+GO:0005770,late endosome,1,['P49459']
+GO:0005764,lysosome,1,['P49459']
+GO:0061673,mitotic spindle astral microtubule,1,['P51808']
+GO:0005871,kinesin complex,1,['P52732']
+GO:0008278,cohesin complex,1,['O60216']
+GO:0030893,meiotic cohesin complex,1,['O60216']
+GO:0030892,mitotic cohesin complex,1,['O60216']
+GO:0072562,blood microparticle,1,['O00560']
+GO:0005895,interleukin-5 receptor complex,1,['O00560']
+GO:0035866,alphav-beta3 integrin-PKCalpha complex,1,['P17252']
+GO:0022626,cytosolic ribosome,1,['P15170']
+GO:0018444,translation release factor complex,1,['P15170']
+GO:0005677,chromatin silencing complex,1,['Q96EB6']
+GO:0061773,eNoSc complex,1,['Q96EB6']
+GO:0000792,heterochromatin,1,['Q96EB6']
+GO:0005637,nuclear inner membrane,1,['Q96EB6']
+GO:0033553,rDNA heterochromatin,1,['Q96EB6']
+GO:0097128,cyclin D1-CDK4 complex,1,['P24385']
+GO:0017053,transcription repressor complex,1,['P24385']
+GO:0002177,manchette,1,['P62826']
+GO:0042565,RNA nuclear export complex,1,['P62826']
+GO:0070552,BRISC complex,1,['Q15018']
+GO:0097123,cyclin A1-CDK2 complex,1,['P24941']
+GO:0097124,cyclin A2-CDK2 complex,1,['P24941']
+GO:0097134,cyclin E1-CDK2 complex,1,['P24941']
+GO:0097135,cyclin E2-CDK2 complex,1,['P24941']
+GO:0000805,X chromosome,1,['P24941']
+GO:0000806,Y chromosome,1,['P24941']
+GO:0005840,ribosome,1,['Q04637']
+GO:0030659,cytoplasmic vesicle membrane,1,['P30622']
+GO:0005882,intermediate filament,1,['P30622']
+GO:0042405,nuclear inclusion body,1,['P12270']
+GO:0034399,nuclear periphery,1,['P12270']
+GO:0030136,clathrin-coated vesicle,1,['P50570']
+GO:0030670,phagocytic vesicle membrane,1,['P50570']
+GO:0002102,podosome,1,['P50570']
+GO:0001931,uropod,1,['P50570']
+GO:0070516,CAK-ERCC2 complex,1,['P51948']
+GO:0000439,transcription factor TFIIH core complex,1,['P51948']
+GO:0005675,transcription factor TFIIH holo complex,1,['P51948']
+GO:0070985,transcription factor TFIIK complex,1,['P51948']
+GO:0061793,chromatin lock complex,1,['P06400']
+GO:0035189,Rb-E2F complex,1,['P06400']
+GO:0140288,GBAF complex,1,['P51531']
+GO:0045111,intermediate filament cytoskeleton,1,['P51531']
+GO:0150053,cerebellar climbing fiber to Purkinje cell synapse,1,['P05556']
+GO:0009897,external side of plasma membrane,1,['P05556']
+GO:0034665,integrin alpha1-beta1 complex,1,['P05556']
+GO:0034680,integrin alpha10-beta1 complex,1,['P05556']
+GO:0034681,integrin alpha11-beta1 complex,1,['P05556']
+GO:0034666,integrin alpha2-beta1 complex,1,['P05556']
+GO:0034667,integrin alpha3-beta1 complex,1,['P05556']
+GO:0034668,integrin alpha4-beta1 complex,1,['P05556']
+GO:0034674,integrin alpha5-beta1 complex,1,['P05556']
+GO:0034675,integrin alpha6-beta1 complex,1,['P05556']
+GO:0034677,integrin alpha7-beta1 complex,1,['P05556']
+GO:0034678,integrin alpha8-beta1 complex,1,['P05556']
+GO:0034679,integrin alpha9-beta1 complex,1,['P05556']
+GO:0034682,integrin alphav-beta1 complex,1,['P05556']
+GO:0008305,integrin complex,1,['P05556']
+GO:0106003,amyloid-beta complex,1,['P05067']
+GO:0097449,astrocyte projection,1,['P05067']
+GO:0043198,dendritic shaft,1,['P05067']
+GO:0005788,endoplasmic reticulum lumen,1,['P05067']
+GO:0031904,endosome lumen,1,['P05067']
+GO:0005796,Golgi lumen,1,['P05067']
+GO:0005798,Golgi-associated vesicle,1,['P05067']
+GO:1990812,growth cone filopodium,1,['P05067']
+GO:1990761,growth cone lamellipodium,1,['P05067']
+GO:0044304,main axon,1,['P05067']
+GO:0005743,mitochondrial inner membrane,1,['P05067']
+GO:0098992,neuronal dense core vesicle,1,['P05067']
+GO:0031093,platelet alpha granule lumen,1,['P05067']
+GO:0032588,trans-Golgi network membrane,1,['P05067']
+GO:0097431,mitotic spindle pole,1,['P53350']
+GO:0000795,synaptonemal complex,1,['P53350']
+GO:0031526,brush border membrane,1,['O14745']
+GO:0012505,endomembrane system,1,['O14745']
+GO:0098797,plasma membrane protein complex,1,['O14745']
+GO:0097225,sperm midpiece,1,['O14745']
+GO:0032426,stereocilium tip,1,['O14745']
+GO:0097132,cyclin D2-CDK6 complex,1,['Q00534']
+GO:0097133,cyclin D3-CDK6 complex,1,['Q00534']
+GO:0005884,actin filament,1,['P46940']
+GO:1990904,ribonucleoprotein complex,1,['P46940']
+GO:0036057,slit diaphragm,1,['P46940']
+GO:0009925,basal plasma membrane,1,['P00533']
+GO:0030669,clathrin-coated endocytic vesicle membrane,1,['P00533']
+GO:0097489,"multivesicular body, internal vesicle lumen",1,['P00533']
+GO:0070435,Shc-EGFR complex,1,['P00533']
+GO:1904813,ficolin-1-rich granule lumen,1,['O00571']
+GO:0072559,NLRP3 inflammasome complex,1,['O00571']
+GO:0043186,P granule,1,['O00571']
+GO:0034774,secretory granule lumen,1,['O00571']
+GO:0044297,cell body,1,['P07437']
+GO:0000228,nuclear chromosome,1,['Q969G3']
+GO:0016586,RSC-type complex,1,['Q969G3']
+GO:0016327,apicolateral plasma membrane,1,['P35222']
+GO:0030877,beta-catenin destruction complex,1,['P35222']
+GO:1990711,beta-catenin-ICAT complex,1,['P35222']
+GO:1990907,beta-catenin-TCF complex,1,['P35222']
+GO:0070369,beta-catenin-TCF7L2 complex,1,['P35222']
+GO:0016342,catenin complex,1,['P35222']
+GO:0005916,fascia adherens,1,['P35222']
+GO:0016600,flotillin complex,1,['P35222']
+GO:0099092,"postsynaptic density, intracellular component",1,['P35222']
+GO:0098831,presynaptic active zone cytoplasmic component,1,['P35222']
+GO:0042734,presynaptic membrane,1,['P35222']
+GO:0032993,protein-DNA complex,1,['P35222']
+GO:1990909,Wnt signalosome,1,['P35222']
+GO:0031465,Cul4B-RING E3 ubiquitin ligase complex,1,['Q13620']
+GO:0044291,cell-cell contact zone,1,['Q14160']
+GO:0099147,extrinsic component of postsynaptic density membrane,1,['Q14160']
+GO:0005879,axonemal microtubule,1,['P68371']

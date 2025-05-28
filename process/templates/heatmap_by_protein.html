@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+<div class="legend">Select a Protein</div>
+
+<form method="post" action="{% url 'heatmap' %}">
+<input type="hidden" name="project_id" value="{{ project_id }}">
+<div class="vertical-flex">
+    <div>
+        {% csrf_token %}
+        <label for="protein">Choose a protein:</label>
+    </div>
+    <div>
+        <select name="accession_number" id="protein">
+            {% for protein in proteins %}
+                <option value="{{ protein.accession_number }}">{{ protein.accession_number }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <button type="submit">Submit</button>
+    </div>
+</div>
+</form>
+
+</body>
+</html>

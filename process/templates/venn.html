@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="{% static 'js/venn.js' %}"></script>
+</head>
+<body>
+    <div id="venn"></div>
+
+    {{ venn_data|json_script:"venn-data" }}
+
+    <script>
+        var sets = JSON.parse(document.getElementById('venn-data').textContent);
+
+        var chart = venn.VennDiagram();
+        d3.select("#venn").datum(sets).call(chart);
+    </script>
+
+</body>
+</html>

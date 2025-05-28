@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,12 +26,12 @@ SECRET_KEY = "django-insecure-+4g!acvmg+&n@sn!0bh&^lljl%3r3(yidg3-4tlf(5k9d-zs4w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
 
 # Application definition
 
 INSTALLED_APPS = [
+    "process.apps.ProcessConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -72,13 +73,17 @@ WSGI_APPLICATION = "processor.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DATABASE_NAME", "main"),
+        "USER": os.environ.get("DATABASE_USER", "myuser"),
+        "PASSWORD": os.environ.get("DATABASE_PASSWORD", "mypassword"),
+        "HOST": os.environ.get("DATABASE_HOST", "postgres-db"),
+        "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -120,3 +125,23 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# N.B. THIS IS SET UP FOR DEVELOPMENT ONLY! Settings below will need to be improved for prod.
+
+# Allow localhost and 127.0.0.1 as valid cookie domains
+CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://127.0.0.1", "http://0.0.0.0"]
+
+# Let the browser accept the session cookie
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+# Optional but helpful for dev:
+SESSION_COOKIE_SAMESITE = (
+    "Lax"  # or None, but None requires Secure=True on some browsers
+)
+CSRF_COOKIE_SAMESITE = "Lax"
+
+SESSION_COOKIE_DOMAIN = None
+
+SESSION_ENGINE = "django.contrib.sessions.backends.db"

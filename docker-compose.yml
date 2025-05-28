@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: main
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+  cc_processor:
+    image: cc_processor:latest  # Replace with your actual image name
+    container_name: cc_processor
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    environment:
+      DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
+      POSTGRES_DB: main
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_HOST: postgres-db
+      POSTGRES_PORT: 5432
+    volumes:
+        - .:/app
+
+volumes:
+  postgres_data:

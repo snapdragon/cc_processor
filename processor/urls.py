@@ -1,23 +1,21 @@
-"""
-URL configuration for processor project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
 from django.contrib import admin
 from django.urls import path
 
+from process import views
+
 urlpatterns = [
+    path("", views.index, name="index"),
+    path("venn/", views.venn, name="venn"),
+    path("heatmap/<int:id>/", views.heatmap, name="heatmap"),
+    path("heatmap/", views.heatmap, name="heatmap"),
+    path(
+        "heatmap_by_protein/<int:id>/",
+        views.heatmap_by_protein,
+        name="heatmap_by_protein",
+    ),
+    path("pca/<int:id>/", views.pca, name="pca"),
+    path("barchart/<int:id>/", views.barchart, name="barchart"),
+    path("scatterplot/<int:id>/", views.scatterplot, name="scatterplot"),
+    path("lingress/<int:id>/", views.lingress, name="lingress"),
     path("admin/", admin.site.urls),
 ]

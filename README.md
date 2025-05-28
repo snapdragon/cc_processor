@@ -1,0 +1,111 @@
+## CC_processor
+
+Code to process proteomic and phosphoproteomic data.
+To run, the relevant files must be placed in 
+
+# To add new datasets
+
+Create a new Project entry, SampleStage names and ColumnNames for the names of the columns in the spreadsheet(s). For examples, see the migration files.
+You may need to alter import_protein and import_phospho depending on the type of spreadsheet.
+
+
+### To run from scratch
+```sh
+docker compose up
+
+# Go to the cc_processor container and set things up
+docker exec -it cc_processor /bin/bash
+eval $(poetry env activate)
+python manage.py migrate
+
+# From outside the container, import the uniprot and peptide data tables
+# (not necessary but saves time)
+docker exec -i postgres-db psql -U myuser -d main < process_uniprotdata_2025_07_19.sql
+docker exec -i postgres-db psql -U myuser -d main < process_peptidestartposition_2025_07_19.sql
+
+# From inside the cc_processor container, import and process the data
+python manage.py import_protein --project "SL"
+python manage.py import_phospho --project "SL"
+python manage.py process --project "SL" --run-all
+```
+
+### Connect to django container
+```sh
+docker exec -it cc_processor /bin/bash
+```
+
+### Connect to postgres container
+```sh
+docker exec -it postgres-db /bin/bash
+psql -U myuser -d main
+```
+
+### Various DB queries
+```sh
+CREATE DATABASE dbify;
+
+# Change DB
+\c dbify
+
+# List tables
+\dt
+
+# Display the length of non-empty phospho results in order
+SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM process_runresult where phospho_result != '{}' order by json_text_length asc;
+
+# Count phosphos for a project
+SELECT p.id AS project_id,
+       p.name AS project_name,
+       COUNT(ph.id) AS phospho_count
+FROM process_project p
+JOIN process_protein pr ON pr.project_id = p.id
+JOIN process_phospho ph ON ph.protein_id = pr.id
+GROUP BY p.id, p.name;
+
+```
+
+### Import the original ICR output into the DB, useful for comparison
+```sh
+python manage.py import_original
+```
+
+### Compare a protein from the original output with new output, or compare all
+```sh
+python manage.py compare --accession-number Q93075
+python manage.py compare
+```
+
+### To get the admin site working
+```sh
+docker exec -it cc_processor /bin/bash
+python manage.py createsuperuser
+python manage.py runserver 0.0.0.0:8000
+# Then go to 0.0.0.0:8000/admin in your browser
+```
+
+### Dump entire DB
+``` sh
+pg_dump -U myuser -d dbify > db_backups/db_backup.sql
+
+# To import again
+docker exec -i postgres-db psql -U myuser -d main < db_dump/db_dump_2025_07_31.sql
+```
+
+### Dump tables to save retrieving again
+```sh
+# From inside postgres_db container
+pg_dump -d main -t process_uniprotdata > uniprot_data.sql
+pg_dump -d main -t process_peptidestartposition > peptidestartposition.sql
+
+# From outside container
+docker cp f09f37276ef6:/process_uniprotdata.sql db_data/process_uniprotdata.sql
+docker cp f09f37276ef6:/process_peptidestartposition.sql db_data/process_peptidestartposition.
+
+# From outside container
+docker cp db_data/process_uniprotdata.sql f09f37276ef6:/process_uniprotdata.sql 
+docker cp db_data/process_peptidestartposition.sql f09f37276ef6:/process_peptidestartposition.sql 
+
+# To import, from outside container
+psql -U myuser -d dbify -f db_data/process_peptidestartposition.sql
+psql -U myuser -d dbify -f db_data/process_uniprotdata.sql
+```

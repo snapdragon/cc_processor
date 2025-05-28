@@ -6,14 +6,29 @@ authors = [
     {name = "Paul Anderson",email = "admin@beigesoft.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "django (>=5.2.1,<6.0.0)",
     "pytest (>=8.3.5,<9.0.0)",
-    "pre-commit (>=4.2.0,<5.0.0)"
+    "pre-commit (>=4.2.0,<5.0.0)",
+    "psycopg2 (>=2.9.10,<3.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "pytest-django (>=4.11.1,<5.0.0)",
+    "factory-boy (>=3.3.3,<4.0.0)",
+    "scipy (>=1.15.3,<2.0.0)",
+    "scikit-learn (>=1.6.1,<2.0.0)",
+    "statsmodels (>=0.14.4,<0.15.0)",
+    "requests (>=2.32.4,<3.0.0)",
+    "pytest-cov (>=6.2.1,<7.0.0)",
+    "rpy2 (>=3.6.1,<4.0.0)",
+    "ijson (>=3.4.0,<4.0.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "processor.settings"

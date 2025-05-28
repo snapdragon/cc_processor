@@ -172,3 +172,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Exclude data files
+/data
+/output
+/output_ICR
+/db_backups
+~$riteup.docx
+Writeup.docx

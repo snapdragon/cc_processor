@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<svg id="protein_heatmap" width="1000" height="500"></svg>
+
+{{ protein_genes|json_script:"protein-genes" }}
+{{ protein_readings_data|json_script:"protein-readings-data" }}
+{{ protein_reading_max|json_script:"protein-reading-max" }}
+{{ samples_data|json_script:"samples-data" }}
+
+<script>
+    const protein_genes = JSON.parse(document.getElementById('protein-genes').textContent);
+    const protein_expression_matrix = JSON.parse(document.getElementById('protein-readings-data').textContent);
+    const protein_reading_max = JSON.parse(document.getElementById('protein-reading-max').textContent);
+    const samples = JSON.parse(document.getElementById('samples-data').textContent);
+
+    heatmap("#protein_heatmap", protein_genes, protein_expression_matrix, samples, protein_reading_max, "#0072B2")
+
+    function heatmap(id, genes, expression_matrix, samples, colourRange, cellColor) {
+        const cellWidth = 60;
+        const cellHeight = 1;
+        const margin = { top: 147, right: 50, bottom: 50, left: 100 };
+
+        const svg = d3.select(id)
+            .attr("width", margin.left + samples.length * cellWidth + margin.right)
+            .attr("height", margin.top + genes.length * cellHeight + margin.bottom);
+
+        const colorScale = d3.scaleLinear()
+            .domain([0, colourRange])
+            .range(["white", cellColor]);
+
+        genes.forEach((gene, rowIndex) => {
+            samples.forEach((sample, colIndex) => {
+                const value = expression_matrix[rowIndex][colIndex];
+
+                svg.append("rect")
+                    .attr("x", margin.left + colIndex * cellWidth)
+                    .attr("y", margin.top + rowIndex * cellHeight)
+                    .attr("width", cellWidth)
+                    .attr("height", cellHeight)
+                    .attr("class", "cell")
+                    .attr("fill", value == null || isNaN(value) ? "#FFCCCB" : colorScale(value));
+            });
+        });
+
+        svg.selectAll(".col-label")
+            .data(samples)
+            .enter()
+            .append("text")
+            .attr("x", (d, i) => margin.left + i * cellWidth + cellWidth / 2)
+            .attr("y", margin.top - 10)
+            .attr("text-anchor", "start")
+            .attr("transform", (d, i) => {
+                const x = margin.left + i * cellWidth + cellWidth / 2;
+                const y = margin.top - 10;
+                return `rotate(-90, ${x}, ${y})`;
+            })
+            .text(d => d);
+
+        const legend_svg = d3.select(id);
+        const defs = legend_svg.append("defs");
+
+        let gid = "gidone"
+
+        const gradient = defs.append("linearGradient")
+          .attr("id", "legend-gradient" + gid)
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        .attr("y1", "0%")
+        .attr("y2", "0%")
+
+    // Add color stops
+    gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#ffffff")
+
+    gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", cellColor);
+
+    rightShift = -90
+
+    legend_svg.append("rect")
+      .attr("x", margin.left + 200 + rightShift)
+      .attr("y", margin.top + 20 + expression_matrix.length * 60)
+      .attr("width", 120)
+      .attr("height", 20)
+      .style("fill", "url(#legend-gradient" + gid + ")")
+      .style("stroke", "black");
+
+    legend_svg.append("rect")
+      .attr("x", margin.left + 410 + rightShift)
+      .attr("y", margin.top + 20 + expression_matrix.length * 60)
+      .attr("width", 20)
+      .attr("height", 20)
+      .style("fill", "#FFCCCB")
+      .style("stroke", "black");
+
+    // Add text labels
+    legend_svg.append("text")
+      .attr("x", margin.left + 172 + rightShift)
+      .attr("y", margin.top + 33 + expression_matrix.length * 60)
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text("Low");
+
+    legend_svg.append("text")
+      .attr("x", margin.left + 347 + rightShift)
+      .attr("y", margin.top + 33 + expression_matrix.length * 60)
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text("High");
+
+    legend_svg.append("text")
+      .attr("x", margin.left + 472 + rightShift)
+      .attr("y", margin.top + 33 + expression_matrix.length * 60)
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text("Missing");
+}
+
+</script>
+
+
+</body>
+</html>

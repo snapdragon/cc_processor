@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <style>
+      .legend {
+        margin-left: 20px;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</style></head>
+<body>
+  <!-- <div class="vertical-flex">
+    <div>
+      <svg width="500" height="500" id="proteins"></svg>
+    </div>
+    <div class="legend">
+      Proteomics results with q values &le; 0.05 and curve fold change &ge; 1.2 for {{ project.full_name }}
+    </div>
+    <div>
+      <svg width="500" height="500" id="phosphos"></svg>
+    </div>
+    <div class="legend">
+      Phosphoproteomics results with q values &le; 0.01 and curve fold change &ge; 1.2 for {{ project.full_name }}
+    </div>
+  </div> -->
+
+  <svg width="500" height="500" id="proteins"></svg>
+  <svg width="500" height="500" id="phosphos"></svg>
+
+  {{ protein_data|json_script:"protein-data" }}
+  {{ phospho_data|json_script:"phospho-data" }}
+  {{ protein_num|json_script:"protein_num" }}
+  {{ phospho_num|json_script:"phospho-num" }}
+  {{ oscillating_protein_num|json_script:"oscillating-protein_num" }}
+  {{ oscillating_phospho_num|json_script:"oscillating-phospho-num" }}
+
+  <script>
+    protein_data = JSON.parse(document.getElementById('protein-data').textContent)
+    phospho_data = JSON.parse(document.getElementById('phospho-data').textContent)
+    protein_num = JSON.parse(document.getElementById('protein_num').textContent)
+    phospho_num = JSON.parse(document.getElementById('phospho-num').textContent)
+    oscillating_protein_num = JSON.parse(document.getElementById('oscillating-protein_num').textContent)
+    oscillating_phospho_num = JSON.parse(document.getElementById('oscillating-phospho-num').textContent)
+
+    scatterplot("#proteins", protein_data, protein_num, oscillating_protein_num, 1.301, "#0072B2")
+    scatterplot("#phosphos", phospho_data, phospho_num, oscillating_phospho_num, 2, "#00B272")
+
+    function scatterplot(id, data, num, oscillating_num, q_value_x, dotColor) {
+      const margin = { top: 20, right: 10, bottom: 60, left: 70 },
+            width = 500 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom
+
+      const svg = d3.select(id)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`)
+
+      const xScale = d3.scaleLinear().domain([0, 6]).range([0, width])
+      const yScale = d3.scaleLinear().domain([0, 16]).range([height, 0])
+
+      // Axes
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).ticks(6))
+      svg.append("g").call(d3.axisLeft(yScale))
+
+      // Threshold lines
+      svg.append("line")
+        .attr("x1", xScale(.263)).attr("x2", xScale(.263))
+        .attr("y1", 0).attr("y2", height)
+        .attr("stroke", "gray").attr("stroke-width", 1)
+
+      svg.append("line")
+        .attr("x1", 0).attr("x2", width)
+        .attr("y1", yScale(q_value_x)).attr("y2", yScale(q_value_x))
+        .attr("stroke", "gray").attr("stroke-width", 1)
+
+      // Scatter points
+      svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 3)
+        .attr("fill", d => d.oscillating ? dotColor : "lightgray")
+
+      // Labels
+      svg.selectAll(".label")
+        .data(data.filter(d => d.label))
+        .enter()
+        .append("text")
+        .attr("x", d => xScale(d.x) + 5)
+        .attr("y", d => yScale(d.y))
+        .text(d => d.label)
+        .attr("fill", "#8B0000")
+        .style("font-weight", "bold")
+        .style("font-size", "24px")
+        .attr("stroke", "white")
+        .attr("stroke-width", 4)
+        .attr("paint-order", "stroke")
+        .attr("dominant-baseline", "middle")
+
+      // Annotation text
+      svg.append("text")
+        .attr("x", width - 120)
+        .attr("y", height - 30)
+        .attr("fill", "black")
+        .text(oscillating_num + " oscillating")
+        .style("font-size", "18px")
+
+      svg.append("text")
+        .attr("x", width - 120)
+        .attr("y", height - 10)
+        .attr("fill", "black")
+        .text(num + " total")
+        .style("font-size", "18px")
+
+      // Axis labels
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 45)
+        .attr("text-anchor", "middle")
+        .text("log₂ Curve Fold Change")
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -55)
+        .attr("text-anchor", "middle")
+        .text("-log₁₀ ANOVA q-value")
+    }
+
+  </script>
+</body>
+</html>

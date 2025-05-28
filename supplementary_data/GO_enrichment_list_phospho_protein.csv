@@ -1,0 +1,435 @@
+name,source,p_value
+cytosol,GO:CC,1.9626996448013006e-48
+nucleoplasm,GO:CC,1.7696509148411275e-43
+cadherin binding,GO:MF,2.2466965649052718e-41
+protein binding,GO:MF,3.098593522739589e-41
+RNA binding,GO:MF,1.0765612722180226e-39
+intracellular membraneless organelle,GO:CC,9.682450168819167e-38
+membraneless organelle,GO:CC,9.971183351766794e-38
+cell adhesion molecule binding,GO:MF,3.934353682170572e-33
+nuclear lumen,GO:CC,4.7529852829312235e-33
+intracellular anatomical structure,GO:CC,1.1960295867410783e-30
+supramolecular complex,GO:CC,8.583314234220823e-30
+anchoring junction,GO:CC,1.2777478823043957e-29
+intracellular organelle lumen,GO:CC,6.006901118802712e-29
+organelle lumen,GO:CC,6.006901118802712e-29
+membrane-enclosed lumen,GO:CC,6.006901118802712e-29
+cell-substrate junction,GO:CC,1.5753216883102185e-28
+organelle organization,GO:BP,3.3804561594086764e-28
+focal adhesion,GO:CC,3.904436037163818e-28
+cytoplasm,GO:CC,4.232084381138104e-28
+organelle,GO:CC,4.511238700269419e-28
+cytoskeleton,GO:CC,2.2937270732320463e-27
+intracellular organelle,GO:CC,2.4736860456238344e-27
+cytoskeletal protein binding,GO:MF,7.771157253073335e-27
+cell junction,GO:CC,8.184263600635672e-26
+mRNA binding,GO:MF,2.3214784559294435e-25
+cellular component organization or biogenesis,GO:BP,5.5934026191975935e-24
+protein-containing complex binding,GO:MF,1.817478964402868e-23
+nucleic acid binding,GO:MF,4.539014178378135e-22
+actin cytoskeleton,GO:CC,1.4716437411173233e-20
+cellular component organization,GO:BP,1.7077054214105397e-20
+nucleus,GO:CC,2.1810944153479467e-19
+actin binding,GO:MF,2.8942959544816497e-19
+nuclear body,GO:CC,2.4617094994439084e-17
+enzyme binding,GO:MF,8.717757584858768e-17
+actin filament bundle,GO:CC,2.1844225599806306e-16
+intracellular transport,GO:BP,2.6085998045614365e-16
+membrane-bounded organelle,GO:CC,3.5158144975359473e-16
+cellular localization,GO:BP,1.1289771182131013e-15
+regulation of primary metabolic process,GO:BP,1.2747200070101623e-15
+macromolecule localization,GO:BP,1.6982267131403464e-15
+actomyosin,GO:CC,2.1930745173439747e-15
+binding,GO:MF,2.3956080889021074e-15
+contractile actin filament bundle,GO:CC,6.164328557647383e-15
+stress fiber,GO:CC,6.164328557647383e-15
+regulation of mRNA metabolic process,GO:BP,7.780867364283393e-15
+cytoskeleton organization,GO:BP,1.1094226036466098e-14
+biological regulation,GO:BP,1.6053600507468134e-14
+protein localization,GO:BP,1.819438235290468e-14
+extracellular vesicle,GO:CC,2.141516310519996e-14
+extracellular organelle,GO:CC,2.2102463626783456e-14
+extracellular membrane-bounded organelle,GO:CC,2.2102463626783456e-14
+extracellular exosome,GO:CC,2.4192048524104806e-14
+cellular macromolecule localization,GO:BP,2.562718032446674e-14
+nuclear speck,GO:CC,6.328709731919985e-14
+intracellular membrane-bounded organelle,GO:CC,1.4065268872673356e-13
+molecular adaptor activity,GO:MF,1.6980694934440258e-13
+cell cortex,GO:CC,1.7436184573734654e-13
+negative regulation of cellular process,GO:BP,1.7737508528872695e-13
+supramolecular fiber,GO:CC,1.8552892696264827e-13
+nitrogen compound transport,GO:BP,1.9393406648557744e-13
+regulation of cellular process,GO:BP,2.5605804242396425e-13
+supramolecular polymer,GO:CC,2.6603717952810424e-13
+negative regulation of biological process,GO:BP,3.341552819993697e-13
+regulation of biological process,GO:BP,6.064987438371976e-13
+establishment of localization in cell,GO:BP,1.1344190701690457e-12
+vesicle,GO:CC,2.0689905095160586e-12
+protein domain specific binding,GO:MF,4.271160525151446e-12
+actin cytoskeleton organization,GO:BP,4.5621001042467806e-12
+protein transport,GO:BP,5.4263953539225374e-12
+protein-containing complex,GO:CC,5.561814976193504e-12
+cytoplasmic stress granule,GO:CC,7.322874253804023e-12
+regulation of macromolecule metabolic process,GO:BP,8.126358347423177e-12
+actin filament-based process,GO:BP,1.165101541536012e-11
+protein-macromolecule adaptor activity,GO:MF,1.2269884527028181e-11
+nuclear export,GO:BP,1.4547521815702274e-11
+regulation of nucleobase-containing compound metabolic process,GO:BP,1.649190511809016e-11
+regulation of metabolic process,GO:BP,1.764357078635627e-11
+supramolecular fiber organization,GO:BP,1.8376627501099046e-11
+nuclear transport,GO:BP,1.9213007957340895e-11
+nucleocytoplasmic transport,GO:BP,1.9213007957340895e-11
+establishment of protein localization,GO:BP,6.112109222577916e-11
+perinuclear region of cytoplasm,GO:CC,6.290532883758522e-11
+regulation of mRNA processing,GO:BP,6.854147217669365e-11
+microtubule cytoskeleton,GO:CC,8.148086623281326e-11
+regulation of cellular component organization,GO:BP,8.166573784986033e-11
+regulation of cellular localization,GO:BP,1.1726851597964223e-10
+regulation of RNA splicing,GO:BP,1.582676528412739e-10
+positive regulation of cellular process,GO:BP,1.9307402073565825e-10
+actin filament binding,GO:MF,3.2914515956557316e-10
+cellular response to stress,GO:BP,3.893015882044996e-10
+ribonucleoprotein granule,GO:CC,6.054002055032239e-10
+cell leading edge,GO:CC,6.977808431829289e-10
+positive regulation of biological process,GO:BP,7.271279485490111e-10
+positive regulation of macromolecule metabolic process,GO:BP,1.1957917804306304e-09
+"regulation of mRNA splicing, via spliceosome",GO:BP,2.1537490552674423e-09
+endomembrane system organization,GO:BP,2.563519372456153e-09
+chromatin organization,GO:BP,2.5654844513435914e-09
+negative regulation of nucleobase-containing compound metabolic process,GO:BP,2.7492045147593565e-09
+localization,GO:BP,2.905853769879473e-09
+regulation of RNA metabolic process,GO:BP,3.176333530796226e-09
+negative regulation of metabolic process,GO:BP,3.349072058343716e-09
+chromatin remodeling,GO:BP,3.5963543187999786e-09
+podosome,GO:CC,4.9249427320073785e-09
+regulation of organelle organization,GO:BP,7.730131441400673e-09
+positive regulation of biosynthetic process,GO:BP,9.045823069624775e-09
+negative regulation of macromolecule metabolic process,GO:BP,1.0298454574877426e-08
+positive regulation of macromolecule biosynthetic process,GO:BP,1.0983088502349714e-08
+contractile muscle fiber,GO:CC,1.2122780144512159e-08
+positive regulation of metabolic process,GO:BP,1.252792150278109e-08
+regulation of catabolic process,GO:BP,1.2719539557984151e-08
+negative regulation of organelle organization,GO:BP,1.4130780970625995e-08
+regulation of localization,GO:BP,1.5276685684477058e-08
+regulation of biological quality,GO:BP,1.5787280308031258e-08
+regulation of translation,GO:BP,2.0993275586170678e-08
+regulation of biosynthetic process,GO:BP,2.1597119539605237e-08
+cell cycle,GO:BP,2.1646214944738803e-08
+negative regulation of RNA metabolic process,GO:BP,2.2544187134818853e-08
+nucleic acid transport,GO:BP,2.3253572933843276e-08
+RNA transport,GO:BP,2.3253572933843276e-08
+cytoplasmic ribonucleoprotein granule,GO:CC,2.397616187136267e-08
+polymeric cytoskeletal fiber,GO:CC,2.513750220975077e-08
+myofibril,GO:CC,3.0103699842835075e-08
+mRNA transport,GO:BP,3.321850874172553e-08
+establishment of RNA localization,GO:BP,3.3369825300312726e-08
+RNA localization,GO:BP,3.8295425586197595e-08
+chromosome,GO:CC,5.000718138746652e-08
+regulation of macromolecule biosynthetic process,GO:BP,5.1228769914980723e-08
+translation,GO:BP,5.236840095521372e-08
+cell cycle process,GO:BP,8.45971612278579e-08
+catalytic step 2 spliceosome,GO:CC,1.0311199444632974e-07
+regulation of gene expression,GO:BP,1.461220552890662e-07
+cell-cell junction,GO:CC,1.5189737192395156e-07
+cellular component biogenesis,GO:BP,1.623032100790325e-07
+actin filament organization,GO:BP,1.7507426492443088e-07
+endomembrane system,GO:CC,1.8167956091786075e-07
+negative regulation of cellular component organization,GO:BP,1.9989081824329934e-07
+chromosomal region,GO:CC,2.1540668526195948e-07
+cell morphogenesis,GO:BP,2.2624513852730154e-07
+chromatin binding,GO:MF,2.449818495671542e-07
+regulation of protein metabolic process,GO:BP,2.469592421421741e-07
+nuclear matrix,GO:CC,2.5182575785709936e-07
+nuclear envelope,GO:CC,4.070534178675637e-07
+response to stress,GO:BP,4.2495772188430664e-07
+RNA catabolic process,GO:BP,6.176252045078874e-07
+regulation of protein localization,GO:BP,7.394300350431974e-07
+anatomical structure morphogenesis,GO:BP,7.918363924983502e-07
+condensed chromosome,GO:CC,9.972898470364225e-07
+"chromosome, centromeric region",GO:CC,1.0378899230546131e-06
+chromosome organization,GO:BP,1.13679103327068e-06
+intracellular protein transport,GO:BP,1.224239706555752e-06
+cell death,GO:BP,1.2358059741723538e-06
+apoptotic process,GO:BP,1.3507996146061087e-06
+response to stimulus,GO:BP,1.4740998597374352e-06
+cellular response to stimulus,GO:BP,1.5332145336689753e-06
+translational initiation,GO:BP,1.611758798316526e-06
+transcription factor binding,GO:MF,1.7052130813602015e-06
+"condensed chromosome, centromeric region",GO:CC,1.8082326130487473e-06
+positive regulation of RNA metabolic process,GO:BP,2.1381198377612317e-06
+regulation of intracellular transport,GO:BP,2.2017815714893843e-06
+nucleus organization,GO:BP,2.2281136874558055e-06
+regulation of translational initiation,GO:BP,2.336823662489027e-06
+nuclear pore,GO:CC,2.429319580909282e-06
+cell projection,GO:CC,2.5055790676636268e-06
+programmed cell death,GO:BP,2.630535754019774e-06
+spliceosomal complex,GO:CC,2.640144695933767e-06
+microtubule organizing center,GO:CC,2.6433854597149994e-06
+regulation of apoptotic process,GO:BP,2.7129530944388706e-06
+heterochromatin,GO:CC,3.035760581844334e-06
+developmental process,GO:BP,3.132962725165567e-06
+regulation of nucleocytoplasmic transport,GO:BP,3.266927572110963e-06
+regulation of cellular component biogenesis,GO:BP,3.32975127358623e-06
+positive regulation of nucleobase-containing compound metabolic process,GO:BP,3.528984545502863e-06
+regulation of programmed cell death,GO:BP,3.5515444566815165e-06
+protein localization to nucleus,GO:BP,3.649832856629879e-06
+kinetochore,GO:CC,3.7304836351621197e-06
+nucleic acid catabolic process,GO:BP,4.043483521319957e-06
+transcription coregulator activity,GO:MF,4.788527367997479e-06
+nucleobase-containing compound transport,GO:BP,6.5245069446557294e-06
+synapse,GO:CC,6.6595753408731144e-06
+mRNA catabolic process,GO:BP,7.781247974464827e-06
+nucleic acid metabolic process,GO:BP,1.0720943666744372e-05
+I band,GO:CC,1.2938404950882343e-05
+regulation of cytoskeleton organization,GO:BP,1.2980035058838676e-05
+growth cone,GO:CC,1.4461496955551928e-05
+adherens junction,GO:CC,1.486971028503093e-05
+DNA-templated transcription,GO:BP,1.6200188233385212e-05
+Z disc,GO:CC,1.9353057353431997e-05
+site of polarized growth,GO:CC,2.2303986335637378e-05
+ribonucleoside triphosphate phosphatase activity,GO:MF,2.3135788566279862e-05
+transport,GO:BP,2.3877279073068188e-05
+negative regulation of biosynthetic process,GO:BP,2.467958093478632e-05
+establishment of localization,GO:BP,2.596826742590609e-05
+negative regulation of macromolecule biosynthetic process,GO:BP,2.9784418881872596e-05
+positive regulation of RNA biosynthetic process,GO:BP,3.231202811164396e-05
+membraneless organelle assembly,GO:BP,3.356125454496785e-05
+extracellular space,GO:CC,3.658797094906821e-05
+regulation of cellular component size,GO:BP,3.821873273680595e-05
+positive regulation of translation,GO:BP,4.204418234676237e-05
+cell division,GO:BP,4.434907277969685e-05
+positive regulation of transcription by RNA polymerase I,GO:BP,4.789210566397259e-05
+pyrophosphatase activity,GO:MF,4.968426328015236e-05
+"hydrolase activity, acting on acid anhydrides, in phosphorus-containing anhydrides",GO:MF,5.1024653897977796e-05
+"hydrolase activity, acting on acid anhydrides",GO:MF,5.1024653897977796e-05
+actin filament,GO:CC,5.2554705045656235e-05
+B-WICH complex,GO:CC,5.361563009062857e-05
+histone deacetylase binding,GO:MF,5.364476324531255e-05
+regulation of transcription by RNA polymerase I,GO:BP,5.656539350163801e-05
+GTPase binding,GO:MF,6.023114660714604e-05
+positive regulation of protein metabolic process,GO:BP,6.152023432714544e-05
+positive regulation of DNA-templated transcription,GO:BP,7.072793250312436e-05
+regulation of nucleobase-containing compound transport,GO:BP,7.252545449761098e-05
+RNA export from nucleus,GO:BP,7.399817201773754e-05
+cellular component disassembly,GO:BP,7.467157649986012e-05
+macromolecule catabolic process,GO:BP,7.57803264631305e-05
+organelle assembly,GO:BP,7.58145243329551e-05
+negative regulation of DNA-templated transcription,GO:BP,7.689723351597884e-05
+anatomical structure development,GO:BP,9.220060688493038e-05
+mitotic cell cycle,GO:BP,9.313667943138283e-05
+organelle localization,GO:BP,9.890041152186389e-05
+negative regulation of RNA biosynthetic process,GO:BP,0.00011701486431422279
+cellular developmental process,GO:BP,0.00012781806153831476
+sarcomere,GO:CC,0.00012886244738576687
+negative regulation of programmed cell death,GO:BP,0.00014090025781065936
+cell-substrate junction assembly,GO:BP,0.00014223557476310457
+DNA metabolic process,GO:BP,0.00015554677195565907
+membrane,GO:CC,0.00016188509183035255
+cytoplasmic vesicle,GO:CC,0.0001688590477140305
+cellular component assembly,GO:BP,0.00017419642249919307
+plasma membrane bounded cell projection,GO:CC,0.00018502421990837154
+intracellular vesicle,GO:CC,0.0001864461198840153
+regulation of developmental process,GO:BP,0.00018990854731861412
+membrane organization,GO:BP,0.0001993898614976245
+negative regulation of cytoskeleton organization,GO:BP,0.00021888753146452638
+cell differentiation,GO:BP,0.00022850816577996963
+positive regulation of protein localization,GO:BP,0.00024335909827928107
+regulation of mRNA catabolic process,GO:BP,0.0002477726647463965
+positive regulation of viral genome replication,GO:BP,0.0002871252490751262
+ruffle,GO:CC,0.000287369472316294
+negative regulation of mRNA metabolic process,GO:BP,0.000295514159248322
+centrosome,GO:CC,0.0003029822880795528
+protein metabolic process,GO:BP,0.0003194896837861401
+viral process,GO:BP,0.00032515498523981494
+cell-substrate junction organization,GO:BP,0.00033210522798545524
+protein depolymerization,GO:BP,0.0003342006612550243
+positive regulation of intracellular transport,GO:BP,0.0003363074489339901
+"alternative mRNA splicing, via spliceosome",GO:BP,0.00036134243504427026
+transcription by RNA polymerase I,GO:BP,0.00036134243504427026
+purine ribonucleotide binding,GO:MF,0.0003862556366381794
+negative regulation of apoptotic process,GO:BP,0.00039280403578481236
+positive regulation of cellular component organization,GO:BP,0.00040332730737987913
+regulation of RNA biosynthetic process,GO:BP,0.00042846776431114836
+positive regulation of gene expression,GO:BP,0.0004603752960364824
+purine ribonucleoside triphosphate binding,GO:MF,0.0004872962982901326
+regulation of molecular function,GO:BP,0.0005006264204303232
+DNA-binding transcription factor binding,GO:MF,0.0005035635043718418
+cytoplasmic translation,GO:BP,0.0005210659448402669
+ribonucleotide binding,GO:MF,0.000528295568895955
+regulation of transport,GO:BP,0.0005345943858803673
+protein import into nucleus,GO:BP,0.0005661807850941883
+small GTPase binding,GO:MF,0.0005809596523851835
+regulation of RNA export from nucleus,GO:BP,0.0005970938194625526
+regulation of DNA-templated transcription,GO:BP,0.0005983211109177817
+regulation of protein depolymerization,GO:BP,0.0006150905646676839
+stress granule assembly,GO:BP,0.000626794113254877
+protein-containing complex disassembly,GO:BP,0.0006316335909636954
+establishment or maintenance of cell polarity,GO:BP,0.0006522233795147639
+nuclear membrane,GO:CC,0.0006551427439876963
+microtubule,GO:CC,0.0007013525108300835
+chromatin,GO:CC,0.0007417290173769814
+nucleobase-containing compound metabolic process,GO:BP,0.0007586244015468725
+regulation of protein stability,GO:BP,0.0007755107292135612
+tubulin binding,GO:MF,0.0008131889886167864
+spindle,GO:CC,0.0008412008909356912
+import into nucleus,GO:BP,0.0008495355501103205
+microtubule-based process,GO:BP,0.0008643121342589246
+protein export from nucleus,GO:BP,0.000897526300898913
+mitotic cell cycle process,GO:BP,0.000999759439588123
+transcription by RNA polymerase II,GO:BP,0.001003646575228644
+filamentous actin,GO:CC,0.0010500961380327611
+nucleobase-containing compound catabolic process,GO:BP,0.0010760032022562596
+DNA damage response,GO:BP,0.0010849349610243617
+axon,GO:CC,0.001096405881719826
+lamellipodium,GO:CC,0.0011180364001287088
+nuclear pore nuclear basket,GO:CC,0.001135234230675673
+cell migration,GO:BP,0.0011637138274642983
+distal axon,GO:CC,0.0012504838995165118
+ATP-dependent activity,GO:MF,0.0012688507867819844
+cortical cytoskeleton,GO:CC,0.0013477362812843758
+regulation of protein polymerization,GO:BP,0.0013498248290885492
+transmembrane transporter binding,GO:MF,0.0014101331336190829
+nucleotide binding,GO:MF,0.001435732599780576
+negative regulation of supramolecular fiber organization,GO:BP,0.00150017606199272
+euchromatin,GO:CC,0.0015238642137042223
+ribosome biogenesis,GO:BP,0.0015954801265205497
+COP9 signalosome,GO:CC,0.0015974642875267355
+nuclear chromosome,GO:CC,0.0016571443665802101
+regulation of mRNA stability,GO:BP,0.0018301743409248979
+vesicle-mediated transport,GO:BP,0.001839549358938705
+actin filament bundle assembly,GO:BP,0.0019118445024709945
+nucleoside phosphate binding,GO:MF,0.001929851088711192
+purine nucleotide binding,GO:MF,0.0020431261391291875
+regulation of cell size,GO:BP,0.0021197935826977976
+translation factor activity,GO:MF,0.002161038939154704
+regulation of supramolecular fiber organization,GO:BP,0.0022379790840619915
+actin filament bundle organization,GO:BP,0.002422455624861849
+regulation of microtubule cytoskeleton organization,GO:BP,0.002618081725894402
+response to abiotic stimulus,GO:BP,0.0026515876949844606
+negative regulation of catabolic process,GO:BP,0.0028360278701358896
+mRNA export from nucleus,GO:BP,0.002869586001926103
+regulation of organelle assembly,GO:BP,0.0029337241671208328
+catalytic complex,GO:CC,0.002989119606079908
+ribonucleoprotein complex binding,GO:MF,0.003047835004590109
+viral life cycle,GO:BP,0.0031116360852037474
+structural constituent of cytoskeleton,GO:MF,0.0034331423492432113
+mRNA 3'-UTR binding,GO:MF,0.0034331423492432113
+protein kinase binding,GO:MF,0.003435280566735558
+Golgi vesicle transport,GO:BP,0.0034484159371591804
+nuclear protein-containing complex,GO:CC,0.0037768525722509092
+regulation of protein-containing complex disassembly,GO:BP,0.00417092525986989
+positive regulation of protein export from nucleus,GO:BP,0.004245363712497757
+negative regulation of protein depolymerization,GO:BP,0.0042595090574810935
+regulation of RNA stability,GO:BP,0.004286994618042299
+regulation of cell adhesion,GO:BP,0.004528487643257708
+regulation of microtubule-based process,GO:BP,0.004536760225622441
+heterocyclic compound binding,GO:MF,0.004833310963021532
+mRNA 5'-UTR binding,GO:MF,0.004873795720373419
+identical protein binding,GO:MF,0.004889271894452073
+regulation of anatomical structure morphogenesis,GO:BP,0.005126161861550862
+protein localization to organelle,GO:BP,0.005403354038928459
+regulation of viral life cycle,GO:BP,0.0054183704875297774
+nucleosome binding,GO:MF,0.005435800053593871
+transcription coactivator activity,GO:MF,0.005478315324123894
+nuclear envelope organization,GO:BP,0.005561739828814197
+cell junction organization,GO:BP,0.005579621087223658
+carbohydrate derivative binding,GO:MF,0.0061658987054983155
+SWI/SNF superfamily-type complex,GO:CC,0.006340034933430488
+ficolin-1-rich granule,GO:CC,0.006435095237562734
+DNA binding,GO:MF,0.006746642836619378
+nucleosomal DNA binding,GO:MF,0.006814639495313874
+protein stabilization,GO:BP,0.006917560651562404
+costamere,GO:CC,0.006964183597042635
+clathrin-coated pit,GO:CC,0.007116834377069741
+protein kinase C binding,GO:MF,0.0074579087915876315
+protein folding chaperone,GO:MF,0.007706132319288272
+nuclear periphery,GO:CC,0.007802603506919468
+regulation of anatomical structure size,GO:BP,0.008195702978416467
+regulation of viral process,GO:BP,0.00861801709209048
+ADP binding,GO:MF,0.008619806317428817
+multicellular organism development,GO:BP,0.00887756963402214
+cell junction assembly,GO:BP,0.009153112222946179
+response to chemical,GO:BP,0.009828619921062699
+RNA metabolic process,GO:BP,0.009994481219553795
+mRNA metabolic process,GO:BP,0.010152056789781682
+response to epidermal growth factor,GO:BP,0.010182631352635191
+muscle structure development,GO:BP,0.010462000661991343
+positive regulation of viral process,GO:BP,0.01115496747276136
+histone binding,GO:MF,0.011304925491880467
+regulation of response to stress,GO:BP,0.011361885251193207
+protein polymerization,GO:BP,0.011802392777793071
+nucleolus,GO:CC,0.012097787081797137
+ficolin-1-rich granule lumen,GO:CC,0.012376623117489624
+cellular response to chemical stimulus,GO:BP,0.012497286034455714
+positive regulation of nucleocytoplasmic transport,GO:BP,0.012720133088559994
+microtubule cytoskeleton organization,GO:BP,0.013757201884982449
+regulation of protein export from nucleus,GO:BP,0.013912364345742653
+negative regulation of protein-containing complex disassembly,GO:BP,0.013945364740395792
+ATP binding,GO:MF,0.01483283594551946
+negative regulation of transcription by RNA polymerase II,GO:BP,0.01485765160592234
+MCM complex,GO:CC,0.015165245916390065
+plasma membrane bounded cell projection organization,GO:BP,0.015492776900838275
+response to osmotic stress,GO:BP,0.015549633063557113
+exon-exon junction complex,GO:CC,0.015749373661373568
+ATPase complex,GO:CC,0.016597210350192407
+adenyl ribonucleotide binding,GO:MF,0.01662512837242277
+negative regulation of protein metabolic process,GO:BP,0.016993112314287004
+cell projection organization,GO:BP,0.017127165640139642
+focal adhesion assembly,GO:BP,0.017310979035045908
+ATP hydrolysis activity,GO:MF,0.017363360679024383
+rRNA metabolic process,GO:BP,0.017794682175661627
+regulation of transcription by RNA polymerase II,GO:BP,0.01865270336191659
+post-transcriptional regulation of gene expression,GO:BP,0.019311996415086404
+positive regulation of transport,GO:BP,0.019640501290915408
+cell motility,GO:BP,0.02039339124724978
+retromer complex binding,GO:MF,0.020904319945800855
+ubiquitin protein ligase binding,GO:MF,0.020979468009967358
+regulation of viral genome replication,GO:BP,0.021356301577489103
+cell adhesion,GO:BP,0.021364519025908166
+neuron projection extension,GO:BP,0.021558151211021902
+DNA repair,GO:BP,0.021630486049796217
+neuron projection development,GO:BP,0.021811335060527282
+nuclear inclusion body,GO:CC,0.022392798012793706
+brush border,GO:CC,0.0226240879656534
+microtubule end,GO:CC,0.02315287650700455
+ATP-dependent protein folding chaperone,GO:MF,0.023458680506592285
+intracellular signal transduction,GO:BP,0.023967718241078115
+glutamatergic synapse,GO:CC,0.02528355284521551
+calmodulin binding,GO:MF,0.02528429731230872
+cortical microtubule cytoskeleton,GO:CC,0.025363334631432463
+basal cortex,GO:CC,0.025363334631432463
+heterochromatin formation,GO:BP,0.026002259067981155
+"regulation of alternative mRNA splicing, via spliceosome",GO:BP,0.029056015682870646
+enzyme regulator activity,GO:MF,0.029224778467996062
+Golgi organization,GO:BP,0.02996899241855945
+kinase binding,GO:MF,0.030220685324498706
+GTPase activity,GO:MF,0.030220685324498706
+dystroglycan binding,GO:MF,0.03228982449080517
+inclusion body,GO:CC,0.03259868978775933
+cytosolic ribosome,GO:CC,0.03294768651194173
+response to nitrogen compound,GO:BP,0.03580651015421496
+microtubule plus-end binding,GO:MF,0.036095400676578016
+structural molecule activity,GO:MF,0.03658163156835235
+DNA-templated transcription elongation,GO:BP,0.03776436391553862
+Golgi apparatus,GO:CC,0.03848976792344232
+axon extension,GO:BP,0.038540137987570194
+cell development,GO:BP,0.038591237707120134
+protein localization to cell periphery,GO:BP,0.038833823464862714
+RNA polymerase II-specific DNA-binding transcription factor binding,GO:MF,0.03898423942808809
+positive regulation of catabolic process,GO:BP,0.04013109356804546
+cell growth,GO:BP,0.041248112405076746
+nucleic acid conformation isomerase activity,GO:MF,0.04150790295294166
+cellular response to abiotic stimulus,GO:BP,0.042871116839555135
+cellular response to environmental stimulus,GO:BP,0.042871116839555135
+catabolic process,GO:BP,0.044468203952319506
+regulation of response to stimulus,GO:BP,0.0448920929771784
+neuron projection,GO:CC,0.04489570881552128
+ubiquitin-like protein ligase binding,GO:MF,0.04502856509734424
+anatomical structure formation involved in morphogenesis,GO:BP,0.04542193721096511
+"translation factor activity, RNA binding",GO:MF,0.045887411945542814
+microtubule plus-end,GO:CC,0.046927728565165895
+cellular response to epidermal growth factor stimulus,GO:BP,0.047570785376870095
+nucleoside-triphosphatase regulator activity,GO:MF,0.048233192656264724
+GTPase regulator activity,GO:MF,0.048233192656264724
+integrin-mediated signaling pathway,GO:BP,0.04937867264404237
+sister chromatid segregation,GO:BP,0.049555249191777784

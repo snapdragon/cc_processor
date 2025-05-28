@@ -1,0 +1,19 @@
+accession_number,gene_name,name
+P46527,CDKN1B,p27 (CDK inhibitor 1B)
+O14965,AURKA,Aurora kinase A
+Q96GD4,AURKB,Aurora kinase B
+P30260,WEE1,WEE1 G2 checkpoint kinase
+Q8TD47,PKMYT1,Membrane-associated tyrosine- and threonine-specific cdc2-inhibitory kinase (PKMYT1)
+P30304,CDC25A,Cell division cycle 25A
+O00387,CDC20,Cell division cycle 20
+P23460,PTTG1,Securin
+P24864,CCNB1,Cyclin B1
+P30279,CCNE1,Cyclin E1
+P11802,CDK6,Cyclin-dependent kinase 6
+Q99541,TP53,Tumor protein p53
+P04637,MDM2,MDM2 proto-oncogene
+Q13535,ATM,Ataxia telangiectasia mutated
+Q13315,CHK1,Checkpoint kinase 1 (CHEK1)
+O14757,CHK2,Checkpoint kinase 2 (CHEK2)
+P30279,CCND3,Cyclin D3
+P24864,CCNE2,Cyclin E2

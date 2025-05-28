@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Proteome PCA</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <style>
+    .dot { stroke: #000; stroke-width: 0.5px; }
+    .label { font-size: 10px; fill: white; text-anchor: middle; }
+  </style>
+</head>
+<body>
+  <h2>Proteome and phospho PCA</h2>
+
+  <svg width="700" height="500" id="protein_svg"></svg>
+  <svg width="700" height="500" id="phospho_svg"></svg>
+
+  {{ protein_data|json_script:"protein-data" }}
+  {{ phospho_data|json_script:"phospho-data" }}
+
+  <script>
+    protein_data = JSON.parse(document.getElementById('protein-data').textContent)
+    phospho_data = JSON.parse(document.getElementById('phospho-data').textContent)
+
+    drawPCA("#protein_svg", protein_data["pca_data_json"], protein_data["pc1_var"], protein_data["pc2_var"])
+    drawPCA("#phospho_svg", phospho_data["pca_data_json"], phospho_data["pc1_var"], phospho_data["pc2_var"])
+
+  function drawPCA(id, data, pc1_var, pc2_var) {
+    console.log(data)
+    
+    const svg = d3.select(id);
+    const margin = { top: 40, right: 170, bottom: 50, left: 50 };
+    const width = +svg.attr("width") - margin.left - margin.right;
+    const height = +svg.attr("height") - margin.top - margin.bottom;
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  
+    // Color by Stage (e.g., "Stage 1" to "Stage 8")
+    const stageSet = Array.from(new Set(data.map(d => d.Stage))).sort();
+    const color = d3.scaleOrdinal()
+      .domain(stageSet)
+      .range(d3.schemeTableau10);  // 8 colors (nice for distinct stage coloring)
+  
+    const x = d3.scaleLinear()
+      .domain(d3.extent(data, d => d.PC1)).nice()
+      .range([0, width]);
+  
+    const y = d3.scaleLinear()
+      .domain(d3.extent(data, d => d.PC2)).nice()
+      .range([height, 0]);
+  
+    // Axes
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x));
+  
+    g.append("g")
+      .call(d3.axisLeft(y));
+  
+    // Axis Labels
+    g.append("text")
+      .attr("x", width / 2)
+      .attr("y", height + 50)
+      .attr("text-anchor", "middle")
+      .text("PC1 " + pc1_var);
+  
+    g.append("text")
+      .attr("x", -height / 2)
+      .attr("y", -35)
+      .attr("transform", "rotate(-90)")
+      .attr("text-anchor", "middle")
+      .text("PC2 " + pc2_var);
+  
+    // Draw dots: color by stage
+    g.selectAll(".dot")
+      .data(data)
+      .join("circle")
+      .attr("class", "dot")
+      .attr("r", 10)
+      .attr("cx", d => x(d.PC1))
+      .attr("cy", d => y(d.PC2))
+      .attr("fill", d => color(d.Stage));
+  
+    // Replicate numbers inside dots
+    g.selectAll(".label")
+      .data(data)
+      .join("text")
+      .attr("class", "label")
+      .attr("x", d => x(d.PC1))
+      .attr("y", d => y(d.PC2) + 4)
+      .text(d => d.Rep);
+
+      // g.selectAll(".dot-label")
+      //   .data(data)
+      //   .join("text")
+      //   .attr("class", "dot-label")
+      //   .attr("x", d => x(d.PC1) + 25)
+      //   .attr("y", d => y(d.PC2))
+      //   .attr("font-size", "14px")
+      //   .attr("fill", "black")
+      //   .text(d => d.Label);
+
+      const labelSet = Array.from(new Set(data.map(d => d.Label))).sort();
+
+      const color2 = d3.scaleOrdinal()
+        .domain(labelSet)
+        .range(d3.schemeTableau10)
+
+      // Add legend on the right side (based on d.Label)
+      const legend = svg.append("g")
+        .attr("transform", `translate(${width + margin.left + 20}, ${margin.top})`);
+
+      labelSet.forEach((label, i) => {
+        const legendRow = legend.append("g")
+          .attr("transform", `translate(0, ${i * 20})`);
+
+        legendRow.append("rect")
+          .attr("width", 12)
+          .attr("height", 12)
+          .attr("fill", color2(label));
+
+        legendRow.append("text")
+          .attr("x", 18)
+          .attr("y", 10)
+          .attr("text-anchor", "start")
+          .attr("font-size", "12px")
+          .attr("fill", "black")
+          .text(label);
+      });
+  }
+</script>
+</body>
+</html>
