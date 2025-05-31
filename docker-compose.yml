@@ -21,6 +21,14 @@ services:
     restart: unless-stopped
     tty: true
     stdin_open: true
+    environment:
+      DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
 
 volumes:
   postgres_data:
