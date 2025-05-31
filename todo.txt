@@ -1,5 +1,4 @@
-Change django to postgres
-Create initial models
+Start command line import
 Add persistent volume to postgres container
 
 

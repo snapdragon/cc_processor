@@ -3,15 +3,36 @@
 docker compose up
 ```
 
-### Connect to container
+### Connect to django container
 ```sh
 docker exec -it cc_processor /bin/bash
 ```
 
+### Create and run migrations
+```sh
+python manage.py makemigrations
+python manage.py migrate
+python manage.py makemigrations --empty process
+```
+
+### Connect to postgres container
+```sh
+docker exec -it postgres-db /bin/bash
+psql -U myuser -d mydatabase
+```
+
+### How to clear out a migration
+```sh
+delete from django_migrations where app = 'process';
+```
+
+
+
+
+
 ### Run venv
 ```sh
 eval $(poetry env activate)
-poetry install
 ```
 
 ### Build docker image
