@@ -7,8 +7,6 @@ class Project(models.Model):
     name = models.CharField(max_length=255)
     proteome_file = models.CharField(max_length=255)
     phosphoproteome_file = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -20,8 +18,6 @@ class Replicate(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="replicates"
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -33,8 +29,6 @@ class SampleStage(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="sample_stages"
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -48,8 +42,6 @@ class ColumnName(models.Model):
     replicate = models.ForeignKey(
         Replicate, on_delete=models.CASCADE, related_name="sample_stages"
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -57,8 +49,6 @@ class ColumnName(models.Model):
 
 class Protein(models.Model):
     accession_number = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -69,8 +59,6 @@ class ProteinReading(models.Model):
         ColumnName, on_delete=models.CASCADE, related_name="protein_readings"
     )
     reading = models.FloatField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.reading

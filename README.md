@@ -3,7 +3,27 @@
 docker compose up
 docker exec -it cc_processor /bin/bash
 eval $(poetry env activate)
-python processor/scripts/import_spreadsheet.py
+python manage.py import_spreadsheet
+python manage.py process
+```
+
+### To reset the migration
+```sh
+docker exec -it postgres-db /bin/bash
+psql -U myuser -d mydatabase
+\dt
+# DROP TABLE 'process_' for all tables starting 'process'
+delete from django_migrations where app = 'process';
+# Exit the
+# Go to the code (in vscode or other editor)
+# Copy the contents of the migration file with the inserts, e.g. from 0002_auto_20250531_1657.
+# Delete the migration files
+# Go to the process docker container
+docker exec -it cc_processor /bin/bash
+python manage.py makemigrations
+python manage.py makemigrations --empty process
+# Paste all the previously copied inserts into the file made by the command above
+python manage.py migrate
 ```
 
 ### Run docker compose
