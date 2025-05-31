@@ -1,3 +1,5 @@
+# TODO - convert to management scripts
+
 import os
 import sys
 

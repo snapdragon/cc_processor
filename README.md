@@ -1,3 +1,11 @@
+### To run from scratch
+```sh
+docker compose up
+docker exec -it cc_processor /bin/bash
+eval $(poetry env activate)
+python processor/scripts/import_spreadsheet.py
+```
+
 ### Run docker compose
 ```sh
 docker compose up

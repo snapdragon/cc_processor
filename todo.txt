@@ -1,3 +1,6 @@
+Turn import_spreadsheet into a management script
+Find a way to loop through the replicates efficiently
+
 
 
 ### Later

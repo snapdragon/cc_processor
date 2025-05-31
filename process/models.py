@@ -73,4 +73,15 @@ class ProteinReading(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.accession_number
+        return self.reading
+
+
+# class ProcessResult(models.Model):
+#     column_name = models.ForeignKey(
+#         ColumnName, on_delete=models.CASCADE, related_name="protein_readings"
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return self.column_name.sample_stage.name

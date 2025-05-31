@@ -1,0 +1,6 @@
+Why do some rows have more than one uniprot accession?
+    Should they be split into more than one row, or left as one?
+    How does that impact calculation of column medians and other stats?
+
+Speaking of column medians, what do we do if a cell is empty?
+    Consider it to be zero, or absent?
