@@ -1,7 +1,12 @@
+Add docker compose
+Change django to postgres
+Create initial models
+
+
+
 Change dockerfile to not have to run the env after start
 
+### Later
 
-Add postgres
-Add docker compose
-Create initial models
 Add bandit?
+Update python version

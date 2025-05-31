@@ -1,3 +1,13 @@
+### Run docker compose
+```sh
+docker compose up
+```
+
+### Connect to container
+```sh
+docker exec -it cc_processor /bin/bash
+```
+
 ### Build docker image
 ```sh
 docker build -t cc_processor .
