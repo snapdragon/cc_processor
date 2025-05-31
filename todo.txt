@@ -1,1 +1,5 @@
+Add postgres
+Add docker compose
 Add mypy
+Create initial models
+Add bandit?
