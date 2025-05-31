@@ -12,19 +12,25 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Update system packages and install pip dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+curl build-essential libpq-dev && \
+pip install "poetry==$POETRY_VERSION" && \
+apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip to the latest version
 RUN python -m ensurepip && \
     pip install --upgrade pip
 
-# Set working directory
-WORKDIR /app
+# Copy only dependency files first
+COPY pyproject.toml poetry.lock ./
+
+# Install dependencies into a virtual environment in /opt/venv
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --only main --no-root
+
+# Copy application code
+COPY . .
 
 # Default command
-CMD ["python3"]
+CMD ["/bin/bash"]

@@ -12,3 +12,9 @@ docker run -it --rm cc_processor
 ```sh
 pre-commit run --all-files
 ```
+
+### Run venv
+```sh
+eval $(poetry env activate)
+poetry install
+```

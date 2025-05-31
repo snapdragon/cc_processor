@@ -1,3 +1,6 @@
+Change dockerfile to not have to run the env after start
+
+
 Add postgres
 Add docker compose
 Create initial models
