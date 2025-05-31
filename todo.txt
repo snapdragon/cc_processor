@@ -1,14 +1,8 @@
-Start command line import
-Add persistent volume to postgres container
-
-
-
-Change dockerfile to not have to run the env after start
-The docker config for the cc_processor keeps the shell alive, but it then does nothing.
-    How to improve this?
 
 
 ### Later
 
-Add bandit?
-Update python version
+Change dockerfile to not have to run the env after start
+The docker config for the cc_processor keeps the shell alive, but it then does nothing.
+    How to improve this?
+Update python version?

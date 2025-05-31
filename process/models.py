@@ -16,7 +16,7 @@ class Project(models.Model):
 
 class Replicate(models.Model):
     name = models.CharField(max_length=255)
-    rank = models.IntegerField
+    rank = models.IntegerField()
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="replicates"
     )
@@ -29,10 +29,12 @@ class Replicate(models.Model):
 
 class SampleStage(models.Model):
     name = models.CharField(max_length=255)
-    rank = models.IntegerField
+    rank = models.IntegerField()
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="sample_stages"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -46,6 +48,29 @@ class ColumnName(models.Model):
     replicate = models.ForeignKey(
         Replicate, on_delete=models.CASCADE, related_name="sample_stages"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+
+class Protein(models.Model):
+    accession_number = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class ProteinReading(models.Model):
+    column_name = models.ForeignKey(
+        ColumnName, on_delete=models.CASCADE, related_name="protein_readings"
+    )
+    reading = models.FloatField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.accession_number
