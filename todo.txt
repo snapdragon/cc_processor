@@ -25,6 +25,7 @@ Don't get Fisher G values yet
 Get protein annotations
 
 
+Add uniqueness constraints to models
 Study all pytest marks
 Write tests for medians calculation
 
