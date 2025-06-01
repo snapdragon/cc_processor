@@ -12,7 +12,14 @@ python manage.py process
 docker exec -it postgres-db /bin/bash
 psql -U myuser -d mydatabase
 \dt
-# DROP TABLE 'process_' for all tables starting 'process'
+# DROP TABLE 'process_' for all tables starting 'process', e.g.
+drop table process_proteinreading;
+drop table process_protein;
+drop table process_columnname;
+drop table process_samplestage;
+drop table process_replicate;
+drop table process_project;
+
 delete from django_migrations where app = 'process';
 # Exit the
 # Go to the code (in vscode or other editor)

@@ -58,7 +58,10 @@ class ProteinReading(models.Model):
     column_name = models.ForeignKey(
         ColumnName, on_delete=models.CASCADE, related_name="protein_readings"
     )
-    reading = models.FloatField(blank=True)
+    protein = models.ForeignKey(
+        Protein, on_delete=models.CASCADE, related_name="protein_readings"
+    )
+    reading = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.reading}"

@@ -36,8 +36,15 @@ class Command(BaseCommand):
 
             accession_number = row["Protein.Group"]
 
-            Protein.objects.create(accession_number=accession_number)
+            protein = Protein.objects.create(accession_number=accession_number)
 
             for col in df.columns:
                 if cn := cns_by_name.get(col):
-                    ProteinReading.objects.create(column_name=cn, reading=row[col])
+                    reading = row[col]
+
+                    if reading != reading:
+                        reading = None
+
+                    ProteinReading.objects.create(
+                        column_name=cn, reading=reading, protein=protein
+                    )

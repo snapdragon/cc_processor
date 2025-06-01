@@ -31,6 +31,23 @@ class Command(BaseCommand):
         self._process(project, replicates, protein_readings)
 
     def _process(self, project, replicates, protein_readings):
+        """
+        Does all the required calculations. The steps are:
+
+        TODO - put the descriptions below in the function comments, not here, along with
+            data structures.
+
+        1) Calculate the median for each replicate for each stage.
+            In other words, get all the values for each column and find the median.
+
+        2) Calculate the mean for each protein for each stage across replicates.
+            So for proteins 'ABCD', 'EFGH' with replicates 'One', 'Two' and stages '1h', '2h',
+            it will get the abundances for 'ABCD 1h' for each of the replicates, then take
+            the mean.
+
+        3) TODO
+        """
+
         # TODO - make each call flaggable
         medians = self._all_replicates(
             func=self._calc_replicate_column_medians,
@@ -40,29 +57,68 @@ class Command(BaseCommand):
 
         print(medians)
 
-        # protein_abundance_means_by_stage = self._calculate_abundance_means_across_replicates(protein_readings)
+        abundance_means_across_replicates_by_stage = (
+            self._calculate_abundance_means_across_replicates_by_stage(protein_readings)
+        )
 
-    # def _calculate_abundance_means_across_replicates(self, protein_readings: QuerySet[ProteinReading]):
-    #     means = {}
+        print(abundance_means_across_replicates_by_stage)
 
-    #     for protein_reading in protein_readings:
-    #         protein = protein_reading.protein
+    def _calculate_abundance_means_across_replicates_by_stage(
+        self, protein_readings: QuerySet[ProteinReading]
+    ):
+        logger.info("Calculating mean across replicates by stage for each protein")
 
-    #         if not means.get(protein):
-    #             means[protein] = {}
+        means: dict = {}
 
-    #         stage = protein_reading.column_name.sample_stage
+        protein_no = 0
 
-    #         if not means[protein].get(stage):
-    #             means[protein][stage] = []
+        for protein_reading in protein_readings:
+            protein_no += 1
+            self._count_logger(
+                protein_no,
+                10000,
+                f"Appending for {protein_no}, {protein_reading.protein.accession_number} {protein_reading.column_name.sample_stage.name}",
+            )
 
-    #         means[protein][stage].append(protein_reading.reading)
+            protein = protein_reading.protein
+
+            if not means.get(protein):
+                means[protein] = {}
+
+            stage = protein_reading.column_name.sample_stage
+
+            if not means[protein].get(stage):
+                means[protein][stage] = []
+
+            if protein_reading.reading:
+                means[protein][stage].append(protein_reading.reading)
+
+        protein_stage_no = 0
+
+        for protein in means.keys():
+            for stage in means[protein]:
+                protein_stage_no += 1
+
+                abundances = means[protein][stage]
+
+                if len(abundances):
+                    mean = sum(abundances) / len(abundances)
+                    means[protein][stage] = mean
+                else:
+                    means[protein][stage] = None
+
+                protein_stage_no += 1
+                self._count_logger(
+                    protein_stage_no,
+                    10000,
+                    f"Mean for {protein_stage_no}, {protein} {stage}: {mean}",
+                )
+
+        return means
 
     def _all_replicates(self, *args, **kwargs):
         """
         Calls the passed function for each replicate for the project.
-
-
         """
         results = {}
 
@@ -81,6 +137,8 @@ class Command(BaseCommand):
     def _calc_replicate_column_medians(
         self, replicate: Replicate, protein_readings: QuerySet[ProteinReading]
     ):
+        logger.info("Calculating column medians by replicate")
+
         column_medians = {}
 
         column_names = ColumnName.objects.filter(replicate__name=replicate.name)
@@ -93,12 +151,11 @@ class Command(BaseCommand):
             )
 
             for protein_reading in protein_readings_by_column:
-                # NaN does not equal NaN
-                if protein_reading.reading != protein_reading.reading:
+                if protein_reading.reading:
+                    readings.append(protein_reading.reading)
+                else:
                     # TODO - what to do about NaN values?
                     readings.append(0)
-                else:
-                    readings.append(protein_reading.reading)
 
             median = statistics.median(readings)
 
@@ -109,3 +166,7 @@ class Command(BaseCommand):
             column_medians[column_name.id] = median
 
         return column_medians
+
+    def _count_logger(self, i: int, step: int, output: str):
+        if i % step == 0:
+            logger.info(output)
