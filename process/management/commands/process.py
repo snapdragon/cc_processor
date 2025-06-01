@@ -23,13 +23,15 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         # TODO - make this a command line option, to cater for other projects
         project = Project.objects.get(name=PROJECT_NAME)
-
         replicates = Replicate.objects.filter(project=project)
-
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
 
+        self._process(project, replicates, protein_readings)
+
+    def _process(self, project, replicates, protein_readings):
+        # TODO - make each call flaggable
         medians = self._all_replicates(
             func=self._calc_replicate_column_medians,
             replicates=replicates,
@@ -37,6 +39,24 @@ class Command(BaseCommand):
         )
 
         print(medians)
+
+        # protein_abundance_means_by_stage = self._calculate_abundance_means_across_replicates(protein_readings)
+
+    # def _calculate_abundance_means_across_replicates(self, protein_readings: QuerySet[ProteinReading]):
+    #     means = {}
+
+    #     for protein_reading in protein_readings:
+    #         protein = protein_reading.protein
+
+    #         if not means.get(protein):
+    #             means[protein] = {}
+
+    #         stage = protein_reading.column_name.sample_stage
+
+    #         if not means[protein].get(stage):
+    #             means[protein][stage] = []
+
+    #         means[protein][stage].append(protein_reading.reading)
 
     def _all_replicates(self, *args, **kwargs):
         """

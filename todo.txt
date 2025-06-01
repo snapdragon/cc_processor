@@ -1,3 +1,31 @@
+### Steps
+
+DONE - Iterate through the rows of data_points, getting uniprot accession for each row
+DONE - calculate the medians for each column (why?)
+TODO - Look up the gene names and protein names for that uniprot accession
+TODO - Populate time_course_proteome with some default values for each uniprot accession
+NOT NEEDED - Convert the abundances for the dict for the uniprot accession, which are identified
+    by column name, to times instead of column names
+Get the averages of the renamed abundances, as far as possible
+Do first level normalisation, which are by median
+Calculate the averages of the normalised renamed abundances
+Normalise all abundances to Palbo and calculate log2 of them
+Subtract log2 mean for each rep, and normalise
+Calculate min-max for each rep, and normalise
+Calculate 0-max for each rep, and normalise
+Calculate imputed values TODO - what?
+Calculate stats
+Calculate ANOVA
+Calculate confidence
+Create data frame TODO - why?
+Get ANOVA q values
+Don't get Fisher G values yet
+    TODO does the python version have a bug?
+    https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
+Get protein annotations
+
+
+Add protein to protein_reading (doh!)
 Write tests for _all_replicates and for medians calculation
 
 
