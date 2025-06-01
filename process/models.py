@@ -51,7 +51,7 @@ class Protein(models.Model):
     accession_number = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.name
+        return self.accession_number
 
 
 class ProteinReading(models.Model):
@@ -61,7 +61,7 @@ class ProteinReading(models.Model):
     reading = models.FloatField(blank=True)
 
     def __str__(self):
-        return self.reading
+        return f"{self.reading}"
 
 
 # class ProcessResult(models.Model):

@@ -16,23 +16,32 @@ class Command(BaseCommand):
         project = Project.objects.get(name=PROJECT_NAME)
 
         replicates = Replicate.objects.filter(project=project)
+
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
 
         medians = self._all_replicates(
-            self._calc_replicate_column_medians, replicates, protein_readings
+            func=self._calc_replicate_column_medians,
+            replicates=replicates,
+            protein_readings=protein_readings,
         )
 
         print(medians)
 
-    def _all_replicates(self, func, replicates, protein_readings):
-        returns = {}
+    def _all_replicates(self, *args, **kwargs):
+        results = {}
+
+        call_kwargs = kwargs.copy()
+        func = call_kwargs.pop("func")
+        replicates = call_kwargs.pop("replicates")
 
         for replicate in replicates:
-            returns[replicate] = func(replicate, protein_readings)
+            call_kwargs["replicate"] = replicate
 
-        return returns
+            results[replicate] = func(**call_kwargs)
+
+        return results
 
     def _calc_replicate_column_medians(
         self, replicate: Replicate, protein_readings: QuerySet[ProteinReading]
