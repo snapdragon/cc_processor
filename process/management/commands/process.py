@@ -141,6 +141,7 @@ class Command(BaseCommand):
 
         column_medians = {}
 
+        # TODO - extract this to 'handle'?
         column_names = ColumnName.objects.filter(replicate__name=replicate.name)
 
         for column_name in column_names:
@@ -155,6 +156,7 @@ class Command(BaseCommand):
                     readings.append(protein_reading.reading)
                 else:
                     # TODO - what to do about None values?
+                    #   Does adding a zero mess things up?
                     readings.append(0)
 
             median = statistics.median(readings)
@@ -163,7 +165,7 @@ class Command(BaseCommand):
                 f"calculating median for replicate {replicate.name} stage {column_name.sample_stage.name}: {median}"
             )
 
-            column_medians[column_name.id] = median
+            column_medians[column_name] = median
 
         return column_medians
 

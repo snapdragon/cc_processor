@@ -37,6 +37,8 @@ def test_calculate_abundance_means_across_replicates_by_stage():
     replicate2 = ReplicateFactory(name="r1", project=replicate1.project)
     replicate3 = ReplicateFactory(name="r1", project=replicate1.project)
 
+    # TODO - why doesn't it care about these being different projects?
+    #   More tests may be needed to check the code works with one of multiple projects.
     sample_stage1 = SampleStageFactory()
     sample_stage2 = SampleStageFactory()
 
@@ -67,4 +69,36 @@ def test_calculate_abundance_means_across_replicates_by_stage():
             sample_stage1: 4,
             sample_stage2: 3,
         }
+    }
+
+
+@pytest.mark.django_db
+def test_calc_replicate_column_medians():
+    command = Command()
+
+    replicate = ReplicateFactory(name="r1")
+
+    # TODO - why doesn't it care about these being different projects?
+    #   More tests may be needed to check the code works with one of multiple projects.
+    sample_stage1 = SampleStageFactory()
+    sample_stage2 = SampleStageFactory()
+
+    column_name1 = ColumnNameFactory(replicate=replicate, sample_stage=sample_stage1)
+    column_name2 = ColumnNameFactory(replicate=replicate, sample_stage=sample_stage2)
+
+    protein = ProteinFactory()
+    ProteinReadingFactory(protein=protein, column_name=column_name1, reading=1)
+    ProteinReadingFactory(protein=protein, column_name=column_name1, reading=4)
+    ProteinReadingFactory(protein=protein, column_name=column_name1, reading=4)
+    ProteinReadingFactory(protein=protein, column_name=column_name2, reading=1)
+    ProteinReadingFactory(protein=protein, column_name=column_name2, reading=None)
+    ProteinReadingFactory(protein=protein, column_name=column_name2, reading=5)
+
+    protein_readings = ProteinReading.objects.all()
+
+    results = command._calc_replicate_column_medians(replicate, protein_readings)
+
+    assert results == {
+        column_name1: 4.0,
+        column_name2: 1.0,
     }

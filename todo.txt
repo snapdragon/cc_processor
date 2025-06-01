@@ -27,11 +27,12 @@ Get protein annotations
 
 Add uniqueness constraints to models
 Study all pytest marks
-Write tests for medians calculation
 
 
 ### Later
 
+Validate all the various statistical calculations
+    median, mean
 Change dockerfile to not have to run the env after start
 The docker config for the cc_processor keeps the shell alive, but it then does nothing.
     How to improve this?
