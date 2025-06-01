@@ -154,7 +154,7 @@ class Command(BaseCommand):
                 if protein_reading.reading:
                     readings.append(protein_reading.reading)
                 else:
-                    # TODO - what to do about NaN values?
+                    # TODO - what to do about None values?
                     readings.append(0)
 
             median = statistics.median(readings)
