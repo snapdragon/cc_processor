@@ -32,7 +32,7 @@ repos:
     rev: v1.14.1
     hooks:
     -   id: mypy
-        exclude: "processor/settings.py|[a-zA-Z]*/(migrations)/(.)*"
+        exclude: "[a-zA-Z]*/(migrations)/(.)*"
         args:
           [
             --install-types,

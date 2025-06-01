@@ -1,3 +1,4 @@
+import logging
 import statistics
 
 from django.core.management.base import BaseCommand
@@ -5,11 +6,19 @@ from django.db.models.query import QuerySet
 
 from process.models import ColumnName, Project, ProteinReading, Replicate
 
+# TODO - make this configurable by flag
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s - %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
 PROJECT_NAME = "Soliman Labs"
 
 
 class Command(BaseCommand):
-    help = "Runs the custom script"
+    help = "Processes all proteins for a given project"
 
     def handle(self, *args, **kwargs):
         # TODO - make this a command line option, to cater for other projects
@@ -30,8 +39,14 @@ class Command(BaseCommand):
         print(medians)
 
     def _all_replicates(self, *args, **kwargs):
+        """
+        Calls the passed function for each replicate for the project.
+
+
+        """
         results = {}
 
+        # Remove the passed function and replicates as they're not needed by the passed function
         call_kwargs = kwargs.copy()
         func = call_kwargs.pop("func")
         replicates = call_kwargs.pop("replicates")
@@ -67,7 +82,7 @@ class Command(BaseCommand):
 
             median = statistics.median(readings)
 
-            print(
+            logger.info(
                 f"calculating median for replicate {replicate.name} stage {column_name.sample_stage.name}: {median}"
             )
 

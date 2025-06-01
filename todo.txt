@@ -1,5 +1,3 @@
-Find a way to loop through the replicates efficiently
-Add logging
 Write tests for _all_replicates and for medians calculation
 
 
