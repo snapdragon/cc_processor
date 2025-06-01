@@ -1,31 +1,54 @@
 import statistics
 
 from django.core.management.base import BaseCommand
+from django.db.models.query import QuerySet
 
-from process.models import ColumnName, ProteinReading
+from process.models import ColumnName, Project, ProteinReading, Replicate
 
-REPLICATE_NAMES = ("One", "Two", "Three")
+PROJECT_NAME = "Soliman Labs"
 
 
 class Command(BaseCommand):
     help = "Runs the custom script"
 
     def handle(self, *args, **kwargs):
-        self._calc_replicate_column_medians(REPLICATE_NAMES[0])
-        self._calc_replicate_column_medians(REPLICATE_NAMES[1])
-        self._calc_replicate_column_medians(REPLICATE_NAMES[2])
+        # TODO - make this a command line option, to cater for other projects
+        project = Project.objects.get(name=PROJECT_NAME)
 
-    def _calc_replicate_column_medians(self, replicate_name: str):
+        replicates = Replicate.objects.filter(project=project)
+        protein_readings = ProteinReading.objects.filter(
+            column_name__replicate__project=project
+        )
+
+        medians = self._all_replicates(
+            self._calc_replicate_column_medians, replicates, protein_readings
+        )
+
+        print(medians)
+
+    def _all_replicates(self, func, replicates, protein_readings):
+        returns = {}
+
+        for replicate in replicates:
+            returns[replicate] = func(replicate, protein_readings)
+
+        return returns
+
+    def _calc_replicate_column_medians(
+        self, replicate: Replicate, protein_readings: QuerySet[ProteinReading]
+    ):
         column_medians = {}
 
-        column_names = ColumnName.objects.filter(replicate__name=replicate_name)
+        column_names = ColumnName.objects.filter(replicate__name=replicate.name)
 
         for column_name in column_names:
             readings = []
 
-            protein_readings = ProteinReading.objects.filter(column_name=column_name)
+            protein_readings_by_column = protein_readings.filter(
+                column_name=column_name
+            )
 
-            for protein_reading in protein_readings:
+            for protein_reading in protein_readings_by_column:
                 # NaN does not equal NaN
                 if protein_reading.reading != protein_reading.reading:
                     # TODO - what to do about NaN values?
@@ -34,6 +57,10 @@ class Command(BaseCommand):
                     readings.append(protein_reading.reading)
 
             median = statistics.median(readings)
+
+            print(
+                f"calculating median for replicate {replicate.name} stage {column_name.sample_stage.name}: {median}"
+            )
 
             column_medians[column_name.id] = median
 
