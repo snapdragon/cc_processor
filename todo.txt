@@ -25,9 +25,8 @@ Don't get Fisher G values yet
 Get protein annotations
 
 
-
-Set all missing abundances to None, not NaN?
-Write tests for _all_replicates and for medians calculation
+Study all pytest marks
+Write tests for medians calculation
 
 
 ### Later
