@@ -6,3 +6,4 @@ Speaking of column medians, what do we do if a cell is empty?
     Consider it to be zero, or absent?
 
 Is palbo normalisation the same as Nocodozole normalisation?
+    Actually presumably it should be normalised by the first stage, as that's what Palbo is.

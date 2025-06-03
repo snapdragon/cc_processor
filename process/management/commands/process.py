@@ -80,6 +80,27 @@ class Command(BaseCommand):
             column_names=column_names,
         )
 
+        if with_bugs:
+            # Make both the same, it's simpler than deleting number one and changing
+            #   code elsewhere
+            replicate_1 = None
+            replicate_2 = None
+
+            for replicate in medians.keys():
+                # TODO - make these constants
+                if replicate.name == "One":
+                    replicate_1 = replicate
+                elif replicate.name == "Two":
+                    replicate_2 = replicate
+
+            r2_medians = {}
+
+            for cn in medians[replicate_2].keys():
+                r2_medians[cn.sample_stage.name] = medians[replicate_2][cn]
+
+            for cn in medians[replicate_1].keys():
+                medians[replicate_1][cn] = r2_medians[cn.sample_stage.name]
+
         print(f"Medians for project {project.name}")
         for replicate in medians.keys():
             print(f"Replicate: {replicate.name}")
@@ -87,14 +108,14 @@ class Command(BaseCommand):
             for stage in medians[replicate].keys():
                 print(f"    {stage.name}: {medians[replicate][stage]}")
 
-        means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                protein_readings, with_bugs
-            )
-        )
+        # means_across_replicates_by_stage = (
+        #     self._calculate_means_across_replicates_by_stage(
+        #         protein_readings, with_bugs
+        #     )
+        # )
 
-        # These are just here for now to stop the pre commit hooks complaining
-        assert means_across_replicates_by_stage == means_across_replicates_by_stage
+        # # These are just here for now to stop the pre commit hooks complaining
+        # assert means_across_replicates_by_stage == means_across_replicates_by_stage
 
         normalised_protein_readings = self._calculate_first_level_normalisation(
             protein_readings, medians
@@ -107,7 +128,7 @@ class Command(BaseCommand):
         # TODO - check whether all means calculations need with-bugs
         normalised_means_across_replicates_by_stage = (
             self._calculate_means_across_replicates_by_stage(
-                normalised_protein_readings, False
+                normalised_protein_readings, with_bugs
             )
         )
 
@@ -252,6 +273,7 @@ class Command(BaseCommand):
                 means[protein][stage] = []
 
             if with_bugs:
+                # We throw away the second reading
                 if len(means[protein][stage]) == 1:
                     continue
 
@@ -270,6 +292,7 @@ class Command(BaseCommand):
                     mean = sum(abundances) / len(abundances)
                     means[protein][stage] = self._round(mean)
                 else:
+                    # TODO - is this the right thing to do?
                     means[protein][stage] = None
 
                 protein_stage_no += 1
