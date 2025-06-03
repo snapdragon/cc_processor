@@ -55,6 +55,11 @@ class Command(BaseCommand):
         for index, row in df.iterrows():
             row_no += 1
 
+            # TODO - this is a hack for ICR. Maybe make it a DB config?
+            if contaminant := row.get("Contaminant"):
+                if contaminant == "Yes" or contaminant == "TRUE":
+                    continue
+
             print(f"Adding row {row_no}")
 
             accession_number = row[project.proteome_file_accession_number_column_name]
@@ -73,3 +78,5 @@ class Command(BaseCommand):
                     ProteinReading.objects.create(
                         column_name=cn, reading=reading, protein=protein
                     )
+
+        print(f"Total rows: {row_no}")

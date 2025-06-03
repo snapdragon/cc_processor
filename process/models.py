@@ -45,7 +45,7 @@ class ColumnName(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.sample_stage.name
 
 
 class Protein(models.Model):

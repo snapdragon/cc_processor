@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project_name = options["project"]
 
-        logger.info("fProcessing for project {project_name}")
+        logger.info("Processing for project {project_name}")
 
         project: Final = Project.objects.get(name=project_name)
         replicates: Final = Replicate.objects.filter(project=project)
@@ -69,7 +69,14 @@ class Command(BaseCommand):
             column_names=column_names,
         )
 
-        logger.info(medians)
+        print(f"Medians for project {project.name}")
+        for replicate in medians.keys():
+            print(f"Replicate: {replicate.name}")
+
+            for stage in medians[replicate].keys():
+                print(f"    {stage.name}: {medians[replicate][stage]}")
+
+        return
 
         means_across_replicates_by_stage = (
             self._calculate_means_across_replicates_by_stage(protein_readings)
@@ -277,18 +284,11 @@ class Command(BaseCommand):
             )
 
             for protein_reading in protein_readings_by_column:
-                if protein_reading.reading:
+                # TODO - what to do about None values?
+                if protein_reading.reading is not None:
                     readings.append(protein_reading.reading)
-                else:
-                    # TODO - what to do about None values?
-                    #   Does adding a zero mess things up?
-                    readings.append(0)
 
             median = statistics.median(readings)
-
-            logger.info(
-                f"calculating median for replicate {replicate.name} stage {column_name.sample_stage.name}: {median}"
-            )
 
             column_medians[column_name] = median
 

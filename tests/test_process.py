@@ -33,9 +33,11 @@ def test_all_replicates():
 def test_calculate_means_across_replicates_by_stage():
     command = Command()
 
+    project = ProjectFactory()
+
     replicate1 = ReplicateFactory(name="r1")
-    replicate2 = ReplicateFactory(name="r1", project=replicate1.project)
-    replicate3 = ReplicateFactory(name="r1", project=replicate1.project)
+    replicate2 = ReplicateFactory(name="r1", project=project)
+    replicate3 = ReplicateFactory(name="r1", project=project)
 
     # TODO - why doesn't it care about these being different projects?
     #   More tests may be needed to check the code works with one of multiple projects.
@@ -50,7 +52,7 @@ def test_calculate_means_across_replicates_by_stage():
     column_name5 = ColumnNameFactory(replicate=replicate2, sample_stage=sample_stage2)
     column_name6 = ColumnNameFactory(replicate=replicate3, sample_stage=sample_stage2)
 
-    protein = ProteinFactory()
+    protein = ProteinFactory(project=project)
     ProteinReadingFactory(protein=protein, column_name=column_name1, reading=1)
     ProteinReadingFactory(protein=protein, column_name=column_name2, reading=4)
     ProteinReadingFactory(protein=protein, column_name=column_name3, reading=7)
@@ -74,7 +76,9 @@ def test_calculate_means_across_replicates_by_stage():
 def test_calc_replicate_column_medians():
     command = Command()
 
-    replicate = ReplicateFactory(name="r1")
+    project = ProjectFactory()
+
+    replicate = ReplicateFactory(name="r1", project=project)
 
     # TODO - why doesn't it care about these being different projects?
     #   More tests may be needed to check the code works with one of multiple projects.
@@ -84,7 +88,7 @@ def test_calc_replicate_column_medians():
     column_name1 = ColumnNameFactory(replicate=replicate, sample_stage=sample_stage1)
     column_name2 = ColumnNameFactory(replicate=replicate, sample_stage=sample_stage2)
 
-    protein = ProteinFactory()
+    protein = ProteinFactory(project=project)
     ProteinReadingFactory(protein=protein, column_name=column_name1, reading=1)
     ProteinReadingFactory(protein=protein, column_name=column_name1, reading=4)
     ProteinReadingFactory(protein=protein, column_name=column_name1, reading=4)
@@ -101,5 +105,5 @@ def test_calc_replicate_column_medians():
 
     assert results == {
         column_name1: 4.0,
-        column_name2: 1.0,
+        column_name2: 3.0,
     }
