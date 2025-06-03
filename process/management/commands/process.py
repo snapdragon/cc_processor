@@ -1,6 +1,6 @@
 import logging
+import math
 import statistics
-from typing import Final
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import QuerySet
@@ -40,10 +40,10 @@ class Command(BaseCommand):
 
         logger.info(f"Processing for project {project_name}, with bugs {with_bugs}")
 
-        project: Final = Project.objects.get(name=project_name)
-        replicates: Final = Replicate.objects.filter(project=project)
-        column_names: Final = ColumnName.objects.filter(replicate__project=project)
-        protein_readings: Final = ProteinReading.objects.filter(
+        project = Project.objects.get(name=project_name)
+        replicates = Replicate.objects.filter(project=project)
+        column_names = ColumnName.objects.filter(replicate__project=project)
+        protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
 
@@ -108,14 +108,14 @@ class Command(BaseCommand):
             for stage in medians[replicate].keys():
                 print(f"    {stage.name}: {medians[replicate][stage]}")
 
-        # means_across_replicates_by_stage = (
-        #     self._calculate_means_across_replicates_by_stage(
-        #         protein_readings, with_bugs
-        #     )
-        # )
+        means_across_replicates_by_stage = (
+            self._calculate_means_across_replicates_by_stage(
+                protein_readings, with_bugs
+            )
+        )
 
-        # # These are just here for now to stop the pre commit hooks complaining
-        # assert means_across_replicates_by_stage == means_across_replicates_by_stage
+        # These are just here for now to stop the pre commit hooks complaining
+        assert means_across_replicates_by_stage == means_across_replicates_by_stage
 
         normalised_protein_readings = self._calculate_first_level_normalisation(
             protein_readings, medians
@@ -132,23 +132,31 @@ class Command(BaseCommand):
             )
         )
 
-        logger.info(normalised_means_across_replicates_by_stage)
+        assert (
+            normalised_means_across_replicates_by_stage
+            == normalised_means_across_replicates_by_stage
+        )
 
         arrest_log2_normalised_protein_readings = (
-            self._calculate_arrest_log2_normalisation(protein_readings)
+            self._calculate_arrest_log2_normalisation(
+                normalised_protein_readings, project
+            )
         )
 
         logger.info(
-            f"Number of arrest log2 normalised readings: f{len(normalised_protein_readings)}"
+            f"Number of arrest log2 normalised readings: f{len(arrest_log2_normalised_protein_readings)}"
         )
 
         arrest_log2_normalised_means_across_replicates_by_stage = (
             self._calculate_means_across_replicates_by_stage(
-                arrest_log2_normalised_protein_readings, False
+                arrest_log2_normalised_protein_readings, with_bugs
             )
         )
 
-        logger.info(arrest_log2_normalised_means_across_replicates_by_stage)
+        assert (
+            arrest_log2_normalised_means_across_replicates_by_stage
+            == arrest_log2_normalised_means_across_replicates_by_stage
+        )
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -168,38 +176,60 @@ class Command(BaseCommand):
         return results
 
     def _calculate_arrest_log2_normalisation(
-        self, normalised_protein_readings: QuerySet[ProteinReading]
+        self, normalised_protein_readings: QuerySet[ProteinReading], project: Project
     ):
-        pass
-        # logger.info("log2 arrest normalising abundances")
+        logger.info("log2 arrest normalising abundances")
 
-        # # TODO - this will need to be changed for per-project. Put it in the Project model maybe?
-        # ARRESTING_AGENT = "Nocodozole"
+        log2_normalised_protein_readings = []
 
-        # protein_arrest_values = {}
+        # TODO - what should the stage name be?
+        ARRESTING_AGENT = "Nocodozole"
 
-        # # Get all Nocodozole values by replicate by protein
-        # # TODO - this is super inefficient
-        # for protein_reading in normalised_protein_readings:
-        #     if protein_reading.column_name.sample_stage.name == ARRESTING_AGENT:
-        #         protein_arrest_values[protein_reading.column_name.replicate] = {
-        #             [protein_reading.protein] = protein_reading.reading
+        # TODO - this is a hack, maybe add the field to the Project model?
+        if project.name == "ICR":
+            ARRESTING_AGENT = "Palbo"
 
-        # arrest_logs_normalised_protein_readings = []
+        protein_arrest_values: dict[Replicate, dict] = {}
 
-        # for protein_reading in protein_readings:
-        #     reading = protein_reading.reading
-        #     normalised_reading = None
+        # Get all arrest values by replicate by protein
+        # TODO - this is super inefficient
+        for protein_reading in normalised_protein_readings:
+            if protein_reading.column_name.sample_stage.name == ARRESTING_AGENT:
+                if not protein_arrest_values.get(protein_reading.column_name.replicate):
+                    protein_arrest_values[protein_reading.column_name.replicate] = {}
 
-        #     if reading:
-        #         # TODO - need to round this?
-        #         normalised_reading = reading / protein_arrest_values[protein_reading.protein]
+                protein_arrest_values[protein_reading.column_name.replicate][
+                    protein_reading.protein
+                ] = protein_reading.reading
 
-        #     # TODO - not a QuerySet
-        #     # TODO - inefficient
-        #     arrest_logs_normalised_protein_readings.append(ProteinReading(protein=protein_reading.protein, column_name = protein_reading.column_name, reading=normalised_reading))
+        for protein_reading in normalised_protein_readings:
+            log2_reading = None
 
-        # return arrest_logs_normalised_protein_readings
+            if (
+                protein_reading.reading is not None
+                and protein_arrest_values[protein_reading.column_name.replicate][
+                    protein_reading.protein
+                ]
+                is not None
+            ):
+                log2_reading = self._round(
+                    math.log2(
+                        protein_reading.reading
+                        / protein_arrest_values[protein_reading.column_name.replicate][
+                            protein_reading.protein
+                        ]
+                    )
+                )
+
+            log2_normalised_protein_readings.append(
+                ProteinReading(
+                    protein=protein_reading.protein,
+                    column_name=protein_reading.column_name,
+                    reading=log2_reading,
+                )
+            )
+
+        return log2_normalised_protein_readings
 
     def _calculate_first_level_normalisation(
         self, protein_readings: QuerySet[ProteinReading], medians
@@ -277,7 +307,7 @@ class Command(BaseCommand):
                 if len(means[protein][stage]) == 1:
                     continue
 
-            if protein_reading.reading:
+            if protein_reading.reading is not None:
                 means[protein][stage].append(protein_reading.reading)
 
         protein_stage_no = 0
@@ -287,6 +317,8 @@ class Command(BaseCommand):
                 protein_stage_no += 1
 
                 abundances = means[protein][stage]
+
+                mean = None
 
                 if len(abundances):
                     mean = sum(abundances) / len(abundances)

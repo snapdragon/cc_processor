@@ -5,12 +5,13 @@ DONE - Iterate through the rows of data_points, getting uniprot accession for ea
 DONE AND CHECKED - calculate the medians for each column (why?) - AFFECTED BY ICR BUG
 TODO - Look up the gene names and protein names for that uniprot accession
 TODO - Populate time_course_proteome with some default values for each uniprot accession
-NOT NEEDED - Convert the abundances for the dict for the uniprot accession, which are identified
+DONE BY DEFAULT - Convert the abundances for the dict for the uniprot accession, which are identified
     by column name, to times instead of column names
-DONE AND CHECKED - Get the means of the renamed abundances, as far as possible - AFFECTED BY ICR BUG
-DONE - Do first level normalisation, which are by median - AFFECTED BY ICR BUG
-DONE- Calculate the averages of the normalised renamed abundances
-Normalise all abundances to Palbo and calculate log2 of them
+DONE AND CHECKED - Get the means of the abundances, as far as possible - AFFECTED BY ICR BUG
+DONE AND CHECKED - Do first level normalisation, which are by median - AFFECTED BY ICR BUG
+DONE AND CHECKED - Calculate the averages of the normalised abundances - AFFECTED BY ICR BUG
+DONE AND CHECKED - Normalise all abundances to Palbo and calculate log2 of them
+DONE AND CHECKED - Calculate the averages of the palbo log 2 normalised
 Subtract log2 mean for each rep, and normalise
 Calculate min-max for each rep, and normalise
 Calculate 0-max for each rep, and normalise
@@ -26,9 +27,12 @@ Don't get Fisher G values yet
 Get protein annotations
 
 
-
+Look up the values from the paper for Q09666
 Write a test for _calculate_first_level_normalisation
+Write a test for _calculate_arrest_log2_normalisation
+process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
 Add uniqueness constraints to models
+Add Final to various variables
 Study all pytest marks
 Write tests for with_bugs?
 
