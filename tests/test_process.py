@@ -62,7 +62,9 @@ def test_calculate_means_across_replicates_by_stage():
 
     protein_readings = ProteinReading.objects.all()
 
-    results = command._calculate_means_across_replicates_by_stage(protein_readings)
+    results = command._calculate_means_across_replicates_by_stage(
+        protein_readings, False
+    )
 
     assert results == {
         protein: {

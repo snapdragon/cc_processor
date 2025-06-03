@@ -2,7 +2,7 @@ import logging
 import statistics
 from typing import Final
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import QuerySet
 
 from process.models import ColumnName, Project, ProteinReading, Replicate
@@ -25,11 +25,20 @@ class Command(BaseCommand):
             required=True,
             help="The name of the project to process",
         )
+        parser.add_argument(
+            "--with-bugs",
+            help="Run with the original ICR bugs",
+            action="store_true",
+        )
 
     def handle(self, *args, **options):
         project_name = options["project"]
+        with_bugs = options["with_bugs"]
 
-        logger.info("Processing for project {project_name}")
+        if with_bugs and project_name != "ICR":
+            raise CommandError("Only an ICR project can run --with-bugs")
+
+        logger.info(f"Processing for project {project_name}, with bugs {with_bugs}")
 
         project: Final = Project.objects.get(name=project_name)
         replicates: Final = Replicate.objects.filter(project=project)
@@ -38,9 +47,11 @@ class Command(BaseCommand):
             column_name__replicate__project=project
         )
 
-        self._process(project, replicates, protein_readings, column_names)
+        self._process(project, replicates, protein_readings, column_names, with_bugs)
 
-    def _process(self, project, replicates, protein_readings, column_names):
+    def _process(
+        self, project, replicates, protein_readings, column_names, with_bugs: bool
+    ):
         """
         Does all the required calculations. The steps are:
 
@@ -76,13 +87,14 @@ class Command(BaseCommand):
             for stage in medians[replicate].keys():
                 print(f"    {stage.name}: {medians[replicate][stage]}")
 
-        return
-
         means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(protein_readings)
+            self._calculate_means_across_replicates_by_stage(
+                protein_readings, with_bugs
+            )
         )
 
-        logger.info(means_across_replicates_by_stage)
+        # These are just here for now to stop the pre commit hooks complaining
+        assert means_across_replicates_by_stage == means_across_replicates_by_stage
 
         normalised_protein_readings = self._calculate_first_level_normalisation(
             protein_readings, medians
@@ -92,16 +104,17 @@ class Command(BaseCommand):
             f"Number of normalised readings: f{len(normalised_protein_readings)}"
         )
 
+        # TODO - check whether all means calculations need with-bugs
         normalised_means_across_replicates_by_stage = (
             self._calculate_means_across_replicates_by_stage(
-                normalised_protein_readings
+                normalised_protein_readings, False
             )
         )
 
         logger.info(normalised_means_across_replicates_by_stage)
 
         arrest_log2_normalised_protein_readings = (
-            self._calculate_arrest_log2_normalisation(protein_readings, medians)
+            self._calculate_arrest_log2_normalisation(protein_readings)
         )
 
         logger.info(
@@ -110,7 +123,7 @@ class Command(BaseCommand):
 
         arrest_log2_normalised_means_across_replicates_by_stage = (
             self._calculate_means_across_replicates_by_stage(
-                arrest_log2_normalised_protein_readings
+                arrest_log2_normalised_protein_readings, False
             )
         )
 
@@ -212,7 +225,7 @@ class Command(BaseCommand):
         return normalised_protein_readings
 
     def _calculate_means_across_replicates_by_stage(
-        self, protein_readings: QuerySet[ProteinReading]
+        self, protein_readings: QuerySet[ProteinReading], with_bugs: bool
     ):
         logger.info("Calculating mean across replicates by stage for each protein")
 
@@ -225,7 +238,7 @@ class Command(BaseCommand):
             self._count_logger(
                 protein_no,
                 10000,
-                f"Normalising for {protein_no}, {protein_reading.protein.accession_number} {protein_reading.column_name.sample_stage.name}",
+                f"Calculating mean for {protein_no}, {protein_reading.protein.accession_number} {protein_reading.column_name.sample_stage.name}",
             )
 
             protein = protein_reading.protein
@@ -237,6 +250,10 @@ class Command(BaseCommand):
 
             if not means[protein].get(stage):
                 means[protein][stage] = []
+
+            if with_bugs:
+                if len(means[protein][stage]) == 1:
+                    continue
 
             if protein_reading.reading:
                 means[protein][stage].append(protein_reading.reading)
@@ -251,7 +268,7 @@ class Command(BaseCommand):
 
                 if len(abundances):
                     mean = sum(abundances) / len(abundances)
-                    means[protein][stage] = mean
+                    means[protein][stage] = self._round(mean)
                 else:
                     means[protein][stage] = None
 
@@ -297,3 +314,6 @@ class Command(BaseCommand):
     def _count_logger(self, i: int, step: int, output: str):
         if i % step == 0:
             logger.info(output)
+
+    def _round(self, value):
+        return round(value, 4)
