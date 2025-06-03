@@ -12,9 +12,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# TODO - this is a duplicate, move somewhere common
-PROJECT_NAME = "Soliman Labs"
-
 
 class Command(BaseCommand):
     help = "import a spreadsheet"
@@ -22,14 +19,17 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--project",
-            default=PROJECT_NAME,
-            help="Project name",
+            required=True,
+            help="The name of the project to import",
         )
 
     def handle(self, *args, **options):
         project_name = options["project"]
 
-        logger.info("Importing spreadsheet for {project_name}")
+        if not project_name:
+            raise Exception("Please provide a project name")
+
+        logger.info(f"Importing spreadsheet for {project_name}")
 
         project = Project.objects.get(name=project_name)
 
@@ -44,8 +44,8 @@ class Command(BaseCommand):
         cns_by_name = {}
 
         # TODO - take this out, or modify it to the project, when adding more projects
-        Protein.objects.all().delete()
-        ProteinReading.objects.all().delete()
+        Protein.objects.filter(project=project).delete()
+        ProteinReading.objects.filter(protein__project=project).delete()
 
         for cn in column_names:
             cns_by_name[cn.name] = cn
@@ -59,7 +59,9 @@ class Command(BaseCommand):
 
             accession_number = row[project.proteome_file_accession_number_column_name]
 
-            protein = Protein.objects.create(accession_number=accession_number)
+            protein = Protein.objects.create(
+                project=project, accession_number=accession_number
+            )
 
             for col in df.columns:
                 if cn := cns_by_name.get(col):

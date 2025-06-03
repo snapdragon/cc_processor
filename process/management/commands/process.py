@@ -15,8 +15,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-PROJECT_NAME = "Soliman Labs"
-
 
 class Command(BaseCommand):
     help = "Processes all proteins for a given project"
@@ -24,14 +22,14 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--project",
-            default=PROJECT_NAME,
-            help="Project name",
+            required=True,
+            help="The name of the project to process",
         )
 
     def handle(self, *args, **options):
         project_name = options["project"]
 
-        logger.info("Processing for project {project_name}")
+        logger.info("fProcessing for project {project_name}")
 
         project: Final = Project.objects.get(name=project_name)
         replicates: Final = Replicate.objects.filter(project=project)

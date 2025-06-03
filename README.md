@@ -3,13 +3,14 @@
 docker compose up
 docker exec -it cc_processor /bin/bash
 eval $(poetry env activate)
-python manage.py import_spreadsheet
-python manage.py process
+python manage.py import_spreadsheet --project "Soliman Labs"
+python manage.py process --project "Soliman Labs"
 ```
 
-### To run with a different project
+### To run with IRC
 ```sh
-python manage.py process --project "Project name here"
+python manage.py import_spreadsheet --project "ICR"
+python manage.py process --project "ICR"
 ```
 
 ### To reset the migration
@@ -24,7 +25,6 @@ drop table process_columnname;
 drop table process_samplestage;
 drop table process_replicate;
 drop table process_project;
-
 delete from django_migrations where app = 'process';
 # Exit the
 # Go to the code (in vscode or other editor)

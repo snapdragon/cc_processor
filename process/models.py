@@ -49,6 +49,9 @@ class ColumnName(models.Model):
 
 
 class Protein(models.Model):
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="protein"
+    )
     accession_number = models.CharField(max_length=255)
 
     def __str__(self):
