@@ -9,7 +9,7 @@ from process.factories import (
     SampleStageFactory,
 )
 from process.management.commands.process import Command
-from process.models import ProteinReading
+from process.models import ColumnName, ProteinReading
 
 
 @pytest.mark.django_db
@@ -30,7 +30,7 @@ def test_all_replicates():
 
 
 @pytest.mark.django_db
-def test_calculate_abundance_means_across_replicates_by_stage():
+def test_calculate_means_across_replicates_by_stage():
     command = Command()
 
     replicate1 = ReplicateFactory(name="r1")
@@ -60,9 +60,7 @@ def test_calculate_abundance_means_across_replicates_by_stage():
 
     protein_readings = ProteinReading.objects.all()
 
-    results = command._calculate_abundance_means_across_replicates_by_stage(
-        protein_readings
-    )
+    results = command._calculate_means_across_replicates_by_stage(protein_readings)
 
     assert results == {
         protein: {
@@ -95,8 +93,11 @@ def test_calc_replicate_column_medians():
     ProteinReadingFactory(protein=protein, column_name=column_name2, reading=5)
 
     protein_readings = ProteinReading.objects.all()
+    column_names = ColumnName.objects.all()
 
-    results = command._calc_replicate_column_medians(replicate, protein_readings)
+    results = command._calc_replicate_column_medians(
+        replicate, protein_readings, column_names
+    )
 
     assert results == {
         column_name1: 4.0,

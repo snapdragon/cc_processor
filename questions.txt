@@ -4,3 +4,5 @@ Why do some rows have more than one uniprot accession?
 
 Speaking of column medians, what do we do if a cell is empty?
     Consider it to be zero, or absent?
+
+Is palbo normalisation the same as Nocodozole normalisation?
