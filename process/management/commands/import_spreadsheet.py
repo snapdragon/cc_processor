@@ -1,14 +1,37 @@
+import logging
+
 import pandas as pd
 from django.core.management.base import BaseCommand
 
 from process.models import ColumnName, Project, Protein, ProteinReading
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s - %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
+# TODO - this is a duplicate, move somewhere common
+PROJECT_NAME = "Soliman Labs"
+
 
 class Command(BaseCommand):
     help = "import a spreadsheet"
 
-    def handle(self, *args, **kwargs):
-        project = Project.objects.get(name="Soliman Labs")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--project",
+            default=PROJECT_NAME,
+            help="Project name",
+        )
+
+    def handle(self, *args, **options):
+        project_name = options["project"]
+
+        logger.info("Importing spreadsheet for {project_name}")
+
+        project = Project.objects.get(name=project_name)
 
         file_path = f"data/{project.proteome_file}"
 
@@ -34,7 +57,7 @@ class Command(BaseCommand):
 
             print(f"Adding row {row_no}")
 
-            accession_number = row["Protein.Group"]
+            accession_number = row[project.proteome_file_accession_number_column_name]
 
             protein = Protein.objects.create(accession_number=accession_number)
 

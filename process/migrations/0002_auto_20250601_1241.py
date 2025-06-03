@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
             name="Soliman Labs",
             proteome_file="Soliman/results-request-2023MK001-proteome.xlsx",
             phosphoproteome_file="Soliman/results-request-2023MK004-phosphoproteome.xlsx",
+            proteome_file_accession_number_column_name="Protein.Group",
         )
 
         Replicate = apps.get_model("process", "Replicate")
@@ -201,6 +202,128 @@ class Migration(migrations.Migration):
             replicate=replicate_3,
             sample_stage=sample_stage_10,
             name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_030_01_1ug.90f58effdd53b09a52b544e757179640.mzML",
+        )
+
+        # Config for Institute of Cancer Research project
+        project_ICR = Project.objects.create(
+            name="ICR",
+            proteome_file="ICR/CR07_TMT16plex_FullProt_Proteins.xlsx",
+            phosphoproteome_file="",
+            proteome_file_accession_number_column_name="Accession",
+        )
+
+        replicate_ICR_1 = Replicate.objects.create(
+            name="One", rank=1, project=project_ICR
+        )
+        replicate_ICR_2 = Replicate.objects.create(
+            name="Two", rank=2, project=project_ICR
+        )
+
+        sample_stage_ICR_1 = SampleStage.objects.create(
+            project=project_ICR, name="Palbo", rank=1
+        )
+        sample_stage_ICR_2 = SampleStage.objects.create(
+            project=project_ICR, name="Late G1_1", rank=2
+        )
+        sample_stage_ICR_3 = SampleStage.objects.create(
+            project=project_ICR, name="G1/S", rank=3
+        )
+        sample_stage_ICR_4 = SampleStage.objects.create(
+            project=project_ICR, name="S", rank=4
+        )
+        sample_stage_ICR_5 = SampleStage.objects.create(
+            project=project_ICR, name="S/G2", rank=5
+        )
+        sample_stage_ICR_6 = SampleStage.objects.create(
+            project=project_ICR, name="G2_2", rank=6
+        )
+        sample_stage_ICR_7 = SampleStage.objects.create(
+            project=project_ICR, name="G2/M_1", rank=7
+        )
+        sample_stage_ICR_8 = SampleStage.objects.create(
+            project=project_ICR, name="M/Early G1", rank=8
+        )
+
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_1,
+            name="Abundance: 126, 1, 0",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_2,
+            name="Abundance: 127N, 1, 2",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_3,
+            name="Abundance: 127C, 1, 4",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_4,
+            name="Abundance: 128N, 1, 6",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_5,
+            name="Abundance: 128C, 1, 8",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_6,
+            name="Abundance: 129N, 1, 10",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_7,
+            name="Abundance: 129C, 1, 12",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_1,
+            sample_stage=sample_stage_ICR_8,
+            name="Abundance: 130N, 1, 15",
+        )
+
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_1,
+            name="Abundance: 130C, 2, 0",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_2,
+            name="Abundance: 131N, 2, 2",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_3,
+            name="Abundance: 131C, 2, 4",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_4,
+            name="Abundance: 132N, 2, 6",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_5,
+            name="Abundance: 132C, 2, 8",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_6,
+            name="Abundance: 133N, 2, 10",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_7,
+            name="Abundance: 133C, 2, 12",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_ICR_2,
+            sample_stage=sample_stage_ICR_8,
+            name="Abundance: 134N, 2, 15",
         )
 
     dependencies = [

@@ -7,6 +7,11 @@ python manage.py import_spreadsheet
 python manage.py process
 ```
 
+### To run with a different project
+```sh
+python manage.py process --project "Project name here"
+```
+
 ### To reset the migration
 ```sh
 docker exec -it postgres-db /bin/bash

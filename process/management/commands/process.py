@@ -31,6 +31,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project_name = options["project"]
 
+        logger.info("Processing for project {project_name}")
+
         project: Final = Project.objects.get(name=project_name)
         replicates: Final = Replicate.objects.filter(project=project)
         column_names: Final = ColumnName.objects.filter(replicate__project=project)
