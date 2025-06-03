@@ -1,12 +1,13 @@
 ### Steps
 
 DONE - Iterate through the rows of data_points, getting uniprot accession for each row
-DONE - calculate the medians for each column (why?)
+    Sort of done. What about the lines with multiple accessions number?
+DONE AND CHECKED - calculate the medians for each column (why?)
 TODO - Look up the gene names and protein names for that uniprot accession
 TODO - Populate time_course_proteome with some default values for each uniprot accession
 NOT NEEDED - Convert the abundances for the dict for the uniprot accession, which are identified
     by column name, to times instead of column names
-DONE - Get the averages of the renamed abundances, as far as possible
+DONE AND CHECKED - Get the averages of the renamed abundances, as far as possible
 DONE - Do first level normalisation, which are by median
 DONE- Calculate the averages of the normalised renamed abundances
 Normalise all abundances to Palbo and calculate log2 of them
