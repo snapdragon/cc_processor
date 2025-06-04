@@ -5,7 +5,7 @@ import statistics
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import QuerySet
 
-from process.models import ColumnName, Project, ProteinReading, Replicate
+from process.models import ColumnName, Project, Protein, ProteinReading, Replicate
 
 # TODO - make this configurable by flag
 logging.basicConfig(
@@ -70,9 +70,15 @@ class Command(BaseCommand):
             for its column, then averaging them across replicates.
         """
 
+        # TODO - this is solely for development. Take it out afterwards.
+        Q09666 = Protein.objects.get(
+            accession_number="Q09666", project__name=project.name
+        )
+
         # TODO - make each call flaggable
         # TODO - rename 'medians' to something more informative
         # TODO - does this need to be by replicate? Why not just all columns at once?
+        # TODO - is _all_replicates really useful?
         medians = self._all_replicates(
             func=self._calc_replicate_column_medians,
             replicates=replicates,
@@ -118,12 +124,16 @@ class Command(BaseCommand):
         # # These are just here for now to stop the pre commit hooks complaining
         # assert means_across_replicates_by_stage == means_across_replicates_by_stage
 
+        # N.B. normalised_protein_readings is not the same structure as protein_readings.
+        #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
+        #   is a dict with Protein object keys. The values is a dict of replicate name keys
+        #   with a dict of sample stage names and abundances as keys.
         normalised_protein_readings = self._calculate_first_level_normalisation(
             protein_readings, medians
         )
 
         logger.info(
-            f"Number of normalised readings: f{len(normalised_protein_readings)}"
+            f"Number of normalised readings: f{len(normalised_protein_readings.keys())}"
         )
 
         # TODO - check whether all means calculations need with-bugs
@@ -153,6 +163,11 @@ class Command(BaseCommand):
                 arrest_log2_normalised_protein_readings, with_bugs
             )
         )
+
+        print("+++++ ARREST LOG2 NORM ABUNDANCES AVERAGES")
+        print(arrest_log2_normalised_means_across_replicates_by_stage[Q09666])
+
+        return
 
         assert (
             arrest_log2_normalised_means_across_replicates_by_stage
@@ -275,7 +290,7 @@ class Command(BaseCommand):
     ):
         logger.info("Normalising abundances")
 
-        normalised_protein_readings = []
+        normalised_protein_readings: dict = {}
 
         protein_no = 0
 
@@ -289,9 +304,11 @@ class Command(BaseCommand):
 
             reading = protein_reading.reading
 
-            normalised_reading = None
-
             if reading:
+                protein = protein_reading.protein
+                replicate_name = protein_reading.column_name.replicate.name
+                sample_stage_name = protein_reading.column_name.sample_stage.name
+
                 median = medians[protein_reading.column_name.replicate][
                     protein_reading.column_name
                 ]
@@ -302,76 +319,69 @@ class Command(BaseCommand):
                 #   They probably shouldn't happen.
                 normalised_reading = reading / median
 
-            # TODO - not a QuerySet
-            # TODO - inefficient
-            normalised_protein_readings.append(
-                ProteinReading(
-                    protein=protein_reading.protein,
-                    column_name=protein_reading.column_name,
-                    reading=normalised_reading,
-                )
-            )
+                if not normalised_protein_readings.get(protein):
+                    normalised_protein_readings[protein] = {}
+
+                if not normalised_protein_readings[protein].get(replicate_name):
+                    normalised_protein_readings[protein][replicate_name] = {}
+
+                normalised_protein_readings[protein][replicate_name][
+                    sample_stage_name
+                ] = normalised_reading
 
         return normalised_protein_readings
 
     def _calculate_means_across_replicates_by_stage(
-        self, protein_readings: QuerySet[ProteinReading], with_bugs: bool
+        self, protein_readings: QuerySet[ProteinReading], with_bugs: bool, imputed=False
     ):
         logger.info("Calculating mean across replicates by stage for each protein")
+
+        if imputed:
+            raise Exception("imputed = True not implemented yet.")
 
         means: dict = {}
 
         protein_no = 0
 
-        for protein_reading in protein_readings:
+        for protein in protein_readings.keys():
+            print(f"PROTEIN {protein.accession_number}")
             protein_no += 1
             self._count_logger(
                 protein_no,
                 10000,
-                f"Calculating mean for {protein_no}, {protein_reading.protein.accession_number} {protein_reading.column_name.sample_stage.name}",
+                f"Calculating mean for {protein_no}, {protein.accession_number}",
             )
 
-            protein = protein_reading.protein
+            protein_reading = protein_readings[protein]
+            abundances: dict = {}
 
-            if not means.get(protein):
-                means[protein] = {}
+            for replicate_name in protein_reading:
+                for stage_name in protein_reading[replicate_name]:
+                    if not abundances.get(stage_name):
+                        abundances[stage_name] = []
 
-            stage = protein_reading.column_name.sample_stage
+                    if with_bugs:
+                        # We throw away the second reading
+                        # TODO - how will this behave towards None?
+                        if len(abundances[stage_name]) == 1:
+                            continue
 
-            if not means[protein].get(stage):
-                means[protein][stage] = []
+                    if protein_reading[replicate_name][stage_name] is not None:
+                        abundances[stage_name].append(
+                            protein_reading[replicate_name][stage_name]
+                        )
 
-            if with_bugs:
-                # We throw away the second reading
-                if len(means[protein][stage]) == 1:
-                    continue
+            means[protein] = {}
 
-            if protein_reading.reading is not None:
-                means[protein][stage].append(protein_reading.reading)
+            for stage_name in abundances:
+                abundance = abundances[stage_name]
 
-        protein_stage_no = 0
-
-        for protein in means.keys():
-            for stage in means[protein]:
-                protein_stage_no += 1
-
-                abundances = means[protein][stage]
-
-                mean = None
-
-                if len(abundances):
-                    mean = sum(abundances) / len(abundances)
-                    means[protein][stage] = self._round(mean)
+                if len(abundance):
+                    mean = sum(abundance) / len(abundance)
+                    means[protein][stage_name] = self._round(mean)
                 else:
                     # TODO - is this the right thing to do?
-                    means[protein][stage] = None
-
-                protein_stage_no += 1
-                self._count_logger(
-                    protein_stage_no,
-                    10000,
-                    f"Mean for {protein_stage_no}, {protein} {stage}: {mean}",
-                )
+                    means[protein][stage_name] = None
 
         return means
 

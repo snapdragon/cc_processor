@@ -36,8 +36,8 @@ def test_calculate_means_across_replicates_by_stage():
     project = ProjectFactory()
 
     replicate1 = ReplicateFactory(name="r1")
-    replicate2 = ReplicateFactory(name="r1", project=project)
-    replicate3 = ReplicateFactory(name="r1", project=project)
+    replicate2 = ReplicateFactory(name="r2", project=project)
+    replicate3 = ReplicateFactory(name="r3", project=project)
 
     # TODO - why doesn't it care about these being different projects?
     #   More tests may be needed to check the code works with one of multiple projects.
@@ -53,14 +53,41 @@ def test_calculate_means_across_replicates_by_stage():
     column_name6 = ColumnNameFactory(replicate=replicate3, sample_stage=sample_stage2)
 
     protein = ProteinFactory(project=project)
-    ProteinReadingFactory(protein=protein, column_name=column_name1, reading=1)
-    ProteinReadingFactory(protein=protein, column_name=column_name2, reading=4)
-    ProteinReadingFactory(protein=protein, column_name=column_name3, reading=7)
-    ProteinReadingFactory(protein=protein, column_name=column_name4, reading=1)
-    ProteinReadingFactory(protein=protein, column_name=column_name5, reading=None)
-    ProteinReadingFactory(protein=protein, column_name=column_name6, reading=5)
+    protein_reading_1 = ProteinReadingFactory(
+        protein=protein, column_name=column_name1, reading=1
+    )
+    protein_reading_2 = ProteinReadingFactory(
+        protein=protein, column_name=column_name2, reading=4
+    )
+    protein_reading_3 = ProteinReadingFactory(
+        protein=protein, column_name=column_name3, reading=7
+    )
+    protein_reading_4 = ProteinReadingFactory(
+        protein=protein, column_name=column_name4, reading=1
+    )
+    protein_reading_5 = ProteinReadingFactory(
+        protein=protein, column_name=column_name5, reading=None
+    )
+    protein_reading_6 = ProteinReadingFactory(
+        protein=protein, column_name=column_name6, reading=5
+    )
 
-    protein_readings = ProteinReading.objects.all()
+    protein_readings = {
+        protein: {
+            replicate1.name: {
+                sample_stage1.name: protein_reading_1.reading,
+                sample_stage2.name: protein_reading_4.reading,
+            },
+            replicate2.name: {
+                sample_stage1.name: protein_reading_2.reading,
+                sample_stage2.name: protein_reading_5.reading,
+            },
+            replicate3.name: {
+                sample_stage1.name: protein_reading_3.reading,
+                sample_stage2.name: protein_reading_6.reading,
+            },
+        }
+    }
 
     results = command._calculate_means_across_replicates_by_stage(
         protein_readings, False
@@ -68,8 +95,8 @@ def test_calculate_means_across_replicates_by_stage():
 
     assert results == {
         protein: {
-            sample_stage1: 4,
-            sample_stage2: 3,
+            sample_stage1.name: 4,
+            sample_stage2.name: 3,
         }
     }
 
