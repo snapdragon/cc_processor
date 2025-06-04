@@ -188,6 +188,42 @@ class Command(BaseCommand):
         print("+++++ RELATIVE LOG2 NORM ABUNDANCES AVERAGES")
         print(relative_log2_normalised_means_across_replicates_by_stage[Q09666])
 
+        level_two_normalised_protein_readings = self._calculate_level_two_normalisation(
+            relative_log2_normalised_protein_readings
+        )
+
+        logger.info(
+            f"Number of level two normalised readings: f{len(level_two_normalised_protein_readings)}"
+        )
+
+        level_two_normalised_means_across_replicates_by_stage = (
+            self._calculate_means_across_replicates_by_stage(
+                level_two_normalised_protein_readings, with_bugs
+            )
+        )
+
+        assert (
+            level_two_normalised_means_across_replicates_by_stage
+            == level_two_normalised_means_across_replicates_by_stage
+        )
+
+        min_max_normalised_protein_readings = self._calculate_level_two_normalisation(
+            normalised_protein_readings, True
+        )
+
+        logger.info(
+            f"min max normalised readings: f{len(min_max_normalised_protein_readings)}"
+        )
+
+        min_max_normalised_means_across_replicates_by_stage = (
+            self._calculate_means_across_replicates_by_stage(
+                min_max_normalised_protein_readings, with_bugs
+            )
+        )
+
+        print("++++++ min max normalised means across replicates")
+        print(min_max_normalised_means_across_replicates_by_stage[Q09666])
+
     def _all_replicates(self, *args, **kwargs):
         """
         Calls the passed function for each replicate for the project.
@@ -204,6 +240,45 @@ class Command(BaseCommand):
             results[replicate] = func(**call_kwargs)
 
         return results
+
+    def _calculate_level_two_normalisation(
+        self, normalised_protein_readings: QuerySet[ProteinReading], zero_min=False
+    ):
+        logger.info("relative log2 normalising abundances")
+
+        level_two_normalised_protein_readings: dict = {}
+
+        for protein in normalised_protein_readings:
+            level_two_normalised_protein_readings[protein] = {}
+
+            for replicate_name in normalised_protein_readings[protein]:
+                level_two_normalised_protein_readings[protein][replicate_name] = {}
+
+                min_value = 0
+                # TODO - maybe this should be a function
+                abundances = normalised_protein_readings[protein][replicate_name]
+
+                abundance_values_non_null = [
+                    val for val in abundances.values() if val is not None
+                ]
+
+                if not zero_min:
+                    min_value = min(abundance_values_non_null)
+
+                max_value = max(abundance_values_non_null)
+
+                for stage_name, abundance in abundances.items():
+                    denominator = max_value - min_value
+                    if abundance is None or denominator == 0:
+                        abundance_normalised = 0.5
+                    else:
+                        abundance_normalised = (abundance - min_value) / denominator
+
+                    level_two_normalised_protein_readings[protein][replicate_name][
+                        stage_name
+                    ] = self._round(abundance_normalised)
+
+        return level_two_normalised_protein_readings
 
     def _calculate_relative_log2_normalisation(
         self, normalised_protein_readings: QuerySet[ProteinReading], project: Project

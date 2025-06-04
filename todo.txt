@@ -13,8 +13,8 @@ DONE AND CHECKED - Calculate the averages of the normalised abundances - AFFECTE
 DONE AND CHECKED - Normalise all abundances to Palbo and calculate log2 of them
 DONE AND CHECKED - Calculate the averages of the palbo log 2 normalised
 DONE AND CHECKED - Subtract log2 mean for each rep, and normalise
-Second level normalised data
-Calculate min-max for each rep, and normalise
+DONE AND CHECKED - Second level normalised data
+DONE AND CHECKED - Calculate min-max for each rep, and normalise
 Calculate 0-max for each rep, and normalise
 Calculate imputed values TODO - what?
 Calculate stats
