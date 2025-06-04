@@ -27,9 +27,14 @@ Don't get Fisher G values yet
 Get protein annotations
 
 
+Change protein_readings to be a dict of protein names of dicts of replicate names of dicts
+    of stage names. It'll be easeir to process.
+    protein_readings['Q09666']['One'] = {'RO sample 15 min': 123, 'RO sample 30 min': 456 etc.}
+    Is that right? Examine ICR.
 Look up the values from the paper for Q09666
 Write a test for _calculate_first_level_normalisation
 Write a test for _calculate_arrest_log2_normalisation
+Write a test for _calculate_relative_log2_normalisation
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
 Add uniqueness constraints to models
 Add Final to various variables

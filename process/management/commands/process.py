@@ -108,14 +108,15 @@ class Command(BaseCommand):
             for stage in medians[replicate].keys():
                 print(f"    {stage.name}: {medians[replicate][stage]}")
 
-        means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                protein_readings, with_bugs
-            )
-        )
+        # TODO - is this used for anything?
+        # means_across_replicates_by_stage = (
+        #     self._calculate_means_across_replicates_by_stage(
+        #         protein_readings, with_bugs
+        #     )
+        # )
 
-        # These are just here for now to stop the pre commit hooks complaining
-        assert means_across_replicates_by_stage == means_across_replicates_by_stage
+        # # These are just here for now to stop the pre commit hooks complaining
+        # assert means_across_replicates_by_stage == means_across_replicates_by_stage
 
         normalised_protein_readings = self._calculate_first_level_normalisation(
             protein_readings, medians
@@ -158,6 +159,22 @@ class Command(BaseCommand):
             == arrest_log2_normalised_means_across_replicates_by_stage
         )
 
+        relative_log2_normalised_protein_readings = (
+            self._calculate_relative_log2_normalisation(
+                normalised_protein_readings, project
+            )
+        )
+
+        logger.info(
+            f"Number of relative log2 normalised readings: f{len(relative_log2_normalised_protein_readings)}"
+        )
+
+        # relative_log2_normalised_means_across_replicates_by_stage = (
+        #     self._calculate_means_across_replicates_by_stage(
+        #         relative_log2_normalised_protein_readings, with_bugs
+        #     )
+        # )
+
     def _all_replicates(self, *args, **kwargs):
         """
         Calls the passed function for each replicate for the project.
@@ -174,6 +191,28 @@ class Command(BaseCommand):
             results[replicate] = func(**call_kwargs)
 
         return results
+
+    def _calculate_relative_log2_normalisation(
+        self, normalised_protein_readings: QuerySet[ProteinReading], project: Project
+    ):
+        logger.info("relative log2 normalising abundances")
+
+        log2_normalised_protein_readings: list = []
+
+        for protein_reading in normalised_protein_readings:
+            if (
+                protein_reading.protein.accession_number == "Q09666"
+                and protein_reading.reading is not None
+            ):
+                log2_reading = math.log2(protein_reading.reading)
+
+                print(
+                    f"log2 norm for Q09666 {protein_reading.column_name.sample_stage.name}: {log2_reading}"
+                )
+
+            # log2_normalised_protein_readings.append()
+
+        return log2_normalised_protein_readings
 
     def _calculate_arrest_log2_normalisation(
         self, normalised_protein_readings: QuerySet[ProteinReading], project: Project
