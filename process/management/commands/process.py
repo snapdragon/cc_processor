@@ -164,11 +164,6 @@ class Command(BaseCommand):
             )
         )
 
-        print("+++++ ARREST LOG2 NORM ABUNDANCES AVERAGES")
-        print(arrest_log2_normalised_means_across_replicates_by_stage[Q09666])
-
-        return
-
         assert (
             arrest_log2_normalised_means_across_replicates_by_stage
             == arrest_log2_normalised_means_across_replicates_by_stage
@@ -184,11 +179,14 @@ class Command(BaseCommand):
             f"Number of relative log2 normalised readings: f{len(relative_log2_normalised_protein_readings)}"
         )
 
-        # relative_log2_normalised_means_across_replicates_by_stage = (
-        #     self._calculate_means_across_replicates_by_stage(
-        #         relative_log2_normalised_protein_readings, with_bugs
-        #     )
-        # )
+        relative_log2_normalised_means_across_replicates_by_stage = (
+            self._calculate_means_across_replicates_by_stage(
+                relative_log2_normalised_protein_readings, with_bugs
+            )
+        )
+
+        print("+++++ RELATIVE LOG2 NORM ABUNDANCES AVERAGES")
+        print(relative_log2_normalised_means_across_replicates_by_stage[Q09666])
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -212,20 +210,50 @@ class Command(BaseCommand):
     ):
         logger.info("relative log2 normalising abundances")
 
-        log2_normalised_protein_readings: list = []
+        log2_normalised_protein_readings: dict = {}
 
-        for protein_reading in normalised_protein_readings:
-            if (
-                protein_reading.protein.accession_number == "Q09666"
-                and protein_reading.reading is not None
-            ):
-                log2_reading = math.log2(protein_reading.reading)
+        log2_abundances: dict = {}
 
-                print(
-                    f"log2 norm for Q09666 {protein_reading.column_name.sample_stage.name}: {log2_reading}"
-                )
+        for protein in normalised_protein_readings:
+            log2_abundances[protein] = {}
 
-            # log2_normalised_protein_readings.append()
+            for replicate_name in normalised_protein_readings[protein]:
+                log2_abundances[protein][replicate_name] = {}
+
+                for stage_name in normalised_protein_readings[protein][replicate_name]:
+                    log2_abundances[protein][replicate_name][stage_name] = math.log2(
+                        normalised_protein_readings[protein][replicate_name][stage_name]
+                    )
+
+        for protein in log2_abundances:
+            total_abundances = 0
+            total_lengths = 0
+
+            for replicate_name in log2_abundances[protein]:
+                for stage_name in log2_abundances[protein][replicate_name]:
+                    if log2_abundances[protein][replicate_name][stage_name] is not None:
+                        total_abundances += log2_abundances[protein][replicate_name][
+                            stage_name
+                        ]
+                        total_lengths += 1
+
+            mean = total_abundances / total_lengths
+
+            log2_normalised_protein_readings[protein] = {}
+            for replicate_name in normalised_protein_readings[protein]:
+                log2_normalised_protein_readings[protein][replicate_name] = {}
+
+                for stage_name in normalised_protein_readings[protein][replicate_name]:
+                    normalised_abundance = None
+
+                    if log2_abundances[protein][replicate_name].get(stage_name):
+                        normalised_abundance = self._round(
+                            log2_abundances[protein][replicate_name][stage_name] - mean
+                        )
+
+                    log2_normalised_protein_readings[protein][replicate_name][
+                        stage_name
+                    ] = normalised_abundance
 
         return log2_normalised_protein_readings
 
@@ -234,54 +262,48 @@ class Command(BaseCommand):
     ):
         logger.info("log2 arrest normalising abundances")
 
-        log2_normalised_protein_readings = []
+        log2_normalised_protein_readings: dict = {}
 
         # TODO - what should the stage name be?
+        # TODO - is ARRESTING_AGENT the wrong name?
         ARRESTING_AGENT = "Nocodozole"
 
         # TODO - this is a hack, maybe add the field to the Project model?
         if project.name == "ICR":
             ARRESTING_AGENT = "Palbo"
 
-        protein_arrest_values: dict[Replicate, dict] = {}
+        for protein in normalised_protein_readings.keys():
+            log2_normalised_protein_readings[protein] = {}
 
-        # Get all arrest values by replicate by protein
-        # TODO - this is super inefficient
-        for protein_reading in normalised_protein_readings:
-            if protein_reading.column_name.sample_stage.name == ARRESTING_AGENT:
-                if not protein_arrest_values.get(protein_reading.column_name.replicate):
-                    protein_arrest_values[protein_reading.column_name.replicate] = {}
+            for replicate_name in normalised_protein_readings[protein]:
+                if protein.accession_number == "Q09666":
+                    print("+++ REPLICATES")
 
-                protein_arrest_values[protein_reading.column_name.replicate][
-                    protein_reading.protein
-                ] = protein_reading.reading
+                    print(normalised_protein_readings[protein])
+                if not log2_normalised_protein_readings[protein].get(replicate_name):
+                    log2_normalised_protein_readings[protein][replicate_name] = {}
 
-        for protein_reading in normalised_protein_readings:
-            log2_reading = None
+                for stage_name in normalised_protein_readings[protein][replicate_name]:
+                    log2_reading = None
+                    reading = normalised_protein_readings[protein][replicate_name][
+                        stage_name
+                    ]
 
-            if (
-                protein_reading.reading is not None
-                and protein_arrest_values[protein_reading.column_name.replicate][
-                    protein_reading.protein
-                ]
-                is not None
-            ):
-                log2_reading = self._round(
-                    math.log2(
-                        protein_reading.reading
-                        / protein_arrest_values[protein_reading.column_name.replicate][
-                            protein_reading.protein
-                        ]
-                    )
-                )
+                    if normalised_protein_readings[protein][replicate_name].get(
+                        ARRESTING_AGENT
+                    ):
+                        arrest_reading = normalised_protein_readings[protein][
+                            replicate_name
+                        ][ARRESTING_AGENT]
 
-            log2_normalised_protein_readings.append(
-                ProteinReading(
-                    protein=protein_reading.protein,
-                    column_name=protein_reading.column_name,
-                    reading=log2_reading,
-                )
-            )
+                        if reading is not None and arrest_reading is not None:
+                            log2_reading = self._round(
+                                math.log2(reading / arrest_reading)
+                            )
+
+                    log2_normalised_protein_readings[protein][replicate_name][
+                        stage_name
+                    ] = log2_reading
 
         return log2_normalised_protein_readings
 
@@ -344,7 +366,6 @@ class Command(BaseCommand):
         protein_no = 0
 
         for protein in protein_readings.keys():
-            print(f"PROTEIN {protein.accession_number}")
             protein_no += 1
             self._count_logger(
                 protein_no,

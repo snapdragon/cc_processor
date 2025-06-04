@@ -12,7 +12,8 @@ DONE AND CHECKED - Do first level normalisation, which are by median - AFFECTED 
 DONE AND CHECKED - Calculate the averages of the normalised abundances - AFFECTED BY ICR BUG
 DONE AND CHECKED - Normalise all abundances to Palbo and calculate log2 of them
 DONE AND CHECKED - Calculate the averages of the palbo log 2 normalised
-Subtract log2 mean for each rep, and normalise
+DONE AND CHECKED - Subtract log2 mean for each rep, and normalise
+Second level normalised data
 Calculate min-max for each rep, and normalise
 Calculate 0-max for each rep, and normalise
 Calculate imputed values TODO - what?
@@ -27,11 +28,12 @@ Don't get Fisher G values yet
 Get protein annotations
 
 
+Maybe do one protein at a time like ICR, not all at once.
 Change protein_readings to be a dict of protein names of dicts of replicate names of dicts
     of stage names. It'll be easeir to process.
     protein_readings['Q09666']['One'] = {'RO sample 15 min': 123, 'RO sample 30 min': 456 etc.}
     Is that right? Examine ICR.
-Look up the values from the paper for Q09666
+Look up the values from the paper for a relevant protein to see if it matches buggy output
 Write a test for _calculate_first_level_normalisation
 Write a test for _calculate_arrest_log2_normalisation
 Write a test for _calculate_relative_log2_normalisation
