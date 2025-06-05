@@ -69,7 +69,6 @@ class Command(BaseCommand):
         3) Normalise all abundances. This is done by dividing each abundance by the median
             for its column, then averaging them across replicates.
         """
-
         # TODO - this is solely for development. Take it out afterwards.
         Q09666 = Protein.objects.get(
             accession_number="Q09666", project__name=project.name
@@ -221,8 +220,22 @@ class Command(BaseCommand):
             )
         )
 
+        assert (
+            min_max_normalised_means_across_replicates_by_stage
+            == min_max_normalised_means_across_replicates_by_stage
+        )
+
+        # print("++++++ min max normalised means across replicates")
+        # print(min_max_normalised_means_across_replicates_by_stage[Q09666])
+
+        imputed_protein_readings = self._impute(
+            level_two_normalised_protein_readings, replicates, column_names
+        )
+
+        logger.info(f"imputed readings: f{len(imputed_protein_readings)}")
+
         print("++++++ min max normalised means across replicates")
-        print(min_max_normalised_means_across_replicates_by_stage[Q09666])
+        print(imputed_protein_readings[Q09666])
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -240,6 +253,87 @@ class Command(BaseCommand):
             results[replicate] = func(**call_kwargs)
 
         return results
+
+    def _impute(
+        # TODO - all these pr types are wrong, and also probably bad variable names
+        self,
+        normalised_protein_readings: QuerySet[ProteinReading],
+        replicates: QuerySet[Replicate],
+        column_names: QuerySet[ColumnName],
+    ):
+        logger.info("impute missing data")
+
+        replicates_by_name: dict = {}
+        column_names_by_replicate: dict = {}
+
+        for replicate in replicates:
+            replicates_by_name[replicate.name] = replicate
+            column_names_by_replicate[replicate.name] = []
+
+        for column_name in column_names:
+            column_names_by_replicate[column_name.replicate.name].append(
+                column_name.sample_stage.name
+            )
+
+        imputed_protein_readings: dict = {}
+
+        for protein in normalised_protein_readings.keys():
+            imputed_protein_readings[protein] = {}
+
+            for replicate_name in normalised_protein_readings[protein].keys():
+                imputed_protein_readings[protein][replicate_name] = {}
+
+                abundances_dict = normalised_protein_readings[protein][replicate_name]
+                abundances = list(abundances_dict.values())
+
+                stage_names = column_names_by_replicate[replicate_name]
+
+                for idx, stage_name in enumerate(stage_names):
+                    # Default value, should never be used
+                    value = 0
+
+                    if abundances_dict.get(stage_name, None) is not None:
+                        value = abundances_dict[stage_name]
+                    else:
+                        last = None
+                        next = None
+
+                        # TODO - isn't there a better way to iterate?
+                        for offset in range(1, len(stage_names)):
+                            prev_idx = idx - offset
+                            if prev_idx < 0:
+                                # Gone before the beginning of the list, give up
+                                break
+
+                            prev_stage_name = stage_names[prev_idx]
+
+                            if abundances_dict.get(prev_stage_name, None) is not None:
+                                # last = (offset, abundances_dict[prev_stage_name])
+                                last = abundances_dict[prev_stage_name]
+                                break
+
+                        for offset in range(1, len(abundances)):
+                            # Look forward
+                            # TODO - this seems to loop back to the beginning. Is that right?
+                            next_idx = (idx + offset) % len(abundances)
+                            next_stage_name = stage_names[next_idx]
+
+                            if abundances_dict.get(stage_name, None) is not None:
+                                # next = (offset, abundances[next_stage_name])
+                                next = abundances[next_stage_name]
+                                break
+
+                        if last and next:
+                            step_height = (last - next) / (last + next)
+                            value = next * step_height + next
+
+                    # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
+                    # TODO - for some reason ICR rounds to 2, not 4. What to do?
+                    imputed_protein_readings[protein][replicate_name][
+                        stage_name
+                    ] = round(float(value), 2)
+
+        return imputed_protein_readings
 
     def _calculate_level_two_normalisation(
         self, normalised_protein_readings: QuerySet[ProteinReading], zero_min=False

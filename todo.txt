@@ -15,8 +15,8 @@ DONE AND CHECKED - Calculate the averages of the palbo log 2 normalised
 DONE AND CHECKED - Subtract log2 mean for each rep, and normalise
 DONE AND CHECKED - Second level normalised data
 DONE AND CHECKED - Calculate min-max for each rep, and normalise
-Calculate 0-max for each rep, and normalise
-Calculate imputed values TODO - what?
+DONE AND CHECKED - Calculate 0-max for each rep, and normalise
+DONE AND CHECKED - Calculate imputed values
 Calculate stats
 Calculate ANOVA
 Calculate confidence
@@ -29,15 +29,13 @@ Get protein annotations
 
 
 Maybe do one protein at a time like ICR, not all at once.
-Change protein_readings to be a dict of protein names of dicts of replicate names of dicts
-    of stage names. It'll be easeir to process.
-    protein_readings['Q09666']['One'] = {'RO sample 15 min': 123, 'RO sample 30 min': 456 etc.}
-    Is that right? Examine ICR.
 Look up the values from the paper for a relevant protein to see if it matches buggy output
 Write a test for _calculate_first_level_normalisation
 Write a test for _calculate_arrest_log2_normalisation
 Write a test for _calculate_relative_log2_normalisation
+Write tests for all the functions
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+    Higher level of mypy checking required? Check work.
 Add uniqueness constraints to models
 Add Final to various variables
 Study all pytest marks

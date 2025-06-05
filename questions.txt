@@ -7,3 +7,5 @@ Speaking of column medians, what do we do if a cell is empty?
 
 Is palbo normalisation the same as Nocodozole normalisation?
     Actually presumably it should be normalised by the first stage, as that's what Palbo is.
+
+Is the method of imputing data what we want?
