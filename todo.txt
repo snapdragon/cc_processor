@@ -20,13 +20,16 @@ DONE AND CHECKED - Calculate imputed values
 DONE AND CHECKED - Calculate stats
 Calculate ANOVA
 Calculate confidence
+
+Put in protein loop
+
+
 Create data frame TODO - why?
 Get ANOVA q values
 Don't get Fisher G values yet
     TODO does the python version have a bug?
     https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
 LATER - Get protein annotations
-Change main loop to be by protein
 
 
 NEXT - get steps for phospho

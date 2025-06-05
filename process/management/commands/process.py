@@ -5,7 +5,7 @@ import statistics
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import QuerySet
-from scipy.stats import moment
+from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 
 from process.models import ColumnName, Project, Protein, ProteinReading, Replicate
@@ -243,8 +243,6 @@ class Command(BaseCommand):
             )
         )
 
-        # print("++++++ imputed averages")
-        # print(imputed_across_replicates_by_stage[Q09666])
         assert imputed_across_replicates_by_stage == imputed_across_replicates_by_stage
 
         log2_mean_metrics = self._calculate_metrics(
@@ -259,9 +257,13 @@ class Command(BaseCommand):
             min_max_normalised_means_across_replicates_by_stage,
         )
 
-        print("+++++ MIN MAX")
-        print(zero_max_mean_metrics[Q09666])
-        return
+        assert zero_max_mean_metrics == zero_max_mean_metrics
+
+        # anovas = self._calcANOVA(relative_log2_normalised_protein_readings)
+
+        # print("+++++ ANOVAS")
+        # print(len(anovas.keys()))
+        # return
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -280,6 +282,79 @@ class Command(BaseCommand):
 
         return results
 
+    # TODO - straight up lifted from ICR, simplify ideally using a library
+    def _tp(self, timepoint, input_protein_data):
+        """
+        Groups by time point for the replicates
+        """
+        # TODO - make generic
+        # TODO - tidy this code
+        if "One" in input_protein_data or "Two" in input_protein_data:
+            rep_1 = "One"
+            rep_2 = "Two"
+
+        res = []
+        try:
+            if timepoint in input_protein_data[rep_1]:
+                rep_1 = float(input_protein_data[rep_1][timepoint])
+                res.append(rep_1)
+
+            if timepoint in input_protein_data[rep_2]:
+                rep_2 = float(input_protein_data[rep_2][timepoint])
+                res.append(rep_2)
+
+            res = [x for x in res if x == x]
+
+        except Exception as e:
+            print(input_protein_data)
+            print(e)
+
+        return res
+
+    # TODO - straight up lifted from ICR, simplify ideally using a library
+    def _calcANOVA(self, input_protein_data):
+        """
+        Groups by time point and performs ANOVA between all time point groups.
+        """
+        anovas = {}
+
+        for protein in input_protein_data:
+            try:
+                # TODO - make non generic
+                timepoints_1 = [
+                    self._tp("Palbo", input_protein_data),
+                    self._tp("Late G1_1", input_protein_data),
+                    self._tp("G1/S", input_protein_data),
+                    self._tp("S", input_protein_data),
+                    self._tp("S/G2", input_protein_data),
+                    self._tp("G2_2", input_protein_data),
+                    self._tp("G2/M_1", input_protein_data),
+                    self._tp("M/Early G1", input_protein_data),
+                ]
+
+                timepoints = [x for x in timepoints_1 if x != []]
+
+                # Protein info in at least 2 reps:
+                if len(timepoints) != 0:
+                    one_way_anova = f_oneway(*timepoints)
+                    f_statistic = one_way_anova[0]
+                    p_value = one_way_anova[1]
+                    if np.isnan(p_value):
+                        p_value = 1
+                else:
+                    f_statistic = 1
+                    p_value = 1
+
+                anovas[protein] = (p_value, f_statistic)
+            except Exception as e:
+                print("++++ ERROR CALCULATING ANOVA")
+                print(e)
+                break
+
+            break
+
+        return anovas
+
     def _calculate_metrics(
         self,
         protein_readings: QuerySet[ProteinReading],
@@ -293,8 +368,10 @@ class Command(BaseCommand):
             abundances = []
             abundance_averages = protein_readings_averages[protein]
             # TODO - how does ICR cope with Nones but not this? Does it use imputed values?
-            # abundance_averages_list = [val for val in abundance_averages.values() if val is not None]
-            abundance_averages_list = list(abundance_averages.values())
+            abundance_averages_list = [
+                val for val in abundance_averages.values() if val is not None
+            ]
+            # abundance_averages_list = list(abundance_averages.values())
 
             for replicate_name in protein_readings[protein]:
                 for stage_name in protein_readings[protein][replicate_name]:
@@ -327,9 +404,8 @@ class Command(BaseCommand):
                     range(0, len(abundance_averages)), abundance_averages_list, 2
                 )
                 # TODO - find out what this all means
-                max_fold_change = max(abundance_averages.values()) - min(
-                    # TODO - change to abundance_averages_list?
-                    abundance_averages.values()
+                max_fold_change = max(abundance_averages_list) - min(
+                    abundance_averages_list
                 )
 
                 # TODO - what does all this mean?
@@ -445,6 +521,7 @@ class Command(BaseCommand):
                 if rep != "Two":
                     continue
                 for timepoint in norm_abundances[rep]:
+                    # TODO - has nulls, but not as many as y
                     x.append(timepoint_map[timepoint])
             x.sort()
             y = []
@@ -454,6 +531,7 @@ class Command(BaseCommand):
                     if rep != "Two":
                         continue
                     if timepoint in norm_abundances[rep]:
+                        # TODO - has nulls, but not as many as x
                         y.append(norm_abundances[rep][timepoint])
 
             p = np.poly1d(np.polyfit(x, y, 2))
