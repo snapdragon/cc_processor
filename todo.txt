@@ -17,7 +17,7 @@ DONE AND CHECKED - Second level normalised data
 DONE AND CHECKED - Calculate min-max for each rep, and normalise
 DONE AND CHECKED - Calculate 0-max for each rep, and normalise
 DONE AND CHECKED - Calculate imputed values
-Calculate stats
+DONE AND CHECKED - Calculate stats
 Calculate ANOVA
 Calculate confidence
 Create data frame TODO - why?

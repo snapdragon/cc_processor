@@ -2,8 +2,11 @@ import logging
 import math
 import statistics
 
+import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import QuerySet
+from scipy.stats import moment
+from sklearn.metrics import r2_score
 
 from process.models import ColumnName, Project, Protein, ProteinReading, Replicate
 
@@ -234,17 +237,23 @@ class Command(BaseCommand):
 
         logger.info(f"imputed readings: f{len(imputed_protein_readings)}")
 
-        print("++++++ min max normalised means across replicates")
-        print(imputed_protein_readings[Q09666])
-
         imputed_across_replicates_by_stage = (
             self._calculate_means_across_replicates_by_stage(
                 imputed_protein_readings, with_bugs, imputed=True
             )
         )
 
-        print("++++++ imputed averages")
-        print(imputed_across_replicates_by_stage[Q09666])
+        # print("++++++ imputed averages")
+        # print(imputed_across_replicates_by_stage[Q09666])
+        assert imputed_across_replicates_by_stage == imputed_across_replicates_by_stage
+
+        log2_mean_metrics = self._calculate_metrics(
+            relative_log2_normalised_protein_readings,
+            relative_log2_normalised_means_across_replicates_by_stage,
+        )
+
+        print("+++++ LOG2 MEAN METRICS")
+        print(log2_mean_metrics[Q09666])
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -262,6 +271,214 @@ class Command(BaseCommand):
             results[replicate] = func(**call_kwargs)
 
         return results
+
+    def _calculate_metrics(
+        self,
+        protein_readings: QuerySet[ProteinReading],
+        protein_readings_averages: QuerySet[Replicate],
+    ):
+        logger.info("Calculate metrics")
+
+        protein_metrics = {}
+
+        for protein in protein_readings.keys():
+            abundances = []
+            abundance_averages = protein_readings_averages[protein]
+            # TODO - how does ICR cope with Nones but not this? Does it use imputed values?
+            # abundance_averages_list = [val for val in abundance_averages.values() if val is not None]
+            abundance_averages_list = list(abundance_averages.values())
+
+            for replicate_name in protein_readings[protein]:
+                for stage_name in protein_readings[protein][replicate_name]:
+                    abundance = protein_readings[protein][replicate_name][stage_name]
+
+                    if abundance is not None:
+                        # TODO - why does this add all reps for standard deviation calculation?
+                        abundances.append(abundance)
+
+            std_dev = statistics.stdev(abundances)
+
+            try:
+                _, residuals, *_ = np.polyfit(
+                    range(len(abundance_averages)),
+                    abundance_averages_list,
+                    2,
+                    full=True,
+                )
+
+                if len(residuals) == 0:
+                    # TODO - why 5?
+                    # TODO - 5 for ICR, but what about others?
+                    # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
+                    residual = 5
+                else:
+                    residual = residuals[0]
+
+                # TODO - find out what this all means
+                r_squared = self._polyfit(
+                    range(0, len(abundance_averages)), abundance_averages_list, 2
+                )
+                # TODO - find out what this all means
+                max_fold_change = max(abundance_averages.values()) - min(
+                    # TODO - change to abundance_averages_list?
+                    abundance_averages.values()
+                )
+
+                # TODO - what does all this mean?
+                base_metrics = {
+                    "variance": moment(abundance_averages_list, moment=2),
+                    "skewness": moment(abundance_averages_list, moment=3),
+                    "kurtosis": moment(abundance_averages_list, moment=4),
+                    "peak": max(abundance_averages, key=abundance_averages.get),
+                    "max_fold_change": max_fold_change,
+                    "residuals": residual,
+                    "R_squared": r_squared,
+                }
+
+                # If we have info for the protein in at least 2 replicates
+                if len(protein_readings[protein]) >= 2:
+                    curve_fold_change, curve_peak = self._calcCurveFoldChange(
+                        protein_readings[protein], protein.accession_number
+                    )
+                    residuals_all, r_squared_all = self._calcResidualsR2All(
+                        protein_readings[protein]
+                    )
+
+                    metrics = {
+                        "standard_deviation": std_dev,
+                        **{f"{k}_average": v for k, v in base_metrics.items()},
+                        "residuals_all": residuals_all,
+                        "R_squared_all": r_squared_all,
+                        "curve_fold_change": curve_fold_change,
+                        "curve_peak": curve_peak,
+                    }
+
+                protein_metrics[protein] = metrics
+
+            except Exception as e:
+                print("Exception in _calculate_metrics")
+                print(e)
+                # TODO - take this out
+                break
+
+        return protein_metrics
+
+    # TODO - this is straight up lifted from ICR, change and ideally use a library
+    def _calcResidualsR2All(self, norm_abundances):
+        """
+        Calculate the residuals and the R squared for all the abundances from all the replicates for a protein.
+        """
+
+        # TODO - use generic stage names
+        timepoint_map = {
+            "Palbo": 0,
+            "Late G1_1": 1,
+            "G1/S": 2,
+            "S": 3,
+            "S/G2": 4,
+            "G2_2": 5,
+            "G2/M_1": 6,
+            "M/Early G1": 7,
+        }
+        # if we have info for the protein in at least 2 replicates
+        # TODO - repetitive
+        # TODO - very similiar to _calcCurveFoldChange
+        if len(norm_abundances) >= 2:
+            reps = norm_abundances
+            x = []
+            for rep in reps:
+                if rep != "Two":
+                    continue
+                for timepoint in norm_abundances[rep]:
+                    x.append(timepoint_map[timepoint])
+            x.sort()
+            y = []
+            for timepoint in timepoint_map:
+                for rep in reps:
+                    if rep != "Two":
+                        continue
+                    if timepoint in norm_abundances[rep]:
+                        y.append(norm_abundances[rep][timepoint])
+
+            p = np.poly1d(np.polyfit(x, y, 2))
+            curve_abundances = p(x)
+            residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
+            r_squared_all = round(r2_score(y, curve_abundances), 2)
+
+        return residuals_all, r_squared_all
+
+    # TODO - this is straight up lifted from ICR, change and ideally use a library
+    def _calcCurveFoldChange(self, norm_abundances, uniprot_accession):
+        """
+        Calculates the curve_fold_change and curve peaks for the three or two replicates normalised abundance for each protein.
+        """
+
+        # TODO - use the stage_names for the project
+        timepoint_map = {
+            "Palbo": 0,
+            "Late G1_1": 1,
+            "G1/S": 2,
+            "S": 3,
+            "S/G2": 4,
+            "G2_2": 5,
+            "G2/M_1": 6,
+            "M/Early G1": 7,
+        }
+        curves_all = {}
+
+        # if we have info for the protein in at least 2 replicates
+        # TODO - this code needs a tidy
+        if len(norm_abundances) >= 2:
+            reps = norm_abundances
+            curves_all[uniprot_accession] = {}
+            x = []
+            for rep in reps:
+                # TODO - make generic somehow
+                if rep != "Two":
+                    continue
+                for timepoint in norm_abundances[rep]:
+                    x.append(timepoint_map[timepoint])
+            x.sort()
+            y = []
+            for timepoint in timepoint_map:
+                for rep in reps:
+                    # TODO - make generic somehow
+                    if rep != "Two":
+                        continue
+                    if timepoint in norm_abundances[rep]:
+                        y.append(norm_abundances[rep][timepoint])
+
+            p = np.poly1d(np.polyfit(x, y, 2))
+            curve_abundances = p(x)
+
+            # find the timepoint peak of the curve
+            curve_index = x[list(curve_abundances).index(max(curve_abundances))]
+            for time_point, index in timepoint_map.items():
+                if index == curve_index:
+                    curve_peak = time_point
+
+            # Calculate the fold change from the curve
+            curve_fold_change = max(curve_abundances) / max(0.05, min(curve_abundances))
+
+        return curve_fold_change, curve_peak
+
+    # TODO - this is straight up lifted from ICR. Replace it, ideally with a library call
+    # TODO - write a test for it first
+    def _polyfit(self, x, y, degree):
+        """
+        Calculate the r-squared for polynomial curve fitting.
+        """
+        r_squared = 0
+        coeffs = np.polyfit(x, y, degree)
+        p = np.poly1d(coeffs)
+        # calculate r-squared
+        yhat = p(x)
+        ybar = np.sum(y) / len(y)
+        ssres = np.sum((y - yhat) ** 2)
+        sstot = np.sum((y - ybar) ** 2)
+        r_squared = ssres / sstot
+
+        return 1 - round(r_squared, 2)
 
     def _impute(
         # TODO - all these pr types are wrong, and also probably bad variable names
