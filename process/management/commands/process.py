@@ -237,6 +237,15 @@ class Command(BaseCommand):
         print("++++++ min max normalised means across replicates")
         print(imputed_protein_readings[Q09666])
 
+        imputed_across_replicates_by_stage = (
+            self._calculate_means_across_replicates_by_stage(
+                imputed_protein_readings, with_bugs, imputed=True
+            )
+        )
+
+        print("++++++ imputed averages")
+        print(imputed_across_replicates_by_stage[Q09666])
+
     def _all_replicates(self, *args, **kwargs):
         """
         Calls the passed function for each replicate for the project.
@@ -528,12 +537,12 @@ class Command(BaseCommand):
         return normalised_protein_readings
 
     def _calculate_means_across_replicates_by_stage(
-        self, protein_readings: QuerySet[ProteinReading], with_bugs: bool, imputed=False
+        self,
+        protein_readings: QuerySet[ProteinReading],
+        with_bugs: bool,
+        imputed: bool = False,
     ):
         logger.info("Calculating mean across replicates by stage for each protein")
-
-        if imputed:
-            raise Exception("imputed = True not implemented yet.")
 
         means: dict = {}
 
@@ -555,7 +564,7 @@ class Command(BaseCommand):
                     if not abundances.get(stage_name):
                         abundances[stage_name] = []
 
-                    if with_bugs:
+                    if with_bugs and not imputed:
                         # We throw away the second reading
                         # TODO - how will this behave towards None?
                         if len(abundances[stage_name]) == 1:
