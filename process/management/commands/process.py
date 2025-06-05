@@ -308,8 +308,8 @@ class Command(BaseCommand):
                             prev_stage_name = stage_names[prev_idx]
 
                             if abundances_dict.get(prev_stage_name, None) is not None:
-                                # last = (offset, abundances_dict[prev_stage_name])
-                                last = abundances_dict[prev_stage_name]
+                                last = (offset, abundances_dict[prev_stage_name])
+                                # last = abundances_dict[prev_stage_name]
                                 break
 
                         for offset in range(1, len(abundances)):
@@ -319,13 +319,18 @@ class Command(BaseCommand):
                             next_stage_name = stage_names[next_idx]
 
                             if abundances_dict.get(stage_name, None) is not None:
-                                # next = (offset, abundances[next_stage_name])
-                                next = abundances[next_stage_name]
+                                next = (offset, abundances[next_stage_name])
+                                # next = abundances[next_stage_name]
                                 break
 
                         if last and next:
-                            step_height = (last - next) / (last + next)
-                            value = next * step_height + next
+                            # Linear imputation between nearest timepoints
+                            # TODO - find out why this calculation
+                            # TODO - name variables better
+                            d1, a1 = last
+                            d2, a2 = next
+                            step_height = (a1 - a2) / (d1 + d2)
+                            value = d2 * step_height + a2
 
                     # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
                     # TODO - for some reason ICR rounds to 2, not 4. What to do?
