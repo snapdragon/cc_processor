@@ -252,8 +252,16 @@ class Command(BaseCommand):
             relative_log2_normalised_means_across_replicates_by_stage,
         )
 
-        print("+++++ LOG2 MEAN METRICS")
-        print(log2_mean_metrics[Q09666])
+        assert log2_mean_metrics == log2_mean_metrics
+
+        zero_max_mean_metrics = self._calculate_metrics(
+            min_max_normalised_protein_readings,
+            min_max_normalised_means_across_replicates_by_stage,
+        )
+
+        print("+++++ MIN MAX")
+        print(zero_max_mean_metrics[Q09666])
+        return
 
     def _all_replicates(self, *args, **kwargs):
         """

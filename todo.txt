@@ -25,10 +25,13 @@ Get ANOVA q values
 Don't get Fisher G values yet
     TODO does the python version have a bug?
     https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
-Get protein annotations
+LATER - Get protein annotations
+Change main loop to be by protein
 
 
-Maybe do one protein at a time like ICR, not all at once.
+NEXT - get steps for phospho
+
+
 Look up the values from the paper for a relevant protein to see if it matches buggy output
 Write a test for _calculate_first_level_normalisation
 Write a test for _calculate_arrest_log2_normalisation
@@ -38,8 +41,8 @@ process/management/commands/process.py:44: note: By default the bodies of untype
     Higher level of mypy checking required? Check work.
 Add uniqueness constraints to models
 Add Final to various variables
-Study all pytest marks
 Write tests for with_bugs?
+Round the various stats
 
 
 ### Later
