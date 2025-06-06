@@ -266,18 +266,18 @@ class Command(BaseCommand):
                 min_max_normalised_means_across_replicates_by_stage,
             )
 
-            print("++++++ metrics")
-            print(log2_mean_metrics)
-            print(zero_max_mean_metrics)
-            return
+            # print("++++++ metrics")
+            # print(log2_mean_metrics)
+            # print(zero_max_mean_metrics)
+            # return
 
             assert zero_max_mean_metrics == zero_max_mean_metrics
 
-            # anovas = self._calcANOVA(relative_log2_normalised_protein_readings)
+            anovas = self._calcANOVA(relative_log2_normalised_readings)
 
-            # print("+++++ ANOVAS")
-            # print(len(anovas.keys()))
-            # return
+            print("+++++ ANOVAS")
+            print(anovas)
+            return
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -326,48 +326,43 @@ class Command(BaseCommand):
         return res
 
     # TODO - straight up lifted from ICR, simplify ideally using a library
-    def _calcANOVA(self, input_protein_data):
+    def _calcANOVA(self, readings: dict):
         """
         Groups by time point and performs ANOVA between all time point groups.
         """
-        anovas = {}
+        # Defaults if not enough replicate
+        # TODO - why these values?
+        p_value = 1
+        f_statistic = 1
 
-        for protein in input_protein_data:
-            try:
-                # TODO - make non generic
-                timepoints_1 = [
-                    self._tp("Palbo", input_protein_data),
-                    self._tp("Late G1_1", input_protein_data),
-                    self._tp("G1/S", input_protein_data),
-                    self._tp("S", input_protein_data),
-                    self._tp("S/G2", input_protein_data),
-                    self._tp("G2_2", input_protein_data),
-                    self._tp("G2/M_1", input_protein_data),
-                    self._tp("M/Early G1", input_protein_data),
-                ]
+        try:
+            # TODO - make non generic
+            timepoints_1 = [
+                self._tp("Palbo", readings),
+                self._tp("Late G1_1", readings),
+                self._tp("G1/S", readings),
+                self._tp("S", readings),
+                self._tp("S/G2", readings),
+                self._tp("G2_2", readings),
+                self._tp("G2/M_1", readings),
+                self._tp("M/Early G1", readings),
+            ]
 
-                timepoints = [x for x in timepoints_1 if x != []]
+            timepoints = [x for x in timepoints_1 if x != []]
 
-                # Protein info in at least 2 reps:
-                if len(timepoints) != 0:
-                    one_way_anova = f_oneway(*timepoints)
-                    f_statistic = one_way_anova[0]
-                    p_value = one_way_anova[1]
-                    if np.isnan(p_value):
-                        p_value = 1
-                else:
-                    f_statistic = 1
+            # Protein info in at least 2 reps:
+            # TODO - why is that comment above? There's no mention of two reps.
+            if len(timepoints) != 0:
+                one_way_anova = f_oneway(*timepoints)
+                f_statistic = one_way_anova[0].item()
+                p_value = one_way_anova[1].item()
+                if np.isnan(p_value):
                     p_value = 1
+        except Exception as e:
+            print("++++ ERROR CALCULATING ANOVA")
+            print(e)
 
-                anovas[protein] = (p_value, f_statistic)
-            except Exception as e:
-                print("++++ ERROR CALCULATING ANOVA")
-                print(e)
-                break
-
-            break
-
-        return anovas
+        return (p_value, f_statistic)
 
     def _calculate_metrics(
         self,
