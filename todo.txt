@@ -34,6 +34,7 @@ NEXT - get steps for phospho
 
 
 Look up the values from the paper for a relevant protein to see if it matches buggy output
+Move functions out of command file
 Write a test for _calculate_first_level_normalisation
 Write a test for _calculate_arrest_log2_normalisation
 Write a test for _calculate_relative_log2_normalisation

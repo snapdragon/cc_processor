@@ -21,12 +21,12 @@ def test_all_replicates():
         ReplicateFactory(project=project, name="r2"),
     ]
 
-    def test_func(replicate):
+    def test_func(replicate_name):
         return {}
 
     results = command._all_replicates(func=test_func, replicates=replicates)
 
-    assert results == {replicates[0]: {}, replicates[1]: {}}
+    assert results == {replicates[0].name: {}, replicates[1].name: {}}
 
 
 @pytest.mark.django_db
@@ -72,32 +72,26 @@ def test_calculate_means_across_replicates_by_stage():
         protein=protein, column_name=column_name6, reading=5
     )
 
-    protein_readings = {
-        protein: {
-            replicate1.name: {
-                sample_stage1.name: protein_reading_1.reading,
-                sample_stage2.name: protein_reading_4.reading,
-            },
-            replicate2.name: {
-                sample_stage1.name: protein_reading_2.reading,
-                sample_stage2.name: protein_reading_5.reading,
-            },
-            replicate3.name: {
-                sample_stage1.name: protein_reading_3.reading,
-                sample_stage2.name: protein_reading_6.reading,
-            },
-        }
+    readings = {
+        replicate1.name: {
+            sample_stage1.name: protein_reading_1.reading,
+            sample_stage2.name: protein_reading_4.reading,
+        },
+        replicate2.name: {
+            sample_stage1.name: protein_reading_2.reading,
+            sample_stage2.name: protein_reading_5.reading,
+        },
+        replicate3.name: {
+            sample_stage1.name: protein_reading_3.reading,
+            sample_stage2.name: protein_reading_6.reading,
+        },
     }
 
-    results = command._calculate_means_across_replicates_by_stage(
-        protein_readings, False
-    )
+    results = command._calculate_means_across_replicates_by_stage(readings, False)
 
     assert results == {
-        protein: {
-            sample_stage1.name: 4,
-            sample_stage2.name: 3,
-        }
+        sample_stage1.name: 4,
+        sample_stage2.name: 3,
     }
 
 
@@ -128,11 +122,11 @@ def test_calc_replicate_column_medians():
     protein_readings = ProteinReading.objects.all()
     column_names = ColumnName.objects.all()
 
-    results = command._calc_replicate_column_medians(
-        replicate, protein_readings, column_names
+    results = command._calc_replicate_stage_name_medians(
+        replicate.name, protein_readings, column_names
     )
 
     assert results == {
-        column_name1: 4.0,
-        column_name2: 3.0,
+        column_name1.sample_stage.name: 4.0,
+        column_name2.sample_stage.name: 3.0,
     }
