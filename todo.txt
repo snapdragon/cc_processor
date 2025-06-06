@@ -21,8 +21,6 @@ DONE AND CHECKED - Calculate stats
 Calculate ANOVA
 Calculate confidence
 
-Put in protein loop
-
 
 Create data frame TODO - why?
 Get ANOVA q values

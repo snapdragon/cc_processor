@@ -8,7 +8,7 @@ from django.db.models.query import QuerySet
 from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 
-from process.models import ColumnName, Project, Protein, ProteinReading, Replicate
+from process.models import ColumnName, Project, ProteinReading, Replicate
 
 # TODO - make this configurable by flag
 logging.basicConfig(
@@ -73,48 +73,37 @@ class Command(BaseCommand):
             for its column, then averaging them across replicates.
         """
         # TODO - this is solely for development. Take it out afterwards.
-        Q09666 = Protein.objects.get(
-            accession_number="Q09666", project__name=project.name
-        )
+        # Q09666 = Protein.objects.get(
+        #     accession_number="Q09666", project__name=project.name
+        # )
 
-        # TODO - make each call flaggable
+        # TODO - make each call flaggable?
         # TODO - rename 'medians' to something more informative
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
         medians = self._all_replicates(
-            func=self._calc_replicate_column_medians,
+            func=self._calc_replicate_stage_name_medians,
             replicates=replicates,
             protein_readings=protein_readings,
             column_names=column_names,
         )
 
         if with_bugs:
-            # Make both the same, it's simpler than deleting number one and changing
-            #   code elsewhere
-            replicate_1 = None
-            replicate_2 = None
-
-            for replicate in medians.keys():
-                # TODO - make these constants
-                if replicate.name == "One":
-                    replicate_1 = replicate
-                elif replicate.name == "Two":
-                    replicate_2 = replicate
-
             r2_medians = {}
 
-            for cn in medians[replicate_2].keys():
-                r2_medians[cn.sample_stage.name] = medians[replicate_2][cn]
+            # TODO - is this still needed now we use replicate names instead of replicates?
+            for stage_name in medians["Two"].keys():
+                r2_medians[stage_name] = medians["Two"][stage_name]
 
-            for cn in medians[replicate_1].keys():
-                medians[replicate_1][cn] = r2_medians[cn.sample_stage.name]
+            for stage_name in medians["One"].keys():
+                medians["One"][stage_name] = r2_medians[stage_name]
 
         print(f"Medians for project {project.name}")
-        for replicate in medians.keys():
-            print(f"Replicate: {replicate.name}")
+        for replicate_name in medians.keys():
+            print(f"Replicate: {replicate_name}")
 
-            for stage in medians[replicate].keys():
-                print(f"    {stage.name}: {medians[replicate][stage]}")
+            for stage_name in medians[replicate_name].keys():
+                print(f"    {stage_name}: {medians[replicate_name][stage_name]}")
 
         # TODO - is this used for anything?
         # means_across_replicates_by_stage = (
@@ -126,144 +115,169 @@ class Command(BaseCommand):
         # # These are just here for now to stop the pre commit hooks complaining
         # assert means_across_replicates_by_stage == means_across_replicates_by_stage
 
-        # N.B. normalised_protein_readings is not the same structure as protein_readings.
+        # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
         #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
         #   is a dict with Protein object keys. The values is a dict of replicate name keys
         #   with a dict of sample stage names and abundances as keys.
-        normalised_protein_readings = self._calculate_first_level_normalisation(
-            protein_readings, medians
-        )
+        # TODO - convert this in to a DB query to save having to run it manually?
+        protein_readings_by_rep_stage = self._format_protein_readings(protein_readings)
 
-        logger.info(
-            f"Number of normalised readings: f{len(normalised_protein_readings.keys())}"
-        )
-
-        # TODO - check whether all means calculations need with-bugs
-        normalised_means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                normalised_protein_readings, with_bugs
+        for protein, readings in protein_readings_by_rep_stage.items():
+            # firstLevelNormalisationProteomics
+            normalised_readings = self._calculate_first_level_normalisation(
+                readings, medians
             )
-        )
 
-        assert (
-            normalised_means_across_replicates_by_stage
-            == normalised_means_across_replicates_by_stage
-        )
+            # TODO - take these out later, they're just to stop precommit hooks complaining
+            assert normalised_readings == normalised_readings
 
-        arrest_log2_normalised_protein_readings = (
-            self._calculate_arrest_log2_normalisation(
-                normalised_protein_readings, project
+            # TODO - check whether all means calculations need with-bugs
+            normalised_means_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    normalised_readings, with_bugs
+                )
             )
-        )
 
-        logger.info(
-            f"Number of arrest log2 normalised readings: f{len(arrest_log2_normalised_protein_readings)}"
-        )
-
-        arrest_log2_normalised_means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                arrest_log2_normalised_protein_readings, with_bugs
+            assert (
+                normalised_means_across_replicates_by_stage
+                == normalised_means_across_replicates_by_stage
             )
-        )
 
-        assert (
-            arrest_log2_normalised_means_across_replicates_by_stage
-            == arrest_log2_normalised_means_across_replicates_by_stage
-        )
-
-        relative_log2_normalised_protein_readings = (
-            self._calculate_relative_log2_normalisation(
-                normalised_protein_readings, project
+            # calclog2PalboNormalisation
+            arrest_log2_normalised_readings = self._calculate_arrest_log2_normalisation(
+                normalised_readings, project
             )
-        )
 
-        logger.info(
-            f"Number of relative log2 normalised readings: f{len(relative_log2_normalised_protein_readings)}"
-        )
-
-        relative_log2_normalised_means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                relative_log2_normalised_protein_readings, with_bugs
+            logger.info(
+                f"Number of arrest log2 normalised readings: f{len(arrest_log2_normalised_readings)}"
             )
-        )
 
-        print("+++++ RELATIVE LOG2 NORM ABUNDANCES AVERAGES")
-        print(relative_log2_normalised_means_across_replicates_by_stage[Q09666])
-
-        level_two_normalised_protein_readings = self._calculate_level_two_normalisation(
-            relative_log2_normalised_protein_readings
-        )
-
-        logger.info(
-            f"Number of level two normalised readings: f{len(level_two_normalised_protein_readings)}"
-        )
-
-        level_two_normalised_means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                level_two_normalised_protein_readings, with_bugs
+            arrest_log2_normalised_means_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    arrest_log2_normalised_readings, with_bugs
+                )
             )
-        )
 
-        assert (
-            level_two_normalised_means_across_replicates_by_stage
-            == level_two_normalised_means_across_replicates_by_stage
-        )
-
-        min_max_normalised_protein_readings = self._calculate_level_two_normalisation(
-            normalised_protein_readings, True
-        )
-
-        logger.info(
-            f"min max normalised readings: f{len(min_max_normalised_protein_readings)}"
-        )
-
-        min_max_normalised_means_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                min_max_normalised_protein_readings, with_bugs
+            assert (
+                arrest_log2_normalised_means_across_replicates_by_stage
+                == arrest_log2_normalised_means_across_replicates_by_stage
             )
-        )
 
-        assert (
-            min_max_normalised_means_across_replicates_by_stage
-            == min_max_normalised_means_across_replicates_by_stage
-        )
-
-        # print("++++++ min max normalised means across replicates")
-        # print(min_max_normalised_means_across_replicates_by_stage[Q09666])
-
-        imputed_protein_readings = self._impute(
-            level_two_normalised_protein_readings, replicates, column_names
-        )
-
-        logger.info(f"imputed readings: f{len(imputed_protein_readings)}")
-
-        imputed_across_replicates_by_stage = (
-            self._calculate_means_across_replicates_by_stage(
-                imputed_protein_readings, with_bugs, imputed=True
+            # calclog2RelativeAbundance
+            relative_log2_normalised_readings = (
+                self._calculate_relative_log2_normalisation(normalised_readings)
             )
-        )
 
-        assert imputed_across_replicates_by_stage == imputed_across_replicates_by_stage
+            # print("++++ LOG2")
+            # print(relative_log2_normalised_readings)
+            # return
 
-        log2_mean_metrics = self._calculate_metrics(
-            relative_log2_normalised_protein_readings,
-            relative_log2_normalised_means_across_replicates_by_stage,
-        )
+            logger.info(
+                f"Number of relative log2 normalised readings: f{len(relative_log2_normalised_readings)}"
+            )
 
-        assert log2_mean_metrics == log2_mean_metrics
+            relative_log2_normalised_means_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    relative_log2_normalised_readings, with_bugs
+                )
+            )
 
-        zero_max_mean_metrics = self._calculate_metrics(
-            min_max_normalised_protein_readings,
-            min_max_normalised_means_across_replicates_by_stage,
-        )
+            # print("+++++ RELATIVE AVERAGE")
+            # print(relative_log2_normalised_means_across_replicates_by_stage)
+            # return
 
-        assert zero_max_mean_metrics == zero_max_mean_metrics
+            # normaliseData
+            # TODO - these two calls can be combined
+            level_two_normalised_readings = self._calculate_level_two_normalisation(
+                relative_log2_normalised_readings
+            )
 
-        # anovas = self._calcANOVA(relative_log2_normalised_protein_readings)
+            logger.info(
+                f"Number of level two normalised readings: f{len(level_two_normalised_readings)}"
+            )
 
-        # print("+++++ ANOVAS")
-        # print(len(anovas.keys()))
-        # return
+            level_two_normalised_means_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    level_two_normalised_readings, with_bugs
+                )
+            )
+
+            # print("+++++ LEVEL TWO NORMALISED AVERAGE")
+            # print(level_two_normalised_means_across_replicates_by_stage)
+            # return
+
+            assert (
+                level_two_normalised_means_across_replicates_by_stage
+                == level_two_normalised_means_across_replicates_by_stage
+            )
+
+            min_max_normalised_readings = self._calculate_level_two_normalisation(
+                normalised_readings, True
+            )
+
+            logger.info(
+                f"min max normalised readings: f{len(min_max_normalised_readings)}"
+            )
+
+            min_max_normalised_means_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    min_max_normalised_readings, with_bugs
+                )
+            )
+
+            assert (
+                min_max_normalised_means_across_replicates_by_stage
+                == min_max_normalised_means_across_replicates_by_stage
+            )
+
+            # print("++++++ min max normalised means across replicates")
+            # print(min_max_normalised_means_across_replicates_by_stage)
+            # return
+
+            imputed_readings = self._impute(
+                level_two_normalised_readings, replicates, column_names
+            )
+
+            logger.info(f"imputed readings: f{len(imputed_readings)}")
+
+            imputed_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    imputed_readings, with_bugs, imputed=True
+                )
+            )
+
+            # print("++++++ imputed across replicates")
+            # print(imputed_across_replicates_by_stage)
+            # return
+
+            assert (
+                imputed_across_replicates_by_stage == imputed_across_replicates_by_stage
+            )
+
+            log2_mean_metrics = self._calculate_metrics(
+                relative_log2_normalised_readings,
+                relative_log2_normalised_means_across_replicates_by_stage,
+            )
+
+            assert log2_mean_metrics == log2_mean_metrics
+
+            zero_max_mean_metrics = self._calculate_metrics(
+                min_max_normalised_readings,
+                min_max_normalised_means_across_replicates_by_stage,
+            )
+
+            print("++++++ metrics")
+            print(log2_mean_metrics)
+            print(zero_max_mean_metrics)
+            return
+
+            assert zero_max_mean_metrics == zero_max_mean_metrics
+
+            # anovas = self._calcANOVA(relative_log2_normalised_protein_readings)
+
+            # print("+++++ ANOVAS")
+            # print(len(anovas.keys()))
+            # return
 
     def _all_replicates(self, *args, **kwargs):
         """
@@ -277,8 +291,8 @@ class Command(BaseCommand):
         replicates = call_kwargs.pop("replicates")
 
         for replicate in replicates:
-            call_kwargs["replicate"] = replicate
-            results[replicate] = func(**call_kwargs)
+            call_kwargs["replicate_name"] = replicate.name
+            results[replicate.name] = func(**call_kwargs)
 
         return results
 
@@ -357,95 +371,90 @@ class Command(BaseCommand):
 
     def _calculate_metrics(
         self,
-        protein_readings: QuerySet[ProteinReading],
-        protein_readings_averages: QuerySet[Replicate],
+        readings: dict,
+        readings_averages: dict,
     ):
         logger.info("Calculate metrics")
 
-        protein_metrics = {}
+        metrics = {}
 
-        for protein in protein_readings.keys():
-            abundances = []
-            abundance_averages = protein_readings_averages[protein]
-            # TODO - how does ICR cope with Nones but not this? Does it use imputed values?
-            abundance_averages_list = [
-                val for val in abundance_averages.values() if val is not None
-            ]
-            # abundance_averages_list = list(abundance_averages.values())
+        abundances = []
+        abundance_averages = readings_averages
+        # TODO - how does ICR cope with Nones but not this? Does it use imputed values?
+        abundance_averages_list = [
+            val for val in abundance_averages.values() if val is not None
+        ]
+        # abundance_averages_list = list(abundance_averages.values())
 
-            for replicate_name in protein_readings[protein]:
-                for stage_name in protein_readings[protein][replicate_name]:
-                    abundance = protein_readings[protein][replicate_name][stage_name]
+        for replicate_name in readings:
+            for stage_name in readings[replicate_name]:
+                abundance = readings[replicate_name][stage_name]
 
-                    if abundance is not None:
-                        # TODO - why does this add all reps for standard deviation calculation?
-                        abundances.append(abundance)
+                if abundance is not None:
+                    # TODO - why does this add all reps for standard deviation calculation?
+                    abundances.append(abundance)
 
-            std_dev = statistics.stdev(abundances)
+        std_dev = statistics.stdev(abundances)
 
-            try:
-                _, residuals, *_ = np.polyfit(
-                    range(len(abundance_averages)),
-                    abundance_averages_list,
-                    2,
-                    full=True,
+        try:
+            _, residuals, *_ = np.polyfit(
+                range(len(abundance_averages)),
+                abundance_averages_list,
+                2,
+                full=True,
+            )
+
+            if len(residuals) == 0:
+                # TODO - why 5?
+                # TODO - 5 for ICR, but what about others?
+                # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
+                residual = 5
+            else:
+                residual = residuals[0]
+
+            # TODO - find out what this all means
+            r_squared = self._polyfit(
+                range(0, len(abundance_averages)), abundance_averages_list, 2
+            )
+            # TODO - find out what this all means
+            max_fold_change = max(abundance_averages_list) - min(
+                abundance_averages_list
+            )
+
+            # TODO - what does all this mean?
+            base_metrics = {
+                # Why is variance average 2 sig fig in ICR but several here?
+                "variance": moment(abundance_averages_list, moment=2),
+                "skewness": moment(abundance_averages_list, moment=3),
+                "kurtosis": moment(abundance_averages_list, moment=4),
+                "peak": max(abundance_averages, key=abundance_averages.get),
+                "max_fold_change": max_fold_change,
+                "residuals": residual,
+                "R_squared": r_squared,
+            }
+
+            # If we have info for the protein in at least 2 replicates
+            if len(readings) >= 2:
+                curve_fold_change, curve_peak = self._calcCurveFoldChange(
+                    # readings, protein.accession_number
+                    readings
                 )
+                residuals_all, r_squared_all = self._calcResidualsR2All(readings)
 
-                if len(residuals) == 0:
-                    # TODO - why 5?
-                    # TODO - 5 for ICR, but what about others?
-                    # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
-                    residual = 5
-                else:
-                    residual = residuals[0]
-
-                # TODO - find out what this all means
-                r_squared = self._polyfit(
-                    range(0, len(abundance_averages)), abundance_averages_list, 2
-                )
-                # TODO - find out what this all means
-                max_fold_change = max(abundance_averages_list) - min(
-                    abundance_averages_list
-                )
-
-                # TODO - what does all this mean?
-                base_metrics = {
-                    "variance": moment(abundance_averages_list, moment=2),
-                    "skewness": moment(abundance_averages_list, moment=3),
-                    "kurtosis": moment(abundance_averages_list, moment=4),
-                    "peak": max(abundance_averages, key=abundance_averages.get),
-                    "max_fold_change": max_fold_change,
-                    "residuals": residual,
-                    "R_squared": r_squared,
+                metrics = {
+                    "standard_deviation": std_dev,
+                    **{f"{k}_average": v for k, v in base_metrics.items()},
+                    "residuals_all": residuals_all,
+                    "R_squared_all": r_squared_all,
+                    "curve_fold_change": curve_fold_change,
+                    "curve_peak": curve_peak,
                 }
 
-                # If we have info for the protein in at least 2 replicates
-                if len(protein_readings[protein]) >= 2:
-                    curve_fold_change, curve_peak = self._calcCurveFoldChange(
-                        protein_readings[protein], protein.accession_number
-                    )
-                    residuals_all, r_squared_all = self._calcResidualsR2All(
-                        protein_readings[protein]
-                    )
+        except Exception as e:
+            print("Exception in _calculate_metrics")
+            print(e)
 
-                    metrics = {
-                        "standard_deviation": std_dev,
-                        **{f"{k}_average": v for k, v in base_metrics.items()},
-                        "residuals_all": residuals_all,
-                        "R_squared_all": r_squared_all,
-                        "curve_fold_change": curve_fold_change,
-                        "curve_peak": curve_peak,
-                    }
-
-                protein_metrics[protein] = metrics
-
-            except Exception as e:
-                print("Exception in _calculate_metrics")
-                print(e)
-                # TODO - take this out
-                break
-
-        return protein_metrics
+        return metrics
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
     def _calcResidualsR2All(self, norm_abundances):
@@ -492,7 +501,8 @@ class Command(BaseCommand):
         return residuals_all, r_squared_all
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
-    def _calcCurveFoldChange(self, norm_abundances, uniprot_accession):
+    # def _calcCurveFoldChange(self, norm_abundances, uniprot_accession):
+    def _calcCurveFoldChange(self, norm_abundances):
         """
         Calculates the curve_fold_change and curve peaks for the three or two replicates normalised abundance for each protein.
         """
@@ -508,13 +518,13 @@ class Command(BaseCommand):
             "G2/M_1": 6,
             "M/Early G1": 7,
         }
-        curves_all = {}
+        # curves_all = {}
 
         # if we have info for the protein in at least 2 replicates
         # TODO - this code needs a tidy
         if len(norm_abundances) >= 2:
             reps = norm_abundances
-            curves_all[uniprot_accession] = {}
+            # curves_all[uniprot_accession] = {}
             x = []
             for rep in reps:
                 # TODO - make generic somehow
@@ -569,7 +579,7 @@ class Command(BaseCommand):
     def _impute(
         # TODO - all these pr types are wrong, and also probably bad variable names
         self,
-        normalised_protein_readings: QuerySet[ProteinReading],
+        readings: dict,
         replicates: QuerySet[Replicate],
         column_names: QuerySet[ColumnName],
     ):
@@ -578,177 +588,160 @@ class Command(BaseCommand):
         replicates_by_name: dict = {}
         column_names_by_replicate: dict = {}
 
+        # TODO - is this needed now we no longer use Replicate objects as keys?
         for replicate in replicates:
             replicates_by_name[replicate.name] = replicate
             column_names_by_replicate[replicate.name] = []
 
+        # TODO - and this?
         for column_name in column_names:
             column_names_by_replicate[column_name.replicate.name].append(
                 column_name.sample_stage.name
             )
 
-        imputed_protein_readings: dict = {}
+        imputed_readings: dict = {}
 
-        for protein in normalised_protein_readings.keys():
-            imputed_protein_readings[protein] = {}
+        for replicate_name in readings.keys():
+            imputed_readings[replicate_name] = {}
 
-            for replicate_name in normalised_protein_readings[protein].keys():
-                imputed_protein_readings[protein][replicate_name] = {}
+            abundances_dict = readings[replicate_name]
+            abundances = list(abundances_dict.values())
 
-                abundances_dict = normalised_protein_readings[protein][replicate_name]
-                abundances = list(abundances_dict.values())
+            stage_names = column_names_by_replicate[replicate_name]
 
-                stage_names = column_names_by_replicate[replicate_name]
+            for idx, stage_name in enumerate(stage_names):
+                # Default value, should never be used
+                value = 0
 
-                for idx, stage_name in enumerate(stage_names):
-                    # Default value, should never be used
-                    value = 0
+                if abundances_dict.get(stage_name, None) is not None:
+                    value = abundances_dict[stage_name]
+                else:
+                    last = None
+                    next = None
 
-                    if abundances_dict.get(stage_name, None) is not None:
-                        value = abundances_dict[stage_name]
-                    else:
-                        last = None
-                        next = None
+                    # TODO - isn't there a better way to iterate?
+                    for offset in range(1, len(stage_names)):
+                        prev_idx = idx - offset
+                        if prev_idx < 0:
+                            # Gone before the beginning of the list, give up
+                            break
 
-                        # TODO - isn't there a better way to iterate?
-                        for offset in range(1, len(stage_names)):
-                            prev_idx = idx - offset
-                            if prev_idx < 0:
-                                # Gone before the beginning of the list, give up
-                                break
+                        prev_stage_name = stage_names[prev_idx]
 
-                            prev_stage_name = stage_names[prev_idx]
+                        if abundances_dict.get(prev_stage_name, None) is not None:
+                            last = (offset, abundances_dict[prev_stage_name])
+                            # last = abundances_dict[prev_stage_name]
+                            break
 
-                            if abundances_dict.get(prev_stage_name, None) is not None:
-                                last = (offset, abundances_dict[prev_stage_name])
-                                # last = abundances_dict[prev_stage_name]
-                                break
+                    for offset in range(1, len(abundances)):
+                        # Look forward
+                        # TODO - this seems to loop back to the beginning. Is that right?
+                        next_idx = (idx + offset) % len(abundances)
+                        next_stage_name = stage_names[next_idx]
 
-                        for offset in range(1, len(abundances)):
-                            # Look forward
-                            # TODO - this seems to loop back to the beginning. Is that right?
-                            next_idx = (idx + offset) % len(abundances)
-                            next_stage_name = stage_names[next_idx]
+                        if abundances_dict.get(stage_name, None) is not None:
+                            next = (offset, abundances[next_stage_name])
+                            # next = abundances[next_stage_name]
+                            break
 
-                            if abundances_dict.get(stage_name, None) is not None:
-                                next = (offset, abundances[next_stage_name])
-                                # next = abundances[next_stage_name]
-                                break
+                    if last and next:
+                        # Linear imputation between nearest timepoints
+                        # TODO - find out why this calculation
+                        # TODO - name variables better
+                        d1, a1 = last
+                        d2, a2 = next
+                        step_height = (a1 - a2) / (d1 + d2)
+                        value = d2 * step_height + a2
 
-                        if last and next:
-                            # Linear imputation between nearest timepoints
-                            # TODO - find out why this calculation
-                            # TODO - name variables better
-                            d1, a1 = last
-                            d2, a2 = next
-                            step_height = (a1 - a2) / (d1 + d2)
-                            value = d2 * step_height + a2
+                # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
+                # TODO - for some reason ICR rounds to 2, not 4. What to do?
+                imputed_readings[replicate_name][stage_name] = round(float(value), 2)
 
-                    # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
-                    # TODO - for some reason ICR rounds to 2, not 4. What to do?
-                    imputed_protein_readings[protein][replicate_name][
-                        stage_name
-                    ] = round(float(value), 2)
+        return imputed_readings
 
-        return imputed_protein_readings
-
-    def _calculate_level_two_normalisation(
-        self, normalised_protein_readings: QuerySet[ProteinReading], zero_min=False
-    ):
+    def _calculate_level_two_normalisation(self, readings: dict, zero_min=False):
         logger.info("relative log2 normalising abundances")
 
-        level_two_normalised_protein_readings: dict = {}
+        level_two_normalised_readings: dict = {}
 
-        for protein in normalised_protein_readings:
-            level_two_normalised_protein_readings[protein] = {}
+        for replicate_name in readings:
+            level_two_normalised_readings[replicate_name] = {}
 
-            for replicate_name in normalised_protein_readings[protein]:
-                level_two_normalised_protein_readings[protein][replicate_name] = {}
+            min_value = 0
+            # TODO - maybe this should be a function
+            abundances = readings[replicate_name]
 
-                min_value = 0
-                # TODO - maybe this should be a function
-                abundances = normalised_protein_readings[protein][replicate_name]
+            abundance_values_non_null = [
+                val for val in abundances.values() if val is not None
+            ]
 
-                abundance_values_non_null = [
-                    val for val in abundances.values() if val is not None
-                ]
+            if not zero_min:
+                min_value = min(abundance_values_non_null)
 
-                if not zero_min:
-                    min_value = min(abundance_values_non_null)
+            max_value = max(abundance_values_non_null)
 
-                max_value = max(abundance_values_non_null)
+            for stage_name, abundance in abundances.items():
+                denominator = max_value - min_value
+                if abundance is None or denominator == 0:
+                    abundance_normalised = 0.5
+                else:
+                    abundance_normalised = (abundance - min_value) / denominator
 
-                for stage_name, abundance in abundances.items():
-                    denominator = max_value - min_value
-                    if abundance is None or denominator == 0:
-                        abundance_normalised = 0.5
-                    else:
-                        abundance_normalised = (abundance - min_value) / denominator
+                level_two_normalised_readings[replicate_name][stage_name] = self._round(
+                    abundance_normalised
+                )
 
-                    level_two_normalised_protein_readings[protein][replicate_name][
-                        stage_name
-                    ] = self._round(abundance_normalised)
+        return level_two_normalised_readings
 
-        return level_two_normalised_protein_readings
-
-    def _calculate_relative_log2_normalisation(
-        self, normalised_protein_readings: QuerySet[ProteinReading], project: Project
-    ):
+    def _calculate_relative_log2_normalisation(self, readings: dict):
         logger.info("relative log2 normalising abundances")
 
-        log2_normalised_protein_readings: dict = {}
+        log2_normalised_readings: dict = {}
 
         log2_abundances: dict = {}
 
-        for protein in normalised_protein_readings:
-            log2_abundances[protein] = {}
+        for replicate_name in readings:
+            log2_abundances[replicate_name] = {}
 
-            for replicate_name in normalised_protein_readings[protein]:
-                log2_abundances[protein][replicate_name] = {}
+            for stage_name in readings[replicate_name]:
+                log2_abundances[replicate_name][stage_name] = math.log2(
+                    readings[replicate_name][stage_name]
+                )
 
-                for stage_name in normalised_protein_readings[protein][replicate_name]:
-                    log2_abundances[protein][replicate_name][stage_name] = math.log2(
-                        normalised_protein_readings[protein][replicate_name][stage_name]
-                    )
+        total_abundances = 0
+        total_lengths = 0
 
-        for protein in log2_abundances:
-            total_abundances = 0
-            total_lengths = 0
-
-            for replicate_name in log2_abundances[protein]:
-                for stage_name in log2_abundances[protein][replicate_name]:
-                    if log2_abundances[protein][replicate_name][stage_name] is not None:
-                        total_abundances += log2_abundances[protein][replicate_name][
-                            stage_name
-                        ]
-                        total_lengths += 1
+        for replicate_name in log2_abundances:
+            for stage_name in log2_abundances[replicate_name]:
+                if log2_abundances[replicate_name][stage_name] is not None:
+                    total_abundances += log2_abundances[replicate_name][stage_name]
+                    total_lengths += 1
 
             mean = total_abundances / total_lengths
 
-            log2_normalised_protein_readings[protein] = {}
-            for replicate_name in normalised_protein_readings[protein]:
-                log2_normalised_protein_readings[protein][replicate_name] = {}
+            log2_normalised_readings = {}
 
-                for stage_name in normalised_protein_readings[protein][replicate_name]:
+            for replicate_name in readings:
+                log2_normalised_readings[replicate_name] = {}
+
+                for stage_name in readings[replicate_name]:
                     normalised_abundance = None
 
-                    if log2_abundances[protein][replicate_name].get(stage_name):
+                    if log2_abundances[replicate_name].get(stage_name):
                         normalised_abundance = self._round(
-                            log2_abundances[protein][replicate_name][stage_name] - mean
+                            log2_abundances[replicate_name][stage_name] - mean
                         )
 
-                    log2_normalised_protein_readings[protein][replicate_name][
+                    log2_normalised_readings[replicate_name][
                         stage_name
                     ] = normalised_abundance
 
-        return log2_normalised_protein_readings
+        return log2_normalised_readings
 
-    def _calculate_arrest_log2_normalisation(
-        self, normalised_protein_readings: QuerySet[ProteinReading], project: Project
-    ):
+    def _calculate_arrest_log2_normalisation(self, readings: dict, project: Project):
         logger.info("log2 arrest normalising abundances")
 
-        log2_normalised_protein_readings: dict = {}
+        log2_normalised_readings: dict = {}
 
         # TODO - what should the stage name be?
         # TODO - is ARRESTING_AGENT the wrong name?
@@ -758,47 +751,30 @@ class Command(BaseCommand):
         if project.name == "ICR":
             ARRESTING_AGENT = "Palbo"
 
-        for protein in normalised_protein_readings.keys():
-            log2_normalised_protein_readings[protein] = {}
+        log2_normalised_readings = {}
 
-            for replicate_name in normalised_protein_readings[protein]:
-                if protein.accession_number == "Q09666":
-                    print("+++ REPLICATES")
+        for replicate_name in readings:
+            log2_normalised_readings[replicate_name] = {}
 
-                    print(normalised_protein_readings[protein])
-                if not log2_normalised_protein_readings[protein].get(replicate_name):
-                    log2_normalised_protein_readings[protein][replicate_name] = {}
+            for stage_name in readings[replicate_name]:
+                log2_reading = None
+                reading = readings[replicate_name][stage_name]
 
-                for stage_name in normalised_protein_readings[protein][replicate_name]:
-                    log2_reading = None
-                    reading = normalised_protein_readings[protein][replicate_name][
-                        stage_name
-                    ]
+                if readings[replicate_name].get(ARRESTING_AGENT):
+                    arrest_reading = readings[replicate_name][ARRESTING_AGENT]
 
-                    if normalised_protein_readings[protein][replicate_name].get(
-                        ARRESTING_AGENT
-                    ):
-                        arrest_reading = normalised_protein_readings[protein][
-                            replicate_name
-                        ][ARRESTING_AGENT]
+                    if reading is not None and arrest_reading is not None:
+                        log2_reading = self._round(math.log2(reading / arrest_reading))
 
-                        if reading is not None and arrest_reading is not None:
-                            log2_reading = self._round(
-                                math.log2(reading / arrest_reading)
-                            )
+                log2_normalised_readings[replicate_name][stage_name] = log2_reading
 
-                    log2_normalised_protein_readings[protein][replicate_name][
-                        stage_name
-                    ] = log2_reading
+        return log2_normalised_readings
 
-        return log2_normalised_protein_readings
-
-    def _calculate_first_level_normalisation(
-        self, protein_readings: QuerySet[ProteinReading], medians
-    ):
-        logger.info("Normalising abundances")
-
-        normalised_protein_readings: dict = {}
+    def _format_protein_readings(self, protein_readings: QuerySet[ProteinReading]):
+        logger.info(
+            "Converting protein_readings QuerySet into dict by protein, replicate and stage name"
+        )
+        protein_readings_by_rep_stage: dict = {}
 
         protein_no = 0
 
@@ -807,19 +783,43 @@ class Command(BaseCommand):
             self._count_logger(
                 protein_no,
                 10000,
-                f"Normalising for {protein_no}, {protein_reading.protein.accession_number} {protein_reading.column_name.sample_stage.name}",
+                f"Formatting for {protein_no}, {protein_reading.protein.accession_number}",
             )
 
+            # TODO - what about Nones? Will there be any here? Check the import script.
             reading = protein_reading.reading
 
-            if reading:
-                protein = protein_reading.protein
-                replicate_name = protein_reading.column_name.replicate.name
-                sample_stage_name = protein_reading.column_name.sample_stage.name
+            protein = protein_reading.protein
+            replicate_name = protein_reading.column_name.replicate.name
+            stage_name = protein_reading.column_name.sample_stage.name
 
-                median = medians[protein_reading.column_name.replicate][
-                    protein_reading.column_name
-                ]
+            if not protein_readings_by_rep_stage.get(protein):
+                protein_readings_by_rep_stage[protein] = {}
+
+            if not protein_readings_by_rep_stage[protein].get(replicate_name):
+                protein_readings_by_rep_stage[protein][replicate_name] = {}
+
+            protein_readings_by_rep_stage[protein][replicate_name][stage_name] = reading
+
+        return protein_readings_by_rep_stage
+
+    def _calculate_first_level_normalisation(self, readings: dict, medians):
+        logger.info("Normalising abundances")
+
+        normalised_readings: dict = {}
+
+        for replicate_name in readings:
+            normalised_readings[replicate_name] = {}
+
+            for stage_name in readings[replicate_name]:
+                reading = readings[replicate_name][stage_name]
+
+                print("R AND S")
+                print(replicate_name)
+                print(stage_name)
+                print(medians)
+
+                median = medians[replicate_name][stage_name]
 
                 # TODO - need to round this?
                 # TODO - might there be undefined medians? If so what to do?
@@ -827,82 +827,61 @@ class Command(BaseCommand):
                 #   They probably shouldn't happen.
                 normalised_reading = reading / median
 
-                if not normalised_protein_readings.get(protein):
-                    normalised_protein_readings[protein] = {}
+                normalised_readings[replicate_name][stage_name] = normalised_reading
 
-                if not normalised_protein_readings[protein].get(replicate_name):
-                    normalised_protein_readings[protein][replicate_name] = {}
-
-                normalised_protein_readings[protein][replicate_name][
-                    sample_stage_name
-                ] = normalised_reading
-
-        return normalised_protein_readings
+        return normalised_readings
 
     def _calculate_means_across_replicates_by_stage(
         self,
-        protein_readings: QuerySet[ProteinReading],
+        reading: dict,
         with_bugs: bool,
         imputed: bool = False,
     ):
-        logger.info("Calculating mean across replicates by stage for each protein")
+        logger.info("Calculating mean across replicates by stage for protein")
 
         means: dict = {}
 
-        protein_no = 0
+        abundances: dict = {}
 
-        for protein in protein_readings.keys():
-            protein_no += 1
-            self._count_logger(
-                protein_no,
-                10000,
-                f"Calculating mean for {protein_no}, {protein.accession_number}",
-            )
+        for replicate_name in reading:
+            for stage_name in reading[replicate_name]:
+                if not abundances.get(stage_name):
+                    abundances[stage_name] = []
 
-            protein_reading = protein_readings[protein]
-            abundances: dict = {}
+                if with_bugs and not imputed:
+                    # We throw away the second reading
+                    # TODO - how will this behave towards None?
+                    if len(abundances[stage_name]) == 1:
+                        continue
 
-            for replicate_name in protein_reading:
-                for stage_name in protein_reading[replicate_name]:
-                    if not abundances.get(stage_name):
-                        abundances[stage_name] = []
+                if reading[replicate_name][stage_name] is not None:
+                    abundances[stage_name].append(reading[replicate_name][stage_name])
 
-                    if with_bugs and not imputed:
-                        # We throw away the second reading
-                        # TODO - how will this behave towards None?
-                        if len(abundances[stage_name]) == 1:
-                            continue
-
-                    if protein_reading[replicate_name][stage_name] is not None:
-                        abundances[stage_name].append(
-                            protein_reading[replicate_name][stage_name]
-                        )
-
-            means[protein] = {}
+            means = {}
 
             for stage_name in abundances:
                 abundance = abundances[stage_name]
 
                 if len(abundance):
                     mean = sum(abundance) / len(abundance)
-                    means[protein][stage_name] = self._round(mean)
+                    means[stage_name] = self._round(mean)
                 else:
                     # TODO - is this the right thing to do?
-                    means[protein][stage_name] = None
+                    means[stage_name] = None
 
         return means
 
-    def _calc_replicate_column_medians(
+    def _calc_replicate_stage_name_medians(
         self,
-        replicate: Replicate,
+        replicate_name: str,
         protein_readings: QuerySet[ProteinReading],
         column_names: QuerySet[ColumnName],
     ):
-        logger.info("Calculating column medians by replicate")
+        logger.info("Calculating stage name medians by replicate")
 
-        column_medians = {}
+        stage_name_medians = {}
 
-        column_names_by_replicate = column_names.filter(replicate__name=replicate.name)
+        column_names_by_replicate = column_names.filter(replicate__name=replicate_name)
 
         for column_name in column_names_by_replicate:
             readings = []
@@ -918,9 +897,9 @@ class Command(BaseCommand):
 
             median = statistics.median(readings)
 
-            column_medians[column_name] = median
+            stage_name_medians[column_name.sample_stage.name] = median
 
-        return column_medians
+        return stage_name_medians
 
     def _count_logger(self, i: int, step: int, output: str):
         if i % step == 0:
