@@ -94,9 +94,11 @@ class Command(BaseCommand):
         3) Normalise all abundances. This is done by dividing each abundance by the median
             for its column, then averaging them across replicates.
         """
+        FOCUS_PROTEIN_ACCESSION_NUMBER = "P06493"
+
         # TODO - this is solely for development. Take it out afterwards.
-        Q09666 = Protein.objects.get(
-            accession_number="Q09666", project__name=project.name
+        FOCUS_PROTEIN = Protein.objects.get(
+            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
         # TODO - make each call flaggable?
@@ -104,7 +106,7 @@ class Command(BaseCommand):
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
         medians = self._all_replicates(
-            func=self._calc_replicate_stage_name_medians,
+            func=self._calculate_replicate_stage_name_medians,
             replicates=replicates,
             protein_readings=protein_readings,
             column_names=column_names,
@@ -119,13 +121,6 @@ class Command(BaseCommand):
 
             for stage_name in medians["One"].keys():
                 medians["One"][stage_name] = r2_medians[stage_name]
-
-        # print(f"Medians for project {project.name}")
-        # for replicate_name in medians.keys():
-        #     print(f"Replicate: {replicate_name}")
-
-        #     for stage_name in medians[replicate_name].keys():
-        #         print(f"    {stage_name}: {medians[replicate_name][stage_name]}")
 
         # TODO - is this used for anything?
         # means_across_replicates_by_stage = (
@@ -150,9 +145,6 @@ class Command(BaseCommand):
         results = {}
 
         for protein, readings in raw_readings.items():
-            # print("++++++ PROTEIN")
-            # print(protein)
-            # print(readings)
             num_proteins += 1
 
             results[protein] = {PROTEIN_ABUNDANCES: {}, NORMALISED: {}, IMPUTED: {}, METRICS: {}}
@@ -238,12 +230,7 @@ class Command(BaseCommand):
                 min_max_normalised_means_across_replicates_by_stage,
             )
 
-            anova_stats = self._calcANOVA(relative_log2_normalised_readings)
-            anovas[protein] = {
-                # TODO - using indices is a bit clunky
-                "p_value": anova_stats[0],
-                "f_statistic": anova_stats[1],
-            }
+            anovas[protein] = self._calcANOVA(relative_log2_normalised_readings)
 
             relative_log2_readings_by_protein[
                 protein
@@ -270,7 +257,7 @@ class Command(BaseCommand):
 
         # TODO - fisher stats vary wildly from ICR, investigate
         # print("++++++ FISHER STATS")
-        # print(fisher_stats[Q09666])
+        # print(fisher_stats[FOCUS_PROTEIN])
         # return
 
         # TODO - rename this
@@ -306,7 +293,7 @@ class Command(BaseCommand):
             results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
         print("++++ FINAL RESULTS")
-        print(json.dumps(results[Q09666]))
+        print(json.dumps(results[FOCUS_PROTEIN]))
         return
 
     def _calculate_fisher(
@@ -528,7 +515,10 @@ class Command(BaseCommand):
             print("++++ ERROR CALCULATING ANOVA")
             print(e)
 
-        return (p_value, f_statistic)
+        return {
+            "p_value": p_value,
+            "f_statistic": f_statistic
+        }
 
     def _calculate_metrics(
         self,
@@ -1075,7 +1065,7 @@ class Command(BaseCommand):
 
         return means
 
-    def _calc_replicate_stage_name_medians(
+    def _calculate_replicate_stage_name_medians(
         self,
         replicate_name: str,
         protein_readings: QuerySet[ProteinReading],
