@@ -13,12 +13,9 @@ from sklearn.metrics import r2_score
 
 from process.models import ColumnName, Project, Protein, ProteinReading, Replicate
 
-# from statsmodels.stats.multitest import multipletests
-
-
-# TODO - make this configurable by flag
+# TODO - make this configurable by flag?
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.INFO,
     format="%(levelname)s - %(message)s",
 )
 
@@ -612,7 +609,7 @@ class Command(BaseCommand):
         curve_fold_change = None
         curve_peak = None
 
-        x, y, stage_names = self._generate_xs_ys(readings)
+        x, y, stage_names_map = self._generate_xs_ys(readings)
 
         if len(x) == len(y):
             p = np.poly1d(np.polyfit(x, y, 2))
@@ -620,7 +617,7 @@ class Command(BaseCommand):
 
             # find the timepoint peak of the curve
             curve_index = x[list(curve_abundances).index(max(curve_abundances))]
-            for time_point, index in stage_names.items():
+            for time_point, index in stage_names_map.items():
                 if index == curve_index:
                     curve_peak = time_point
 
@@ -635,20 +632,14 @@ class Command(BaseCommand):
     # TODO - this is straight up lifted from ICR. Replace it, ideally with a library call
     # TODO - write a test for it first
     def _polyfit(self, x, y, degree):
-        """
-        Calculate the r-squared for polynomial curve fitting.
-        """
-        r_squared = 0
         coeffs = np.polyfit(x, y, degree)
         p = np.poly1d(coeffs)
-        # calculate r-squared
         yhat = p(x)
-        ybar = np.sum(y) / len(y)
+        ybar = np.mean(y)
         ssres = np.sum((y - yhat) ** 2)
         sstot = np.sum((y - ybar) ** 2)
-        r_squared = ssres / sstot
-
-        return 1 - round(r_squared, 2)
+        r_squared = 1 - (ssres / sstot)
+        return round(r_squared, 2)
 
     def _impute(
         # TODO - all these pr types are wrong, and also probably bad variable names
@@ -998,38 +989,23 @@ class Command(BaseCommand):
     def _round(self, value):
         return round(value, 4)
 
-    def _generate_stage_name_map(self, readings):
+    def _generate_xs_ys(self, readings):
         final_replicate_name = list(readings.keys())[-1]
 
-        stage_names = {}
+        stage_names_map = {}
 
         for i, stage_name in enumerate(readings[final_replicate_name].keys()):
-            stage_names[stage_name] = i
+            stage_names_map[stage_name] = i
 
-        return final_replicate_name, stage_names
-    
-    def _generate_xs_ys(self, readings):
-        # TODO - stage_names is not good, stage_names_map?
-        final_replicate_name, stage_names = self._generate_stage_name_map(readings)
-
-        reps = readings
         x = []
-        for rep in reps:
-            if rep != final_replicate_name:
-                continue
-            for stage_name in readings[rep]:
-                if stage_names[stage_name] is not None:
-                    x.append(stage_names[stage_name])
+        for stage_name in readings.get(final_replicate_name, {}):
+            x.append(stage_names_map[stage_name])
         x.sort()
 
         y = []
-        for stage_name in stage_names:
-            for rep in reps:
-                if rep != final_replicate_name:
-                    continue
+        for stage_name in stage_names_map:
+            value = readings.get(final_replicate_name, {}).get(stage_name)
+            if value is not None:
+                y.append(value)
 
-                if stage_name in readings[rep]:
-                    if readings[rep][stage_name] is not None:
-                        y.append(readings[rep][stage_name])
-
-        return x, y, stage_names
+        return x, y, stage_names_map
