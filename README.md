@@ -1,3 +1,10 @@
+### For local development
+```sh
+eval $(poetry env activate)
+poetry install
+```
+
+
 ### To run from scratch
 ```sh
 docker compose up
@@ -5,6 +12,9 @@ docker exec -it cc_processor /bin/bash
 eval $(poetry env activate)
 python manage.py import_spreadsheet --project "Soliman Labs"
 python manage.py process --project "Soliman Labs"
+
+python manage.py import_spreadsheet --project "ICR"
+python manage.py process --project "ICR" --with-bugs
 ```
 
 ### To run with IRC

@@ -18,21 +18,25 @@ DONE AND CHECKED - Calculate min-max for each rep, and normalise
 DONE AND CHECKED - Calculate 0-max for each rep, and normalise
 DONE AND CHECKED - Calculate imputed values
 DONE AND CHECKED - Calculate stats
-Calculate ANOVA
-Calculate confidence
-
-
+DONE AND CHECKED - Calculate ANOVA
+WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
 Create data frame TODO - why?
-Get ANOVA q values
-Don't get Fisher G values yet
-    TODO does the python version have a bug?
-    https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
 LATER - Get protein annotations
 
 
+Get ANOVA q values
+The fisher G values are wildley different. Find out why.
+Don't get Fisher G values yet
+    TODO does the python version have a bug?
+    https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
+
+
+NEXT - write tests for all functions
 NEXT - get steps for phospho
 
 
+
+Find out which functions aren't actually needed
 Look up the values from the paper for a relevant protein to see if it matches buggy output
 Move functions out of command file
 Write a test for _calculate_first_level_normalisation

@@ -8,4 +8,8 @@ Speaking of column medians, what do we do if a cell is empty?
 Is palbo normalisation the same as Nocodozole normalisation?
     Actually presumably it should be normalised by the first stage, as that's what Palbo is.
 
-Is the method of imputing data what we want?
+Is the method of imputing data what we want? Linear imputation between nearest timepoints I believe.
+
+Is the approximate fisher G calculation acceptable? Installing R is horrible.
+
+The ICR data has various values for 'confidence'. What about us?
