@@ -443,41 +443,21 @@ class Command(BaseCommand):
 
         return results
 
-    # TODO - straight up lifted from ICR, simplify ideally using a library
     def _tp(self, stage_name, readings):
         """
-        Groups by time point for the replicates
+        Creates a list of each abundance of a stage name across replicates
         """
-        # TODO - make generic
-        rep_1 = "One"
-        rep_2 = "Two"
-
         res = []
-        # TODO - iterate
-        try:
-            if stage_name in readings[rep_1]:
-                reading = readings[rep_1][stage_name]
+
+        for replicate_name in readings:
+            if stage_name in readings[replicate_name]:
+                reading = readings[replicate_name][stage_name]
 
                 if reading is not None:
-                    rep_1 = float(reading)
-                    res.append(rep_1)
-
-            if stage_name in readings[rep_2]:
-                reading = readings[rep_2][stage_name]
-
-                if reading is not None:
-                    rep_2 = float(reading)
-                    res.append(rep_2)
-
-            res = [x for x in res if x == x]
-
-        except Exception as e:
-            print("++++++ ERROR IN TP")
-            print(readings)
-            print(e)
+                    res.append(float(reading))
 
         return res
-
+    
     # TODO - straight up lifted from ICR, simplify ideally using a library
     def _calcANOVA(self, readings: dict):
         """
