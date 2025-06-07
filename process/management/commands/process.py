@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import statistics
+import copy
 
 import numpy as np
 import pandas as pd
@@ -238,7 +239,8 @@ class Command(BaseCommand):
             results[protein][PROTEIN_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_across_replicates_by_stage
             results[protein][NORMALISED][MEDIAN] = normalised_readings
             results[protein][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_means_across_replicates_by_stage
-            results[protein][NORMALISED][LOG2_MEAN] = relative_log2_normalised_readings
+            # TODO - confirm the output later calculations are as they should be after this
+            results[protein][NORMALISED][LOG2_MEAN] = copy.deepcopy(relative_log2_normalised_readings)
             results[protein][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = relative_log2_normalised_means_across_replicates_by_stage
             results[protein][NORMALISED][MIN_MAX] = level_two_normalised_readings
             results[protein][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = level_two_normalised_means_across_replicates_by_stage
@@ -371,6 +373,7 @@ class Command(BaseCommand):
         # TODO - raw is always False, ignore all raw code
         # TODO - norm_method is always log2_mean, ignore all norm_method code
         abundance_table = {}
+        final_protein = None
 
         # TODO - maybe this and other similar loops could be changed to use items()?
         #   That way the value variable could be used in each successive loop, e.g.
@@ -378,13 +381,12 @@ class Command(BaseCommand):
         #       for replicate_name, rn_readings = p_readings.items():
         #           etc.
         for protein in readings:
+            final_protein = protein
+
             abundance_table[protein] = {}
 
             for replicate_name in readings[protein]:
-
                 for stage_name in readings[protein][replicate_name].keys():
-                    # TODO - tidy this, it's silly
-                    # rep = "_".join(replicate_name.split("_", 1)[1].split("_")[:2])
                     rep_stage_name = f"{replicate_name}_{stage_name}"
                     abundance_table[protein][rep_stage_name] = readings[protein][
                         replicate_name
@@ -393,26 +395,13 @@ class Command(BaseCommand):
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
 
-        # Group by time point
-        # TODO - make generic
-        new_cols = [
-            "One_Palbo",
-            "Two_Palbo",
-            "One_Late G1_1",
-            "Two_Late G1_1",
-            "One_G1/S",
-            "Two_G1/S",
-            "One_S",
-            "Two_S",
-            "One_S/G2",
-            "Two_S/G2",
-            "One_G2_2",
-            "Two_G2_2",
-            "One_G2/M_1",
-            "Two_G2/M_1",
-            "One_M/Early G1",
-            "Two_M/Early G1",
-        ]
+        new_cols = []
+
+        replicate_names = list(readings[final_protein].keys())
+
+        for stage_name in readings[final_protein][replicate_names[0]]:
+            for rn in replicate_names:
+                new_cols.append(f"{rn}_{stage_name}")
 
         time_course_abundance_df = time_course_abundance_df[new_cols]
 
@@ -460,19 +449,16 @@ class Command(BaseCommand):
         p_value = 1
         f_statistic = 1
 
-        try:
-            # TODO - make non generic
-            timepoints_1 = [
-                self._tp("Palbo", readings),
-                self._tp("Late G1_1", readings),
-                self._tp("G1/S", readings),
-                self._tp("S", readings),
-                self._tp("S/G2", readings),
-                self._tp("G2_2", readings),
-                self._tp("G2/M_1", readings),
-                self._tp("M/Early G1", readings),
-            ]
+        first_replicate_name = list(readings.keys())[0]
 
+        # TODO - change to stage_names
+        timepoints_1 = []
+
+        try:
+            for stage_name in readings[first_replicate_name]:
+                timepoints_1.append(self._tp(stage_name, readings))
+    
+            # TODO - is this necessary?
             timepoints = [x for x in timepoints_1 if x != []]
 
             # Protein info in at least 2 reps:
