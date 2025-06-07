@@ -18,7 +18,7 @@ from process.models import ColumnName, Project, Protein, ProteinReading, Replica
 
 # TODO - make this configurable by flag
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format="%(levelname)s - %(message)s",
 )
 
@@ -303,8 +303,6 @@ class Command(BaseCommand):
         phospho_ab=False,
         phospho_reg=False,
     ):
-        logger.info("Calculate approximate Fisher G Statistics")
-
         # TODO - remove this comment
         # These calls are always the same in ICR
         # norm_method = "log2_mean"
@@ -362,7 +360,6 @@ class Command(BaseCommand):
     # TODO - does it really need to be a dataframe? Write tests and change if possible.
     def p_adjust_bh(self, p):
         """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
-        logger.info("Calculate Benjamini-Hochberg p-value correction")
         p = np.asarray(p, dtype=float)
         by_descend = p.argsort()[::-1]
         by_orig = by_descend.argsort()
@@ -394,9 +391,6 @@ class Command(BaseCommand):
                     abundance_table[protein][rep_stage_name] = readings[protein][
                         replicate_name
                     ][stage_name]
-
-        print("++++++ TIME COURSE ABUNDANCE")
-        print(abundance_table)
 
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
@@ -505,8 +499,6 @@ class Command(BaseCommand):
         readings: dict,
         readings_averages: dict,
     ):
-        logger.info("Calculate metrics")
-
         metrics = {}
 
         abundances = []
@@ -594,51 +586,46 @@ class Command(BaseCommand):
         return metrics
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
-    def _calcResidualsR2All(self, norm_abundances):
+    def _calcResidualsR2All(self, readings):
         """
         Calculate the residuals and the R squared for all the abundances from all the replicates for a protein.
         """
+        final_replicate_name = list(readings.keys())[-1]
+
+        stage_names = {}
+
+        for i, stage_name in enumerate(readings[final_replicate_name].keys()):
+            stage_names[stage_name] = i
+
         residuals_all = None
         r_squared_all = None
 
-        # TODO - use generic stage names
-        timepoint_map = {
-            "Palbo": 0,
-            "Late G1_1": 1,
-            "G1/S": 2,
-            "S": 3,
-            "S/G2": 4,
-            "G2_2": 5,
-            "G2/M_1": 6,
-            "M/Early G1": 7,
-        }
-        # if we have info for the protein in at least 2 replicates
         # TODO - repetitive
         # TODO - very similiar to _calcCurveFoldChange
-        if len(norm_abundances) >= 2:
-            reps = norm_abundances
-            x = []
+        reps = readings
+        x = []
+        for rep in reps:
+            if rep != final_replicate_name:
+                continue
+            for timepoint in readings[rep]:
+                if stage_names[timepoint] is not None:
+                    x.append(stage_names[timepoint])
+        x.sort()
+        y = []
+        for timepoint in stage_names:
             for rep in reps:
-                if rep != "Two":
+                if rep != final_replicate_name:
                     continue
-                for timepoint in norm_abundances[rep]:
-                    if timepoint_map[timepoint] is not None:
-                        x.append(timepoint_map[timepoint])
-            x.sort()
-            y = []
-            for timepoint in timepoint_map:
-                for rep in reps:
-                    if rep != "Two":
-                        continue
-                    if timepoint in norm_abundances[rep]:
-                        if norm_abundances[rep][timepoint] is not None:
-                            y.append(norm_abundances[rep][timepoint])
+                if timepoint in readings[rep]:
+                    if readings[rep][timepoint] is not None:
+                        y.append(readings[rep][timepoint])
 
-            if len(x) == len(y):
-                p = np.poly1d(np.polyfit(x, y, 2))
-                curve_abundances = p(x)
-                residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
-                r_squared_all = round(r2_score(y, curve_abundances), 2)
+        if len(x) == len(y):
+            p = np.poly1d(np.polyfit(x, y, 2))
+            curve_abundances = p(x)
+            residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
+            residuals_all = residuals_all.item()
+            r_squared_all = round(r2_score(y, curve_abundances), 2)
 
         return residuals_all, r_squared_all
 
@@ -732,8 +719,6 @@ class Command(BaseCommand):
         replicates: QuerySet[Replicate],
         column_names: QuerySet[ColumnName],
     ):
-        logger.info("impute missing data")
-
         replicates_by_name: dict = {}
         column_names_by_replicate: dict = {}
 
@@ -809,8 +794,6 @@ class Command(BaseCommand):
         return imputed_readings
 
     def _calculate_level_two_normalisation(self, readings: dict, zero_min=False):
-        logger.info("relative log2 normalising abundances")
-
         level_two_normalised_readings: dict = {}
 
         for replicate_name in readings:
@@ -845,8 +828,6 @@ class Command(BaseCommand):
         return level_two_normalised_readings
 
     def _calculate_relative_log2_normalisation(self, readings: dict):
-        logger.info("relative log2 normalising abundances")
-
         log2_abundances: dict = {}
 
         for replicate_name in readings:
@@ -897,8 +878,6 @@ class Command(BaseCommand):
         return log2_normalised_readings
 
     def _calculate_arrest_log2_normalisation(self, readings: dict, project: Project):
-        logger.info("log2 arrest normalising abundances")
-
         log2_normalised_readings: dict = {}
 
         # TODO - what should the stage name be?
@@ -983,8 +962,6 @@ class Command(BaseCommand):
         return readings_by_rep_stage
 
     def _calculate_first_level_normalisation(self, readings: dict, medians):
-        logger.info("Normalising abundances")
-
         normalised_readings: dict = {}
 
         for replicate_name in readings:
@@ -1011,8 +988,6 @@ class Command(BaseCommand):
         with_bugs: bool,
         imputed: bool = False,
     ):
-        logger.info("Calculating mean across replicates by stage for protein")
-
         means: dict = {}
 
         abundances: dict = {}
@@ -1051,8 +1026,6 @@ class Command(BaseCommand):
         protein_readings: QuerySet[ProteinReading],
         column_names: QuerySet[ColumnName],
     ):
-        logger.info("Calculating stage name medians by replicate")
-
         stage_name_medians = {}
 
         column_names_by_replicate = column_names.filter(replicate__name=replicate_name)
