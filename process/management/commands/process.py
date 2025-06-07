@@ -142,6 +142,7 @@ class Command(BaseCommand):
         results = {}
 
         for protein, readings in raw_readings.items():
+            logger.info(f"++ PROTEIN: {protein.accession_number}")
             num_proteins += 1
 
             results[protein] = {PROTEIN_ABUNDANCES: {}, NORMALISED: {}, IMPUTED: {}, METRICS: {}}
@@ -516,7 +517,7 @@ class Command(BaseCommand):
 
         std_dev = None
 
-        if len(abundances) != 0:
+        if len(abundances) > 1:
             std_dev = statistics.stdev(abundances)
         else:
             print("+++ NO ABUNDANCES FOR STANDARD DEVIATION")
@@ -676,7 +677,7 @@ class Command(BaseCommand):
                 # Default value, should never be used
                 value = 0
 
-                if abundances_dict.get(stage_name, None) is not None:
+                if abundances_dict.get(stage_name) is not None:
                     value = abundances_dict[stage_name]
                 else:
                     last = None
@@ -691,7 +692,7 @@ class Command(BaseCommand):
 
                         prev_stage_name = stage_names[prev_idx]
 
-                        if abundances_dict.get(prev_stage_name, None) is not None:
+                        if abundances_dict.get(prev_stage_name) is not None:
                             last = (offset, abundances_dict[prev_stage_name])
                             # last = abundances_dict[prev_stage_name]
                             break
@@ -702,7 +703,7 @@ class Command(BaseCommand):
                         next_idx = (idx + offset) % len(abundances)
                         next_stage_name = stage_names[next_idx]
 
-                        if abundances_dict.get(stage_name, None) is not None:
+                        if abundances_dict.get(stage_name) is not None:
                             next = (offset, abundances[next_stage_name])
                             # next = abundances[next_stage_name]
                             break
@@ -786,6 +787,7 @@ class Command(BaseCommand):
 
             if total_lengths != 0:
                 mean = total_abundances / total_lengths
+            # TODO - is mean is None then the loop below can be simplified
 
             log2_normalised_readings = {}
 
@@ -795,7 +797,7 @@ class Command(BaseCommand):
                 for stage_name in readings[replicate_name]:
                     normalised_abundance = None
 
-                    if log2_abundances[replicate_name].get(stage_name):
+                    if log2_abundances[replicate_name].get(stage_name) is not None and mean is not None:
                         normalised_abundance = self._round(
                             log2_abundances[replicate_name][stage_name] - mean
                         )
