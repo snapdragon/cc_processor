@@ -590,35 +590,10 @@ class Command(BaseCommand):
         """
         Calculate the residuals and the R squared for all the abundances from all the replicates for a protein.
         """
-        final_replicate_name = list(readings.keys())[-1]
-
-        stage_names = {}
-
-        for i, stage_name in enumerate(readings[final_replicate_name].keys()):
-            stage_names[stage_name] = i
-
         residuals_all = None
         r_squared_all = None
 
-        # TODO - repetitive
-        # TODO - very similiar to _calcCurveFoldChange
-        reps = readings
-        x = []
-        for rep in reps:
-            if rep != final_replicate_name:
-                continue
-            for timepoint in readings[rep]:
-                if stage_names[timepoint] is not None:
-                    x.append(stage_names[timepoint])
-        x.sort()
-        y = []
-        for timepoint in stage_names:
-            for rep in reps:
-                if rep != final_replicate_name:
-                    continue
-                if timepoint in readings[rep]:
-                    if readings[rep][timepoint] is not None:
-                        y.append(readings[rep][timepoint])
+        x, y, _ = self._generate_xs_ys(readings)
 
         if len(x) == len(y):
             p = np.poly1d(np.polyfit(x, y, 2))
@@ -630,67 +605,30 @@ class Command(BaseCommand):
         return residuals_all, r_squared_all
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
-    # def _calcCurveFoldChange(self, norm_abundances, uniprot_accession):
-    def _calcCurveFoldChange(self, norm_abundances):
+    def _calcCurveFoldChange(self, readings):
         """
         Calculates the curve_fold_change and curve peaks for the three or two replicates normalised abundance for each protein.
         """
         curve_fold_change = None
         curve_peak = None
 
-        # TODO - use the stage_names for the project
-        timepoint_map = {
-            "Palbo": 0,
-            "Late G1_1": 1,
-            "G1/S": 2,
-            "S": 3,
-            "S/G2": 4,
-            "G2_2": 5,
-            "G2/M_1": 6,
-            "M/Early G1": 7,
-        }
-        # curves_all = {}
+        x, y, stage_names = self._generate_xs_ys(readings)
 
-        # if we have info for the protein in at least 2 replicates
-        # TODO - this code needs a tidy
-        if len(norm_abundances) >= 2:
-            reps = norm_abundances
-            # curves_all[uniprot_accession] = {}
-            x = []
-            for rep in reps:
-                # TODO - make generic somehow
-                if rep != "Two":
-                    continue
-                for timepoint in norm_abundances[rep]:
-                    # TODO - has nulls, but not as many as y
-                    if timepoint_map[timepoint] is not None:
-                        x.append(timepoint_map[timepoint])
-            x.sort()
-            y = []
-            for timepoint in timepoint_map:
-                for rep in reps:
-                    # TODO - make generic somehow
-                    if rep != "Two":
-                        continue
-                    if timepoint in norm_abundances[rep]:
-                        # TODO - has nulls, but not as many as x
-                        if norm_abundances[rep][timepoint] is not None:
-                            y.append(norm_abundances[rep][timepoint])
+        if len(x) == len(y):
+            p = np.poly1d(np.polyfit(x, y, 2))
+            curve_abundances = p(x)
 
-            if len(x) == len(y):
-                p = np.poly1d(np.polyfit(x, y, 2))
-                curve_abundances = p(x)
+            # find the timepoint peak of the curve
+            curve_index = x[list(curve_abundances).index(max(curve_abundances))]
+            for time_point, index in stage_names.items():
+                if index == curve_index:
+                    curve_peak = time_point
 
-                # find the timepoint peak of the curve
-                curve_index = x[list(curve_abundances).index(max(curve_abundances))]
-                for time_point, index in timepoint_map.items():
-                    if index == curve_index:
-                        curve_peak = time_point
-
-                # Calculate the fold change from the curve
-                curve_fold_change = max(curve_abundances) / max(
-                    0.05, min(curve_abundances)
-                )
+            # Calculate the fold change from the curve
+            curve_fold_change = max(curve_abundances) / max(
+                0.05, min(curve_abundances)
+            )
+            curve_fold_change = curve_fold_change.item()
 
         return curve_fold_change, curve_peak
 
@@ -1059,3 +997,39 @@ class Command(BaseCommand):
 
     def _round(self, value):
         return round(value, 4)
+
+    def _generate_stage_name_map(self, readings):
+        final_replicate_name = list(readings.keys())[-1]
+
+        stage_names = {}
+
+        for i, stage_name in enumerate(readings[final_replicate_name].keys()):
+            stage_names[stage_name] = i
+
+        return final_replicate_name, stage_names
+    
+    def _generate_xs_ys(self, readings):
+        # TODO - stage_names is not good, stage_names_map?
+        final_replicate_name, stage_names = self._generate_stage_name_map(readings)
+
+        reps = readings
+        x = []
+        for rep in reps:
+            if rep != final_replicate_name:
+                continue
+            for stage_name in readings[rep]:
+                if stage_names[stage_name] is not None:
+                    x.append(stage_names[stage_name])
+        x.sort()
+
+        y = []
+        for stage_name in stage_names:
+            for rep in reps:
+                if rep != final_replicate_name:
+                    continue
+
+                if stage_name in readings[rep]:
+                    if readings[rep][stage_name] is not None:
+                        y.append(readings[rep][stage_name])
+
+        return x, y, stage_names

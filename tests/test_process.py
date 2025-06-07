@@ -214,3 +214,21 @@ def test_calcResidualsR2All():
     result = command._calcResidualsR2All(readings)
 
     assert result == (0.005632439523809521, 0.47)
+
+@pytest.mark.django_db
+def test_calcCurveFoldChange():
+    command = Command()
+
+    # TODO - this is just captured output, not reasoned. Fix.
+    readings = {
+        'One': {
+            'Palbo': -0.2308, 'Late G1_1': 0.4059, 'G1/S': -0.7048, 'S': 0.0117, 'S/G2': -0.4986, 'G2_2': -0.3323, 'G2/M_1': -0.232, 'M/Early G1': 0.6562
+        },
+        'Two': {
+            'Palbo': 0.1586, 'Late G1_1': 0.1537, 'G1/S': 0.1503, 'S': 0.0468, 'S/G2': 0.1054, 'G2_2': 0.1219, 'G2/M_1': 0.0836, 'M/Early G1': 0.1045
+        }
+    }
+
+    result = command._calcCurveFoldChange(readings)
+
+    assert result == (1.8033637502236528, 'Palbo')
