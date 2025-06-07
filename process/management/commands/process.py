@@ -25,6 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # TODO - move constants elsewhere
+RAW = "raw"
 METRICS = "metrics"
 LOG2_MEAN = "log2_mean"
 ZERO_MAX = "0-max"
@@ -33,7 +34,12 @@ Q_VALUE = "q value"
 FISHER_G = "Fisher G"
 PROTEIN_ABUNDANCES = "protein_abundances"
 ABUNDANCE_AVERAGE = "average"
-
+NORMALISED = "normalised"
+MEDIAN = "median"
+MIN_MAX = "min-max"
+# TODO - change this name, it's specific to ICR
+LOG2_PALBO = "log2 palbo"
+IMPUTED = "imputed"
 
 class Command(BaseCommand):
     help = "Processes all proteins for a given project"
@@ -94,7 +100,7 @@ class Command(BaseCommand):
         )
 
         # TODO - make each call flaggable?
-        # TODO - rename 'medians' to something more informative
+        # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
         medians = self._all_replicates(
@@ -128,9 +134,6 @@ class Command(BaseCommand):
         #     )
         # )
 
-        # # These are just here for now to stop the pre commit hooks complaining
-        # assert means_across_replicates_by_stage == means_across_replicates_by_stage
-
         # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
         #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
         #   is a dict with Protein object keys. The values is a dict of replicate name keys
@@ -142,7 +145,6 @@ class Command(BaseCommand):
 
         num_proteins = 0
 
-        # TODO - could be lots of these needed, rename as required
         relative_log2_readings_by_protein = {}
         anovas = {}
         results = {}
@@ -151,37 +153,26 @@ class Command(BaseCommand):
             # print("++++++ PROTEIN")
             # print(protein)
             # print(readings)
-            results[protein] = {PROTEIN_ABUNDANCES: readings, METRICS: {}}
-
             num_proteins += 1
 
-            # # TODO - check whether all means calculations need with-bugs
-            # raw_across_replicates_by_stage = (
-            #     self._calculate_means_across_replicates_by_stage(
-            #         raw_readings, with_bugs
-            #     )
-            # )
+            results[protein] = {PROTEIN_ABUNDANCES: {}, NORMALISED: {}, IMPUTED: {}, METRICS: {}}
 
-            # results[protein][PROTEIN_ABUNDANCES][ABUNDANCE_AVERAGE] = raw_across_replicates_by_stage
+            # TODO - check whether all means calculations need with-bugs
+            raw_across_replicates_by_stage = (
+                self._calculate_means_across_replicates_by_stage(
+                    readings, with_bugs
+                )
+            )
 
             # firstLevelNormalisationProteomics
             normalised_readings = self._calculate_first_level_normalisation(
                 readings, medians
             )
 
-            # TODO - take these out later, they're just to stop precommit hooks complaining
-            assert normalised_readings == normalised_readings
-
-            # TODO - check whether all means calculations need with-bugs
             normalised_means_across_replicates_by_stage = (
                 self._calculate_means_across_replicates_by_stage(
                     normalised_readings, with_bugs
                 )
-            )
-
-            assert (
-                normalised_means_across_replicates_by_stage
-                == normalised_means_across_replicates_by_stage
             )
 
             # calclog2PalboNormalisation
@@ -195,18 +186,10 @@ class Command(BaseCommand):
                 )
             )
 
-            assert (
-                arrest_log2_normalised_means_across_replicates_by_stage
-                == arrest_log2_normalised_means_across_replicates_by_stage
-            )
-
             # calclog2RelativeAbundance
             relative_log2_normalised_readings = (
                 self._calculate_relative_log2_normalisation(normalised_readings)
             )
-
-            # print("++++ LOG2")
-            # print(relative_log2_normalised_readings)
 
             relative_log2_normalised_means_across_replicates_by_stage = (
                 self._calculate_means_across_replicates_by_stage(
@@ -214,12 +197,7 @@ class Command(BaseCommand):
                 )
             )
 
-            # print("+++++ RELATIVE AVERAGE")
-            # print(relative_log2_normalised_means_across_replicates_by_stage)
-            # return
-
             # normaliseData
-            # TODO - these two calls can be combined
             level_two_normalised_readings = self._calculate_level_two_normalisation(
                 relative_log2_normalised_readings
             )
@@ -228,15 +206,6 @@ class Command(BaseCommand):
                 self._calculate_means_across_replicates_by_stage(
                     level_two_normalised_readings, with_bugs
                 )
-            )
-
-            # print("+++++ LEVEL TWO NORMALISED AVERAGE")
-            # print(level_two_normalised_means_across_replicates_by_stage)
-            # return
-
-            assert (
-                level_two_normalised_means_across_replicates_by_stage
-                == level_two_normalised_means_across_replicates_by_stage
             )
 
             min_max_normalised_readings = self._calculate_level_two_normalisation(
@@ -249,15 +218,6 @@ class Command(BaseCommand):
                 )
             )
 
-            assert (
-                min_max_normalised_means_across_replicates_by_stage
-                == min_max_normalised_means_across_replicates_by_stage
-            )
-
-            # print("++++++ min max normalised means across replicates")
-            # print(min_max_normalised_means_across_replicates_by_stage)
-            # return
-
             imputed_readings = self._impute(
                 level_two_normalised_readings, replicates, column_names
             )
@@ -268,29 +228,15 @@ class Command(BaseCommand):
                 )
             )
 
-            # print("++++++ imputed across replicates")
-            # print(imputed_across_replicates_by_stage)
-            # return
-
-            assert (
-                imputed_across_replicates_by_stage == imputed_across_replicates_by_stage
-            )
-
             log2_mean_metrics = self._calculate_metrics(
                 relative_log2_normalised_readings,
                 relative_log2_normalised_means_across_replicates_by_stage,
             )
 
-            assert log2_mean_metrics == log2_mean_metrics
-
-            results[protein][METRICS][LOG2_MEAN] = log2_mean_metrics
-
             zero_max_mean_metrics = self._calculate_metrics(
                 min_max_normalised_readings,
                 min_max_normalised_means_across_replicates_by_stage,
             )
-
-            assert zero_max_mean_metrics == zero_max_mean_metrics
 
             anova_stats = self._calcANOVA(relative_log2_normalised_readings)
             anovas[protein] = {
@@ -299,15 +245,26 @@ class Command(BaseCommand):
                 "f_statistic": anova_stats[1],
             }
 
-            # print("+++++ ANOVAS")
-            # print(anovas)
-            # return
             relative_log2_readings_by_protein[
                 protein
             ] = relative_log2_normalised_readings
 
-            # All these match, so not needed for now
-            # results[protein][METRICS][ZERO_MAX] = zero_max_mean_metrics
+            results[protein][PROTEIN_ABUNDANCES][RAW] = readings
+            results[protein][PROTEIN_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_across_replicates_by_stage
+            results[protein][NORMALISED][MEDIAN] = normalised_readings
+            results[protein][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_means_across_replicates_by_stage
+            results[protein][NORMALISED][LOG2_MEAN] = relative_log2_normalised_readings
+            results[protein][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = relative_log2_normalised_means_across_replicates_by_stage
+            results[protein][NORMALISED][MIN_MAX] = level_two_normalised_readings
+            results[protein][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = level_two_normalised_means_across_replicates_by_stage
+            results[protein][NORMALISED][ZERO_MAX] = min_max_normalised_readings
+            results[protein][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = min_max_normalised_means_across_replicates_by_stage
+            results[protein][NORMALISED][LOG2_PALBO] = arrest_log2_normalised_readings
+            results[protein][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_log2_normalised_means_across_replicates_by_stage
+            results[protein][IMPUTED] = imputed_readings
+            results[protein][IMPUTED][ABUNDANCE_AVERAGE] = imputed_across_replicates_by_stage
+            results[protein][METRICS][LOG2_MEAN] = log2_mean_metrics
+            results[protein][METRICS][ZERO_MAX] = zero_max_mean_metrics
 
         fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein)
 
@@ -316,19 +273,12 @@ class Command(BaseCommand):
         # print(fisher_stats[Q09666])
         # return
 
-        # print("++++ ANOVA")
-        # print(anovas[Q09666])
-        # return
-
         # TODO - rename this
         prot_anova_info: dict = {}
         for protein in anovas.keys():
             prot_anova_info[protein] = {}
 
             prot_anova_info[protein]["p_value"] = anovas[protein]["p_value"]
-
-        # print(prot_anova_info[Q09666])
-        # return
 
         # TODO - converting to a dataframe seems excessive. Find an alternative.
         prot_anova_info_df = pd.DataFrame(prot_anova_info).T
