@@ -55,18 +55,24 @@ class Command(BaseCommand):
         for index, row in df.iterrows():
             row_no += 1
 
+            is_contaminant = False
+
             # TODO - this is a hack for ICR. Maybe make it a DB config?
             if contaminant := row.get("Contaminant"):
                 if contaminant == "Yes" or contaminant == "TRUE":
-                    continue
+                    is_contaminant = True
 
             print(f"Adding row {row_no}")
 
             accession_number = row[project.proteome_file_accession_number_column_name]
 
             protein = Protein.objects.create(
-                project=project, accession_number=accession_number
+                project=project, accession_number=accession_number, is_contaminant=is_contaminant
             )
+
+            # We don't want the readings for contaminants
+            if is_contaminant:
+                continue
 
             for col in df.columns:
                 if cn := cns_by_name.get(col):

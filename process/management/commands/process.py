@@ -69,8 +69,18 @@ class Command(BaseCommand):
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
+        contaminants = Protein.objects.filter(is_contaminant=True)
 
-        self._process(project, replicates, protein_readings, column_names, with_bugs)
+        # # TODO - rename
+        # self._process(project, replicates, protein_readings, column_names, with_bugs)
+
+        self._phospho(contaminants)
+
+
+
+    def _phospho(self, contaminants):
+        logger.info("Processing phosphoproteome")
+        return
 
     def _process(
         self, project, replicates, protein_readings, column_names, with_bugs: bool
@@ -101,7 +111,6 @@ class Command(BaseCommand):
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
-        # TODO - make each call flaggable?
         # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
@@ -301,8 +310,8 @@ class Command(BaseCommand):
 
             results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
-        print("++++ FINAL RESULTS")
-        print(json.dumps(results[FOCUS_PROTEIN]))
+        print(f"Number of proteins: {num_proteins}")
+        # print(json.dumps(results[FOCUS_PROTEIN]))
         return
 
     def _calculate_fisher(

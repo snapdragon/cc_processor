@@ -53,6 +53,7 @@ class Protein(models.Model):
         Project, on_delete=models.CASCADE, related_name="protein"
     )
     accession_number = models.CharField(max_length=255)
+    is_contaminant = models.BooleanField(default=False)
 
     def __str__(self):
         return self.accession_number
@@ -69,6 +70,7 @@ class ProteinReading(models.Model):
 
     def __str__(self):
         return f"{self.reading}"
+
 
 
 # class ProcessResult(models.Model):

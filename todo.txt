@@ -1,3 +1,8 @@
+### Phospho steps
+
+
+
+
 ### Steps
 
 DONE - Iterate through the rows of data_points, getting uniprot accession for each row
@@ -35,6 +40,7 @@ NEXT - write tests for all functions
 NEXT - get steps for phospho
 
 
+Change things to defaultdicts?
 ICR ANOVA q-value "q value" 0.6470752162303733, here 0.6492445296947472. Does it matter?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
