@@ -91,10 +91,12 @@ class Command(BaseCommand):
 
         3) Normalise all abundances. This is done by dividing each abundance by the median
             for its column, then averaging them across replicates.
-        """
-        FOCUS_PROTEIN_ACCESSION_NUMBER = "P06493"
 
-        # TODO - this is solely for development. Take it out afterwards.
+        TODO - finish this list
+        """
+        FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+
+        # TODO - make this a flag
         FOCUS_PROTEIN = Protein.objects.get(
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
@@ -143,10 +145,17 @@ class Command(BaseCommand):
         results = {}
 
         for protein, readings in raw_readings.items():
-            logger.info(f"++ PROTEIN: {protein.accession_number}")
+            # logger.info(f"++ PROTEIN: {protein.accession_number}")
             num_proteins += 1
 
-            results[protein] = {PROTEIN_ABUNDANCES: {}, NORMALISED: {}, IMPUTED: {}, METRICS: {}}
+            results[protein] = {
+                PROTEIN_ABUNDANCES: {
+                    RAW: {},
+                    NORMALISED: {},
+                    IMPUTED: {}
+                },
+                METRICS: {}
+            }
 
             # TODO - check whether all means calculations need with-bugs
             raw_across_replicates_by_stage = (
@@ -237,19 +246,19 @@ class Command(BaseCommand):
 
             results[protein][PROTEIN_ABUNDANCES][RAW] = readings
             results[protein][PROTEIN_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_across_replicates_by_stage
-            results[protein][NORMALISED][MEDIAN] = normalised_readings
-            results[protein][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN] = normalised_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_means_across_replicates_by_stage
             # TODO - confirm the output later calculations are as they should be after this
-            results[protein][NORMALISED][LOG2_MEAN] = copy.deepcopy(relative_log2_normalised_readings)
-            results[protein][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = relative_log2_normalised_means_across_replicates_by_stage
-            results[protein][NORMALISED][MIN_MAX] = level_two_normalised_readings
-            results[protein][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = level_two_normalised_means_across_replicates_by_stage
-            results[protein][NORMALISED][ZERO_MAX] = min_max_normalised_readings
-            results[protein][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = min_max_normalised_means_across_replicates_by_stage
-            results[protein][NORMALISED][LOG2_PALBO] = arrest_log2_normalised_readings
-            results[protein][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_log2_normalised_means_across_replicates_by_stage
-            results[protein][IMPUTED] = imputed_readings
-            results[protein][IMPUTED][ABUNDANCE_AVERAGE] = imputed_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN] = copy.deepcopy(relative_log2_normalised_readings)
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = relative_log2_normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX] = min_max_normalised_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = min_max_normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX] = level_two_normalised_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = level_two_normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO] = arrest_log2_normalised_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_log2_normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][IMPUTED] = imputed_readings
+            results[protein][PROTEIN_ABUNDANCES][IMPUTED][ABUNDANCE_AVERAGE] = imputed_across_replicates_by_stage
             results[protein][METRICS][LOG2_MEAN] = log2_mean_metrics
             results[protein][METRICS][ZERO_MAX] = zero_max_mean_metrics
 
