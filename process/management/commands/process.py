@@ -140,10 +140,16 @@ class Command(BaseCommand):
                     min_max_normalised_readings, replicates, column_names
                 )
 
-                print("+++++ IMPUTED")
+                raw_averages = (
+                    self._calculate_means_across_replicates_by_stage(
+                        readings, with_bugs
+                    )
+                )
+
+                print("+++++ RAW AVERAGES")
                 print(protein)
                 print(mod)
-                print(imputed_readings)
+                print(raw_averages)
                 exit()
 
 
@@ -234,6 +240,7 @@ class Command(BaseCommand):
             }
 
             # TODO - check whether all means calculations need with-bugs
+            # TODO - change all these to 'raw_averages' and the like
             raw_across_replicates_by_stage = (
                 self._calculate_means_across_replicates_by_stage(
                     readings, with_bugs
