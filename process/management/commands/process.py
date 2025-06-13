@@ -92,19 +92,35 @@ class Command(BaseCommand):
 
         medians = self._calculate_phospho_medians(raw_readings)
 
-        print("++++ MEDIANS")
-        print(medians)
-        exit()
+        # print("++++ MEDIANS")
+        # print(medians)
+        # exit()
 
         num_proteins = 0
 
         results = {}
 
         for protein in raw_readings.keys():
-            for mod in raw_readings[protein].keys():
+            for mod, readings in raw_readings[protein].items():
                 num_proteins += 1
 
+                # firstLevelNormalisationProteomics
+                # firstLevelNormalisationPhospho
+                normalised_readings = self._calculate_first_level_normalisation(
+                    readings, medians
+                )
 
+                # normalised_means_across_replicates_by_stage = (
+                #     self._calculate_means_across_replicates_by_stage(
+                #         normalised_readings, with_bugs
+                #     )
+                # )
+
+                print("+++++ NORMALISED READINGS")
+                print(protein)
+                print(mod)
+                print(normalised_readings)
+                exit()
 
 
     def _proteo(
