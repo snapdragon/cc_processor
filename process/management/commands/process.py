@@ -127,18 +127,23 @@ class Command(BaseCommand):
                 )
 
                 # normaliseData
-                level_two_normalised_readings = self._calculate_level_two_normalisation(
+                min_max_normalised_readings = self._calculate_level_two_normalisation(
                     normalised_readings
                 )
 
-                min_max_normalised_readings = self._calculate_level_two_normalisation(
+                # normaliseData
+                zero_max_normalised_readings = self._calculate_level_two_normalisation(
                     normalised_readings, True
                 )
 
-                print("+++++ MIN-MAX NORMALISED")
+                imputed_readings = self._impute(
+                    min_max_normalised_readings, replicates, column_names
+                )
+
+                print("+++++ IMPUTED")
                 print(protein)
                 print(mod)
-                print(min_max_normalised_readings)
+                print(imputed_readings)
                 exit()
 
 
@@ -269,6 +274,7 @@ class Command(BaseCommand):
             )
 
             # normaliseData
+            # TODO - rename these to min-max and zero-max. Also they're back to front.
             level_two_normalised_readings = self._calculate_level_two_normalisation(
                 relative_log2_normalised_readings
             )
