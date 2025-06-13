@@ -126,17 +126,17 @@ class Command(BaseCommand):
                     self._calculate_relative_log2_normalisation(normalised_readings)
                 )
 
-                print("+++++ LOG2")
+                # normaliseData
+                level_two_normalised_readings = self._calculate_level_two_normalisation(
+                    normalised_readings
+                )
+
+                print("+++++ NORMALISED")
                 print(protein)
                 print(mod)
-                print(relative_log2_normalised_readings)
+                print(level_two_normalised_readings)
                 exit()
 
-                # arrest_log2_normalised_means_across_replicates_by_stage = (
-                #     self._calculate_means_across_replicates_by_stage(
-                #         arrest_log2_normalised_readings, with_bugs
-                #     )
-                # )
 
 
 
