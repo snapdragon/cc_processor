@@ -43,6 +43,8 @@ NEXT - get steps for phospho
 
 
 Count number of imputed data points
+Group together calculations and averages
+Maybe put them in a function? They're similar for proteo and phospho.
 There's no point having column names be by replicate. All replicates have the same
     column names. Have them be by project instead.
 Change things to defaultdicts?
