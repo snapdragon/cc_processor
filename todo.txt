@@ -40,16 +40,14 @@ NEXT - write tests for all functions
 NEXT - get steps for phospho
 
 
+There's no point having column names be by replicate. All replicates have the same
+    column names. Have them be by project instead.
 Change things to defaultdicts?
 ICR ANOVA q-value "q value" 0.6470752162303733, here 0.6492445296947472. Does it matter?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
 Find out which functions aren't actually needed
-Look up the values from the paper for a relevant protein to see if it matches buggy output
 Move functions out of command file
-Write a test for _calculate_first_level_normalisation
-Write a test for _calculate_arrest_log2_normalisation
-Write a test for _calculate_relative_log2_normalisation
 Write tests for all the functions
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.

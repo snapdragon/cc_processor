@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 logger.info(f"No protein for {uniprot_accession}")
                 continue
 
-            # logger.info(f"Processing protein: {uniprot_accession}")
+            logger.info(f"Processing protein: {uniprot_accession}")
 
             if uniprot_accession not in time_course_phospho_full:
                 time_course_phospho_full[uniprot_accession] = {"phosphorylation_abundances": {}}

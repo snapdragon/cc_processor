@@ -12,7 +12,7 @@ from scipy.signal import periodogram
 from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 
-from process.models import ColumnName, Project, Protein, ProteinReading, Replicate
+from process.models import ColumnName, Project, Protein, ProteinReading, Replicate, PhosphoReading
 
 # TODO - make this configurable by flag?
 logging.basicConfig(
@@ -70,31 +70,39 @@ class Command(BaseCommand):
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
-        contaminants = Protein.objects.filter(is_contaminant=True)
 
         # self._proteo(project, replicates, protein_readings, column_names, with_bugs)
 
-        self._phospho(contaminants)
+        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
+        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:100]
+
+        self._phospho(project, replicates, phospho_readings, column_names, with_bugs)
 
 
 
-    def _phospho(self, contaminants):
+    def _phospho(self, project, replicates, phospho_readings, column_names, with_bugs: bool):
         logger.info("Processing phosphoproteome")
 
-        time_course_phospho_full = {}
+        # TODO - convert this in to a DB query to save having to run it manually?
+        readings_by_rep_stage = self._format_phospho_readings(phospho_readings)
 
-        # Raw
-        for uniprot_accession in phosphos:
-            if uniprot_accession not in time_course_phospho_full:
-                time_course_phospho_full[uniprot_accession] = {"phosphorylation_abundances": {}}
-            
-            for mod_key in time_course_phospho_reps[uniprot_accession]["phosphorylation_abundances"]:
-                if (
-                    mod_key
-                    not in time_course_phospho_full[uniprot_accession][
-                        "phosphorylation_abundances"
-                    ]
-                ):
+        # raw_readings = self._qc_phospho_readings(readings_by_rep_stage)
+
+        raw_readings = readings_by_rep_stage
+
+        medians = self._calculate_phospho_medians(raw_readings)
+
+        # print("++++ MEDIANS")
+        # print(medians)
+        # exit()
+
+        num_proteins = 0
+
+        results = {}
+
+        for protein in raw_readings.keys():
+            for mod in raw_readings[protein].keys():
+                num_proteins += 1
 
 
 
@@ -138,8 +146,7 @@ class Command(BaseCommand):
             column_names=column_names,
         )
 
-        # if with_bugs:
-        if False:
+        if with_bugs:
             r2_medians = {}
 
             # TODO - is this still needed now we use replicate names instead of replicates?
@@ -914,6 +921,43 @@ class Command(BaseCommand):
 
         return readings_by_rep_stage
 
+    def _format_phospho_readings(self, phospho_readings: QuerySet[PhosphoReading]):
+        logger.info(
+            "Converting phospho_readings QuerySet into dict by protein, mod, replicate and stage name"
+        )
+        readings_by_rep_stage: dict = {}
+
+        mod_no = 0
+
+        for phospho_reading in phospho_readings:
+            mod_no += 1
+            self._count_logger(
+                mod_no,
+                10000,
+                f"Formatting for {mod_no}, protein {phospho_reading.phospho.protein.accession_number} mod {phospho_reading.phospho.mod}",
+            )
+
+            # TODO - what about Nones? Will there be any here? Check the import script.
+            reading = phospho_reading.reading
+
+            protein = phospho_reading.phospho.protein
+            mod = phospho_reading.phospho.mod
+            replicate_name = phospho_reading.column_name.replicate.name
+            stage_name = phospho_reading.column_name.sample_stage.name
+
+            if not readings_by_rep_stage.get(protein):
+                readings_by_rep_stage[protein] = {}
+
+            if not readings_by_rep_stage[protein].get(mod):
+                readings_by_rep_stage[protein][mod] = {}
+
+            if not readings_by_rep_stage[protein][mod].get(replicate_name):
+                readings_by_rep_stage[protein][mod][replicate_name] = {}
+
+            readings_by_rep_stage[protein][mod][replicate_name][stage_name] = reading
+
+        return readings_by_rep_stage
+
     def _calculate_first_level_normalisation(self, readings: dict, medians):
         normalised_readings: dict = {}
 
@@ -972,6 +1016,39 @@ class Command(BaseCommand):
                     means[stage_name] = None
 
         return means
+
+    def _calculate_phospho_medians(
+        self,
+        readings: dict,
+    ):
+        medians = {}
+
+        for protein in readings.keys():
+            for mod in readings[protein].keys():
+                for replicate_name in readings[protein][mod].keys():
+                    if not medians.get(replicate_name):
+                        medians[replicate_name] = {}
+
+                    for column_name in readings[protein][mod][replicate_name].keys():
+                        if not medians[replicate_name].get(column_name):
+                            medians[replicate_name][column_name] = []
+
+                        reading = readings[protein][mod][replicate_name][column_name]
+
+                        if reading is None:
+                            continue
+
+                        medians[replicate_name][column_name].append(reading)
+
+        for replicate_name in medians.keys():
+            for column_name in medians[replicate_name].keys():
+                median = statistics.median(medians[replicate_name][column_name])
+
+                medians[replicate_name][column_name] = median
+
+        return medians
+
+
 
     def _calculate_replicate_stage_name_medians(
         self,
