@@ -64,11 +64,14 @@ class Command(BaseCommand):
         PhosphoReading.objects.filter(phospho__protein__project=project).delete()
         Phospho.objects.filter(protein__project=project).delete()
 
+        num = 0
+
         for uniprot_accession in time_course_phospho_reps:
             if not proteins.get(uniprot_accession):
-                # TODO - what to do about these? Include them anyway?
-                logger.info(f"No protein for {uniprot_accession}")
-                continue
+                new_protein = Protein.objects.create(
+                    project=project, accession_number=uniprot_accession, is_contaminant=False
+                )
+                proteins[uniprot_accession] = new_protein
 
             logger.info(f"Processing protein: {uniprot_accession}")
 
@@ -82,6 +85,8 @@ class Command(BaseCommand):
                         "phosphorylation_abundances"
                     ]
                 ):
+                    num += 1
+
                     # TODO - is this really needed?
                     time_course_phospho_full[uniprot_accession][
                         "phosphorylation_abundances"
@@ -357,6 +362,8 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
                     uniprot_accession_key == ""
                     or uniprot_accession_key in contaminants
                 ):
+                    print("+++++ CONTAMINANT FOUND")
+                    print(uniprot_accession_key)
                     continue
 
                 abundance_rep_1 = findPhosphoAbundance(

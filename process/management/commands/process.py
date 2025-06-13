@@ -73,8 +73,8 @@ class Command(BaseCommand):
 
         # self._proteo(project, replicates, protein_readings, column_names, with_bugs)
 
-        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
-        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:100]
+        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
+        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:100]
 
         self._phospho(project, replicates, phospho_readings, column_names, with_bugs)
 
@@ -92,9 +92,9 @@ class Command(BaseCommand):
 
         medians = self._calculate_phospho_medians(raw_readings)
 
-        # print("++++ MEDIANS")
-        # print(medians)
-        # exit()
+        print("++++ MEDIANS")
+        print(medians)
+        exit()
 
         num_proteins = 0
 
