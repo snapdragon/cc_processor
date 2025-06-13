@@ -11,10 +11,11 @@ docker compose up
 docker exec -it cc_processor /bin/bash
 # poetry install        ?
 eval $(poetry env activate)
-python manage.py import_spreadsheet --project "Soliman Labs"
+python manage.py import_proteo --project "Soliman Labs"
 python manage.py process --project "Soliman Labs"
 
-python manage.py import_spreadsheet --project "ICR"
+python manage.py import_proteo --project "ICR"
+python manage.py import_phospho --project "ICR"
 python manage.py process --project "ICR" --with-bugs
 ```
 
@@ -30,6 +31,8 @@ docker exec -it postgres-db /bin/bash
 psql -U myuser -d mydatabase
 \dt
 # DROP TABLE 'process_' for all tables starting 'process', e.g.
+drop table process_phosphoreading;
+drop table process_phospho;
 drop table process_proteinreading;
 drop table process_protein;
 drop table process_columnname;

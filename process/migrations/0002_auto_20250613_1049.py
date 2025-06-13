@@ -208,7 +208,7 @@ class Migration(migrations.Migration):
         project_ICR = Project.objects.create(
             name="ICR",
             proteome_file="ICR/CR07_TMT16plex_FullProt_Proteins.xlsx",
-            phosphoproteome_file="",
+            phosphoproteome_file="ICR/20210610_CR07_IMAC_PeptideGroups.tdt",
             proteome_file_accession_number_column_name="Accession",
         )
 

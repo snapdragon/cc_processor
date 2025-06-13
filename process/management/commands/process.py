@@ -23,6 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # TODO - move constants elsewhere
+FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
 RAW = "raw"
 METRICS = "metrics"
 LOG2_MEAN = "log2_mean"
@@ -71,8 +72,7 @@ class Command(BaseCommand):
         )
         contaminants = Protein.objects.filter(is_contaminant=True)
 
-        # # TODO - rename
-        # self._process(project, replicates, protein_readings, column_names, with_bugs)
+        # self._proteo(project, replicates, protein_readings, column_names, with_bugs)
 
         self._phospho(contaminants)
 
@@ -80,9 +80,26 @@ class Command(BaseCommand):
 
     def _phospho(self, contaminants):
         logger.info("Processing phosphoproteome")
-        return
 
-    def _process(
+        time_course_phospho_full = {}
+
+        # Raw
+        for uniprot_accession in phosphos:
+            if uniprot_accession not in time_course_phospho_full:
+                time_course_phospho_full[uniprot_accession] = {"phosphorylation_abundances": {}}
+            
+            for mod_key in time_course_phospho_reps[uniprot_accession]["phosphorylation_abundances"]:
+                if (
+                    mod_key
+                    not in time_course_phospho_full[uniprot_accession][
+                        "phosphorylation_abundances"
+                    ]
+                ):
+
+
+
+
+    def _proteo(
         self, project, replicates, protein_readings, column_names, with_bugs: bool
     ):
         """
@@ -104,7 +121,7 @@ class Command(BaseCommand):
 
         TODO - finish this list
         """
-        FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+        logger.info("Processing proteome")
 
         # TODO - make this a flag
         FOCUS_PROTEIN = Protein.objects.get(
@@ -121,7 +138,8 @@ class Command(BaseCommand):
             column_names=column_names,
         )
 
-        if with_bugs:
+        # if with_bugs:
+        if False:
             r2_medians = {}
 
             # TODO - is this still needed now we use replicate names instead of replicates?
@@ -311,7 +329,7 @@ class Command(BaseCommand):
             results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
         print(f"Number of proteins: {num_proteins}")
-        # print(json.dumps(results[FOCUS_PROTEIN]))
+        print(json.dumps(results[FOCUS_PROTEIN]))
         return
 
     def _calculate_fisher(

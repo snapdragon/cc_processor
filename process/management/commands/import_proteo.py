@@ -39,16 +39,16 @@ class Command(BaseCommand):
 
         df = pd.read_excel(excel_file, sheet_name=0)
 
-        column_names = ColumnName.objects.all()
-
+        # TODO - untested, may fail
+        column_names = ColumnName.objects.filter(replicate__project=project)
         cns_by_name = {}
+        for cn in column_names:
+            cns_by_name[cn.name] = cn
 
         # TODO - take this out, or modify it to the project, when adding more projects
         Protein.objects.filter(project=project).delete()
         ProteinReading.objects.filter(protein__project=project).delete()
 
-        for cn in column_names:
-            cns_by_name[cn.name] = cn
 
         row_no = 0
 

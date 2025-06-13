@@ -72,13 +72,26 @@ class ProteinReading(models.Model):
         return f"{self.reading}"
 
 
+class Phospho(models.Model):
+    protein = models.ForeignKey(
+        Protein, on_delete=models.CASCADE, related_name="phospho"
+    )
 
-# class ProcessResult(models.Model):
-#     column_name = models.ForeignKey(
-#         ColumnName, on_delete=models.CASCADE, related_name="protein_readings"
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+    # TODO - is this long enough?
+    mod = models.CharField(max_length=255)
 
-#     def __str__(self):
-#         return self.column_name.sample_stage.name
+    def __str__(self):
+        return f"Phospho for {self.protein.accession_number}"
+
+
+class PhosphoReading(models.Model):
+    column_name = models.ForeignKey(
+        ColumnName, on_delete=models.CASCADE, related_name="phospho_reading"
+    )
+    phospho = models.ForeignKey(
+        Phospho, on_delete=models.CASCADE, related_name="phospho_reading"
+    )
+    reading = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.reading}"
