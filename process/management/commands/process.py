@@ -131,10 +131,14 @@ class Command(BaseCommand):
                     normalised_readings
                 )
 
-                print("+++++ NORMALISED")
+                min_max_normalised_readings = self._calculate_level_two_normalisation(
+                    normalised_readings, True
+                )
+
+                print("+++++ MIN-MAX NORMALISED")
                 print(protein)
                 print(mod)
-                print(level_two_normalised_readings)
+                print(min_max_normalised_readings)
                 exit()
 
 
