@@ -116,11 +116,28 @@ class Command(BaseCommand):
                 #     )
                 # )
 
-                print("+++++ NORMALISED READINGS")
+                # calclog2PalboNormalisation
+                arrest_log2_normalised_readings = self._calculate_arrest_log2_normalisation(
+                    normalised_readings, project
+                )
+
+                # calclog2RelativeAbundance
+                relative_log2_normalised_readings = (
+                    self._calculate_relative_log2_normalisation(normalised_readings)
+                )
+
+                print("+++++ LOG2")
                 print(protein)
                 print(mod)
-                print(normalised_readings)
+                print(relative_log2_normalised_readings)
                 exit()
+
+                # arrest_log2_normalised_means_across_replicates_by_stage = (
+                #     self._calculate_means_across_replicates_by_stage(
+                #         arrest_log2_normalised_readings, with_bugs
+                #     )
+                # )
+
 
 
     def _proteo(
