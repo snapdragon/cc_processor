@@ -76,6 +76,9 @@ class Command(BaseCommand):
             for index, row in df.iterrows():
                 row_no += 1
 
+                if row_no == 3000:
+                    exit()
+
                 accession_number = row[project.proteome_file_accession_number_column_name]
 
                 print(f"Adding phospho row {row_no} {accession_number}")

@@ -55,6 +55,9 @@ class Command(BaseCommand):
         for index, row in df.iterrows():
             row_no += 1
 
+            if row_no == 100:
+                exit()
+
             is_contaminant = False
 
             # TODO - this is a hack for ICR. Maybe make it a DB config?

@@ -42,6 +42,7 @@ MIN_MAX = "min-max"
 LOG2_PALBO = "log2 palbo"
 IMPUTED = "imputed"
 P_VALUE = "p_value"
+F_STATISTICS = "F_statistics"
 PROTEIN_OSCILLATION_ABUNDANCES = "protein_oscillation_abundances"
 ABUNDANCE_AVERAGE = "abundance_average"
 
@@ -88,8 +89,8 @@ class Command(BaseCommand):
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
-        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
-        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:100]
+        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
+        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:1000]
 
         results = self._proteo(project, replicates, protein_readings, column_names, with_bugs)
 
@@ -117,15 +118,14 @@ class Command(BaseCommand):
                 #     gene_name, protein_name = getProteinInfo(protein.accession_number)
 
                 results[protein] = {
-                    # "gene_name": gene_name,
-                    # "protein_name": protein_name,
-                    PROTEIN_ABUNDANCES: {RAW: {}, "normalised": {}, "imputed": {}},
+                    PROTEIN_ABUNDANCES: {RAW: {}, NORMALISED: {}, IMPUTED: {}},
                     PHOSPHORYLATION_ABUNDANCES: phospho_results[protein],
                 }
+                # "gene_name": gene_name,
+                # "protein_name": protein_name,
 
         print("++++ NO PROTEINS")
         print(len(list(results.keys())))
-        exit()
 
         self._addProteinOscillations(results, with_bugs)
 
@@ -151,15 +151,21 @@ class Command(BaseCommand):
 
         # TODO - make this a flag
         # TODO - this is a duplicate
-        FOCUS_PROTEIN = Protein.objects.get(
-            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
-        )
+        # FOCUS_PROTEIN = Protein.objects.get(
+        #     accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
+        # )
 
         for protein in raw_readings.keys():
             results[protein] = {}
 
             for mod, readings in raw_readings[protein].items():
                 num_proteins += 1
+
+                self._count_logger(
+                    num_proteins,
+                    10000,
+                    f"Formatting for {num_proteins}, {protein.accession_number}",
+                )
 
                 results[protein][mod] = {
                     POSITION_ABUNDANCES: {
@@ -347,9 +353,9 @@ class Command(BaseCommand):
         logger.info("Processing proteome")
 
         # TODO - make this a flag
-        FOCUS_PROTEIN = Protein.objects.get(
-            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
-        )
+        # FOCUS_PROTEIN = Protein.objects.get(
+        #     accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
+        # )
 
         # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
@@ -403,6 +409,7 @@ class Command(BaseCommand):
                     NORMALISED: {},
                     IMPUTED: {}
                 },
+                PHOSPHORYLATION_ABUNDANCES: {},
                 METRICS: {}
             }
 
@@ -758,6 +765,7 @@ class Command(BaseCommand):
         # TODO - change to stage_names
         timepoints_1 = []
 
+        # TODO - don't attempt if less than two values, it errors
         try:
             for stage_name in readings[first_replicate_name]:
                 timepoints_1.append(self._tp(stage_name, readings))
@@ -1521,7 +1529,7 @@ class Command(BaseCommand):
             # If we have info both in protein and in phospho level
             prpa = results[protein][PHOSPHORYLATION_ABUNDANCES]
 
-            if len(prpa) != 0 and len(prpa[RAW]) != 0:
+            if len(prpa) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
                 # Add the Protein Oscillation Normalised Abundances
                 for mod in prpa:
                     # TODO - could be initialised in loop below
@@ -1561,7 +1569,7 @@ class Command(BaseCommand):
 
                         prpampoa[LOG2_MEAN][METRICS][ANOVA] = {
                             P_VALUE: p_value,
-                            "F_statistics": f_statistic
+                            F_STATISTICS: f_statistic
                         }
 
         return results
@@ -1632,11 +1640,11 @@ class Command(BaseCommand):
 #                 PHOSPHORYLATION_ABUNDANCES
 #             ]:  
 #                 rep1_phosho = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["position_abundances"]["normalised"][LOG2_MEAN]['abundance_rep_1']
+#                     phosphosite]["position_abundances"][NORMALISED][LOG2_MEAN]['abundance_rep_1']
 #                 rep2_phosho = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["position_abundances"]["normalised"][LOG2_MEAN]['abundance_rep_2']
-#                 rep1_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES]["normalised"][LOG2_MEAN]['abundance_rep_1']
-#                 rep2_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES]["normalised"][LOG2_MEAN]['abundance_rep_2']
+#                     phosphosite]["position_abundances"][NORMALISED][LOG2_MEAN]['abundance_rep_2']
+#                 rep1_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]['abundance_rep_1']
+#                 rep2_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]['abundance_rep_2']
                 
 #                 # If we don't have missing values in the protein and phospho abundances
 #                 if len(rep1_phosho) != 8 or len(rep1_prot) != 8 or len(rep2_phosho) != 8 or len(rep2_prot) != 8:
@@ -1701,7 +1709,7 @@ class Command(BaseCommand):
 #                 combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
 #                     phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA][P_VALUE] = p_value
 #                 combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA]["F_statistics"] = f_statistic
+#                     phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA][F_STATISTICS] = f_statistic
 
 #     # Fisher G Statistic - Phospho
 #     time_course_fisher_dict = calcFisherG(combined_time_course_info, LOG2_MEAN, raw = False,  phospho = True, phospho_ab = False, phospho_reg = True)
