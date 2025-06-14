@@ -23,7 +23,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # TODO - move constants elsewhere
-FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+# FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+FOCUS_PROTEIN_ACCESSION_NUMBER = "O95714"
 RAW = "raw"
 METRICS = "metrics"
 LOG2_MEAN = "log2_mean"
@@ -39,6 +40,10 @@ MIN_MAX = "min-max"
 # TODO - change this name, it's specific to ICR
 LOG2_PALBO = "log2 palbo"
 IMPUTED = "imputed"
+
+# Phospho
+POSITION_ABUNDANCES = "position_abundances"
+FOCUS_MOD = "2928"
 
 class Command(BaseCommand):
     help = "Processes all proteins for a given project"
@@ -92,17 +97,32 @@ class Command(BaseCommand):
 
         medians = self._calculate_phospho_medians(raw_readings)
 
-        # print("++++ MEDIANS")
-        # print(medians)
-        # exit()
-
         num_proteins = 0
 
+        relative_log2_readings_by_protein = {}
+        anovas = {}
         results = {}
 
+        # TODO - make this a flag
+        # TODO - this is a duplicate
+        FOCUS_PROTEIN = Protein.objects.get(
+            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
+        )
+
         for protein in raw_readings.keys():
+            results[protein] = {}
+
             for mod, readings in raw_readings[protein].items():
                 num_proteins += 1
+
+                results[protein][mod] = {
+                    POSITION_ABUNDANCES: {
+                        RAW: {},
+                        NORMALISED: {},
+                        IMPUTED: {}
+                    },
+                    METRICS: {}
+                }
 
                 # firstLevelNormalisationProteomics
                 # firstLevelNormalisationPhospho
@@ -121,71 +141,112 @@ class Command(BaseCommand):
                 )
 
                 # normaliseData
-                min_max_normalised_readings = self._calculate_level_two_normalisation(
+                min_max_readings = self._calculate_level_two_normalisation(
                     normalised_readings
                 )
 
                 # normaliseData
-                zero_max_normalised_readings = self._calculate_level_two_normalisation(
+                zero_max_readings = self._calculate_level_two_normalisation(
                     normalised_readings, True
                 )
 
                 imputed_readings = self._impute(
-                    min_max_normalised_readings, replicates, column_names
+                    min_max_readings, replicates, column_names
                 )
 
                 raw_averages = (
-                    self._calculate_means_across_replicates_by_stage(
+                    self._calculate_means(
                         readings, with_bugs
                     )
                 )
 
+                normalised_averages = (
+                    self._calculate_means(
+                        normalised_readings, with_bugs
+                    )
+                )
+
                 min_max_averages = (
-                    self._calculate_means_across_replicates_by_stage(
-                        min_max_normalised_readings, with_bugs
+                    self._calculate_means(
+                        min_max_readings, with_bugs
                     )
                 )
 
                 zero_max_averages = (
-                    self._calculate_means_across_replicates_by_stage(
-                        zero_max_normalised_readings, with_bugs
+                    self._calculate_means(
+                        zero_max_readings, with_bugs
                     )
                 )
 
                 log2_averages = (
-                    self._calculate_means_across_replicates_by_stage(
+                    self._calculate_means(
                         log2_readings, with_bugs
                     )
                 )
 
                 # TODO - why is this called median when it's from normalised?
                 median_averages = (
-                    self._calculate_means_across_replicates_by_stage(
+                    self._calculate_means(
                         normalised_readings, with_bugs
                     )
                 )
 
                 arrest_averages = (
-                    self._calculate_means_across_replicates_by_stage(
+                    self._calculate_means(
                         arrest_readings, with_bugs
                     )
                 )
 
                 imputed_averages = (
-                    self._calculate_means_across_replicates_by_stage(
+                    self._calculate_means(
                         imputed_readings, imputed=True, with_bugs = with_bugs
                     )
                 )
 
-                # print("+++++ IMPUTED AVERAGES")
-                # print(protein)
-                # print(mod)
-                # print(imputed_averages)
-                # exit()
+                log2_mean_metrics = self._calculate_metrics(
+                    log2_readings,
+                    log2_averages,
+                )
 
-        # Metrics
-        # time_course_phospho_full = self._addPhosphoMetrics(time_course_phospho_full)
+                zero_max_mean_metrics = self._calculate_metrics(
+                    zero_max_readings,
+                    zero_max_averages,
+                )
 
+                anovas[protein] = self._calcANOVA(log2_readings)
+
+                relative_log2_readings_by_protein[
+                    protein
+                ] = log2_readings
+
+                # TODO - these calculations and these results can be combined in one function
+                #   with proteo
+                results[protein][mod][POSITION_ABUNDANCES][RAW] = readings
+                results[protein][mod][POSITION_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_averages
+                # TODO - confirm the output later calculations are as they should be after this
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MIN_MAX] = min_max_readings
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MEDIAN] = normalised_readings
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][ZERO_MAX] = zero_max_readings
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
+                # TODO - this should be called 'arrest'
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_PALBO] = arrest_readings
+                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_averages
+                results[protein][mod][POSITION_ABUNDANCES][IMPUTED] = imputed_readings
+                results[protein][mod][POSITION_ABUNDANCES][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
+                results[protein][mod][METRICS][LOG2_MEAN] = log2_mean_metrics
+                results[protein][mod][METRICS][ZERO_MAX] = zero_max_mean_metrics
+
+        print("++++++ RESULTS")
+        print("++++++ RESULTS")
+        print("++++++ RESULTS")
+        print("++++++ RESULTS")
+        print(json.dumps(results[FOCUS_PROTEIN][FOCUS_MOD]))
+        # print(results.keys())
+        exit()
 
 
     def _proteo(
@@ -239,7 +300,7 @@ class Command(BaseCommand):
 
         # TODO - is this used for anything?
         # means_across_replicates_by_stage = (
-        #     self._calculate_means_across_replicates_by_stage(
+        #     self._calculate_means(
         #         protein_readings, with_bugs
         #     )
         # )
@@ -274,8 +335,8 @@ class Command(BaseCommand):
 
             # TODO - check whether all means calculations need with-bugs
             # TODO - change all these to 'raw_averages' and the like
-            raw_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
+            raw_averages = (
+                self._calculate_means(
                     readings, with_bugs
                 )
             )
@@ -285,97 +346,96 @@ class Command(BaseCommand):
                 readings, medians
             )
 
-            normalised_means_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
+            normalised_averages = (
+                self._calculate_means(
                     normalised_readings, with_bugs
                 )
             )
 
             # calclog2PalboNormalisation
-            arrest_log2_normalised_readings = self._calculate_arrest_log2_normalisation(
+            arrest_readings = self._calculate_arrest_log2_normalisation(
                 normalised_readings, project
             )
 
-            arrest_log2_normalised_means_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
-                    arrest_log2_normalised_readings, with_bugs
+            arrest_averages = (
+                self._calculate_means(
+                    arrest_readings, with_bugs
                 )
             )
 
             # calclog2RelativeAbundance
-            relative_log2_normalised_readings = (
+            log2_readings = (
                 self._calculate_relative_log2_normalisation(normalised_readings)
             )
 
-            relative_log2_normalised_means_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
-                    relative_log2_normalised_readings, with_bugs
+            log2_averages = (
+                self._calculate_means(
+                    log2_readings, with_bugs
                 )
             )
 
             # normaliseData
-            # TODO - rename these to min-max and zero-max. Also they're back to front.
-            level_two_normalised_readings = self._calculate_level_two_normalisation(
-                relative_log2_normalised_readings
+            min_max_readings = self._calculate_level_two_normalisation(
+                log2_readings
             )
 
-            level_two_normalised_means_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
-                    level_two_normalised_readings, with_bugs
+            min_max_averages = (
+                self._calculate_means(
+                    min_max_readings, with_bugs
                 )
             )
 
-            min_max_normalised_readings = self._calculate_level_two_normalisation(
+            zero_max_readings = self._calculate_level_two_normalisation(
                 normalised_readings, True
             )
 
-            min_max_normalised_means_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
-                    min_max_normalised_readings, with_bugs
+            zero_max_averages = (
+                self._calculate_means(
+                    zero_max_readings, with_bugs
                 )
             )
 
             imputed_readings = self._impute(
-                level_two_normalised_readings, replicates, column_names
+                min_max_readings, replicates, column_names
             )
 
-            imputed_across_replicates_by_stage = (
-                self._calculate_means_across_replicates_by_stage(
+            imputed_averages = (
+                self._calculate_means(
                     imputed_readings, with_bugs, imputed=True
                 )
             )
 
             log2_mean_metrics = self._calculate_metrics(
-                relative_log2_normalised_readings,
-                relative_log2_normalised_means_across_replicates_by_stage,
+                log2_readings,
+                log2_averages,
             )
 
             zero_max_mean_metrics = self._calculate_metrics(
-                min_max_normalised_readings,
-                min_max_normalised_means_across_replicates_by_stage,
+                zero_max_readings,
+                zero_max_averages,
             )
 
-            anovas[protein] = self._calcANOVA(relative_log2_normalised_readings)
+            anovas[protein] = self._calcANOVA(log2_readings)
 
             relative_log2_readings_by_protein[
                 protein
-            ] = relative_log2_normalised_readings
+            ] = log2_readings
 
             results[protein][PROTEIN_ABUNDANCES][RAW] = readings
-            results[protein][PROTEIN_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_averages
             results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN] = normalised_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
             # TODO - confirm the output later calculations are as they should be after this
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN] = copy.deepcopy(relative_log2_normalised_readings)
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = relative_log2_normalised_means_across_replicates_by_stage
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX] = min_max_normalised_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = min_max_normalised_means_across_replicates_by_stage
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX] = level_two_normalised_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = level_two_normalised_means_across_replicates_by_stage
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO] = arrest_log2_normalised_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_log2_normalised_means_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX] = zero_max_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX] = min_max_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO] = arrest_readings
+            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_averages
             results[protein][PROTEIN_ABUNDANCES][IMPUTED] = imputed_readings
-            results[protein][PROTEIN_ABUNDANCES][IMPUTED][ABUNDANCE_AVERAGE] = imputed_across_replicates_by_stage
+            results[protein][PROTEIN_ABUNDANCES][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
             results[protein][METRICS][LOG2_MEAN] = log2_mean_metrics
             results[protein][METRICS][ZERO_MAX] = zero_max_mean_metrics
 
@@ -422,65 +482,49 @@ class Command(BaseCommand):
         print(json.dumps(results[FOCUS_PROTEIN]))
         return
 
-    # TODO - lifted from ICR, rename
-    def addPhosphoMetrics(self, time_course_phospho):
+    # TODO - lifted from ICR, rename variables
+    # TODO - check all comments are not from ICR
+    def _calculate_phospho_metrics(self, readings, log2_readings, log2_averages, zero_max_readings, zero_max_averages):
         """
         Add all metrics for each phosphosite.
         """
-        for uniprot_accession in time_course_phospho:
-            for site in time_course_phospho[uniprot_accession]["phosphorylation_abundances"]:
-                norm_abundances = time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["position_abundances"]["normalised"]
-
-                time_course_phospho[uniprot_accession]["phosphorylation_abundances"][
-                    site
-                ]["metrics"] = {
-                    "log2_mean": self._calcAbundanceMetrics(
-                        norm_abundances["log2_mean"], uniprot_accession),
-                    "0-max": self._calcAbundanceMetrics(
-                        norm_abundances["0-max"], uniprot_accession
-                    )
-                }
-                # ANOVA
-                p_value, f_statistic = self._calcANOVA(norm_abundances["log2_mean"])
-                time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"] = {}
-                time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["p_value"] = p_value
-                time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["F_statistics"] = f_statistic
+        metrics = {}
     
-        # Fisher G Statistic
-        time_course_fisher_dict = self._calcFisherG(time_course_phospho, "log2_mean", raw = False, phospho = True)
+        # # Fisher G Statistic
+        # time_course_fisher_dict = self._calcFisherG(time_course_phospho, "log2_mean", raw = False, phospho = True)
 
         # Corrected q values - Phospho
         # 1) Create a dataframe with the desired regression info
-        phospho_anova_info = {}
-        for uniprot_accession in time_course_phospho:
-            for site in time_course_phospho[uniprot_accession]["phosphorylation_abundances"]:
-                phospho_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]['phosphorylation_site']
-                if phospho_key not in phospho_anova_info:
-                    phospho_anova_info[phospho_key] = {}
-                phospho_anova_info[phospho_key]['p_value'] = time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["p_value"]
+        # phospho_anova_info = {}
+        # for uniprot_accession in time_course_phospho:
+        #     for site in time_course_phospho[uniprot_accession]["phosphorylation_abundances"]:
+        #         phospho_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]['phosphorylation_site']
+        #         if phospho_key not in phospho_anova_info:
+        #             phospho_anova_info[phospho_key] = {}
+        #         phospho_anova_info[phospho_key]['p_value'] = time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["p_value"]
     
-        phospho_anova_info_df = pd.DataFrame(phospho_anova_info)
-        phospho_anova_info_df = phospho_anova_info_df.T
-        # 2) Regression ANOVA q values
-        phospho_anova_info_df['q_value'] = p_adjust_bh(phospho_anova_info_df['p_value'])
-        # 3) Turn dataframe into a dictionary
-        phospho_anova_info = phospho_anova_info_df.to_dict('index')
-        # 4) Add Regression info in time_course_phospho dictionary
-        for uniprot_accession in time_course_phospho:
-            for site in time_course_phospho[uniprot_accession]["phosphorylation_abundances"]:
-                site_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession]['phosphorylation_abundances'][site]['phosphorylation_site']
-                # ANOVA q values
-                if site_key in phospho_anova_info:
-                    time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["q_value"] = phospho_anova_info[site_key]['q_value']
-                else:
-                    time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["q_value"] = 1
-                # # Fisher
-                # if site_key in time_course_fisher_dict:
-                #     time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["Fisher_G"] = time_course_fisher_dict[site_key]
-                # else:
-                #     time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
+        # phospho_anova_info_df = pd.DataFrame(phospho_anova_info)
+        # phospho_anova_info_df = phospho_anova_info_df.T
+        # # 2) Regression ANOVA q values
+        # phospho_anova_info_df['q_value'] = p_adjust_bh(phospho_anova_info_df['p_value'])
+        # # 3) Turn dataframe into a dictionary
+        # phospho_anova_info = phospho_anova_info_df.to_dict('index')
+        # # 4) Add Regression info in time_course_phospho dictionary
+        # for uniprot_accession in time_course_phospho:
+        #     for site in time_course_phospho[uniprot_accession]["phosphorylation_abundances"]:
+        #         site_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession]['phosphorylation_abundances'][site]['phosphorylation_site']
+        #         # ANOVA q values
+        #         if site_key in phospho_anova_info:
+        #             time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["q_value"] = phospho_anova_info[site_key]['q_value']
+        #         else:
+        #             time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["ANOVA"]["q_value"] = 1
+        #         # # Fisher
+        #         # if site_key in time_course_fisher_dict:
+        #         #     time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["Fisher_G"] = time_course_fisher_dict[site_key]
+        #         # else:
+        #         #     time_course_phospho[uniprot_accession]["phosphorylation_abundances"][site]["metrics"]["log2_mean"]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
 
-        return time_course_phospho
+        return metrics
 
 
     def _calculate_fisher(
@@ -1123,7 +1167,7 @@ class Command(BaseCommand):
 
         return normalised_readings
 
-    def _calculate_means_across_replicates_by_stage(
+    def _calculate_means(
         self,
         reading: dict,
         with_bugs: bool,
