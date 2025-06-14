@@ -25,24 +25,26 @@ DONE AND CHECKED - Calculate imputed values
 DONE AND CHECKED - Calculate stats
 DONE AND CHECKED - Calculate ANOVA
 WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
-Create data frame TODO - why?
+DONE - create data frame TODO - why?
 LATER - Get protein annotations
 
 
 Get ANOVA q values
-The fisher G values are wildley different. Find out why.
+The fisher G values are wildly different. Find out why.
 Don't get Fisher G values yet
     TODO does the python version have a bug?
     https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
 
 
 NEXT - write tests for all functions
-NEXT - get steps for phospho
 
 
 
-
+Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
+Make mod an object?
+Add a RUNS table, with Results table for proteo and phospho with jsonb field
+Save outputs to protein and phospho objects? As jsonb to start maybe?
 Group together calculations and averages
 Maybe put them in a function? They're similar for proteo and phospho.
 There's no point having column names be by replicate. All replicates have the same
@@ -51,6 +53,7 @@ Change things to defaultdicts?
 ICR ANOVA q-value "q value" 0.6470752162303733, here 0.6492445296947472. Does it matter?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
+Interrogate jsonb in DB for various things, e.g. differences between ICR and SL
 Find out which functions aren't actually needed
 Move functions out of command file
 Write tests for all the functions

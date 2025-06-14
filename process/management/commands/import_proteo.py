@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-from process.models import ColumnName, Project, Protein, ProteinReading
+from process.models import ColumnName, Project, Protein, ProteinReading, Phospho, PhosphoReading
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,16 +39,16 @@ class Command(BaseCommand):
 
         df = pd.read_excel(excel_file, sheet_name=0)
 
-        # TODO - untested, may fail
         column_names = ColumnName.objects.filter(replicate__project=project)
         cns_by_name = {}
         for cn in column_names:
             cns_by_name[cn.name] = cn
 
         # TODO - take this out, or modify it to the project, when adding more projects
-        Protein.objects.filter(project=project).delete()
         ProteinReading.objects.filter(protein__project=project).delete()
-
+        Protein.objects.filter(project=project).delete()
+        PhosphoReading.objects.filter(phospho__protein__project=project).delete()
+        Phospho.objects.filter(protein__project=project).delete()
 
         row_no = 0
 

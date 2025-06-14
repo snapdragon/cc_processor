@@ -41,12 +41,6 @@ class Command(BaseCommand):
         file_path = f"data/{project.phosphoproteome_file}"
 
         column_names = ColumnName.objects.filter(replicate__project=project)
-        cns_by_replicate_and_column_name = {}
-        for cn in column_names:
-            if not cns_by_replicate_and_column_name.get(cn.replicate.name):
-                cns_by_replicate_and_column_name[cn.replicate.name] = {}
-
-            cns_by_replicate_and_column_name[cn.replicate.name][cn.sample_stage.name] = cn
 
         cs = Protein.objects.filter(is_contaminant=True, project=project)
         contaminants = [pr.accession_number for pr in cs]
@@ -58,13 +52,77 @@ class Command(BaseCommand):
 
         proteins = {pr.accession_number: pr for pr in prs}
 
-        time_course_phospho_full = {}
-        time_course_phospho_reps = parseTimeCoursePhosphoProteomics(file_path, contaminants)
-
         PhosphoReading.objects.filter(phospho__protein__project=project).delete()
         Phospho.objects.filter(protein__project=project).delete()
 
+        cns_by_name = {}
+
         num = 0
+
+        if project_name == "Soliman Labs":
+            for cn in column_names:
+                cn_short = re.search(r'IITI_\d{3}_', cn.name)
+
+                cns_by_name[cn_short.group()] = cn
+
+            file_path = f"data/{project.phosphoproteome_file}"
+
+            excel_file = pd.ExcelFile(file_path)
+
+            df = pd.read_excel(excel_file, sheet_name=0)
+
+            row_no = 0
+
+            for index, row in df.iterrows():
+                row_no += 1
+
+                accession_number = row[project.proteome_file_accession_number_column_name]
+
+                print(f"Adding phospho row {row_no} {accession_number}")
+
+                protein, created = Protein.objects.get_or_create(
+                    project=project, accession_number=accession_number, is_contaminant=False
+                )
+
+                mod = row['Modified.Sequence']
+
+                phospho = Phospho.objects.create(
+                    protein = protein, mod = mod
+                )
+
+                for col in df.columns:
+                    col_short = re.search(r'IITI_\d{3}_', col)
+
+                    if col_short is not None:
+                        if cn := cns_by_name.get(col_short.group()):
+                            reading = row[col]
+
+                            if reading != reading:
+                                reading = None
+
+                            print(f"Adding {phospho} {cn} {reading}")
+
+                            PhosphoReading.objects.create(
+                                phospho = phospho, column_name=cn, reading=reading,
+                            )
+
+
+            return
+        
+        if project_name != "ICR":
+            raise Exception(f"Unknown project name {project_name}")
+
+        # TODO - split this into two scripts
+        # TODO - at least tidy it up
+
+        time_course_phospho_full = {}
+        time_course_phospho_reps = parseTimeCoursePhosphoProteomics(file_path, contaminants)
+
+        for cn in column_names:
+            if not cns_by_replicate_and_column_name.get(cn.replicate.name):
+                cns_by_replicate_and_column_name[cn.replicate.name] = {}
+
+            cns_by_replicate_and_column_name[cn.replicate.name][cn.sample_stage.name] = cn
 
         for uniprot_accession in time_course_phospho_reps:
             if not proteins.get(uniprot_accession):
@@ -137,6 +195,7 @@ class Command(BaseCommand):
                         PhosphoReading.objects.create(
                             column_name=col_obj, reading=reading, phospho=phospho
                         )
+
 
 def findModificationPositionRep1(data_point):
     """
