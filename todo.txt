@@ -40,6 +40,7 @@ NEXT - write tests for all functions
 
 
 
+Add PHOSPHORYLATION_SITE to process. In the phospho table maybe?
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
 Make mod an object?

@@ -118,6 +118,7 @@ class Command(BaseCommand):
         # TODO - split this into two scripts
         # TODO - at least tidy it up
 
+        cns_by_replicate_and_column_name = {}
         time_course_phospho_full = {}
         time_course_phospho_reps = parseTimeCoursePhosphoProteomics(file_path, contaminants)
 
@@ -128,6 +129,11 @@ class Command(BaseCommand):
             cns_by_replicate_and_column_name[cn.replicate.name][cn.sample_stage.name] = cn
 
         for uniprot_accession in time_course_phospho_reps:
+            # TODO - remove this, it's for development only
+            if uniprot_accession not in proteins.keys():
+                print(f"Skipping {uniprot_accession}")
+                continue
+
             if not proteins.get(uniprot_accession):
                 new_protein = Protein.objects.create(
                     project=project, accession_number=uniprot_accession, is_contaminant=False
@@ -183,7 +189,7 @@ class Command(BaseCommand):
                             raw["Two"][k] = (cur_ab + abundance_rep_2[k])
 
                 phospho = Phospho.objects.create(
-                    protein=proteins[uniprot_accession], mod=mod_key
+                    protein=proteins[uniprot_accession], mod=mod_key, phosphosite=phosphosite
                 )
 
                 for replicate_name in raw.keys():

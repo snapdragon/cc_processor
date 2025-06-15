@@ -13,7 +13,7 @@ from scipy.signal import periodogram
 from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 
-from process.models import ColumnName, Project, Protein, ProteinReading, Replicate, PhosphoReading
+from process.models import ColumnName, Project, Phospho, ProteinReading, Replicate, PhosphoReading
 
 # TODO - make this configurable by flag?
 logging.basicConfig(
@@ -46,10 +46,12 @@ F_STATISTICS = "F_statistics"
 PROTEIN_OSCILLATION_ABUNDANCES = "protein_oscillation_abundances"
 ABUNDANCE_AVERAGE = "abundance_average"
 
-# Phospho
 POSITION_ABUNDANCES = "position_abundances"
 FOCUS_MOD = "2928"
 PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"
+PHOSPHO_REGRESSION = "phospho_regression"
+PHOSPHORYLATION_SITE = "phosphorylation_site"
+Q_VALUE = Q_VALUE
 
 TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
 
@@ -89,15 +91,17 @@ class Command(BaseCommand):
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
-        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
-        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:1000]
 
         results = self._proteo(project, replicates, protein_readings, column_names, with_bugs)
 
-        phospho_results = self._phospho(project, replicates, phospho_readings, column_names, with_bugs)
+        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
+        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:1000]
+        phosphos = Phospho.objects.filter(protein__project=project)
 
-        print("++++ NO PROTEINS BEFORE")
-        print(len(list(results.keys())))
+        phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, with_bugs)
+
+        # print("++++ NO PROTEINS BEFORE")
+        # print(len(list(results.keys())))
 
         # Not all phospho proteins are in the protein results, add them if required
         for protein in phospho_results:
@@ -124,20 +128,24 @@ class Command(BaseCommand):
                 # "gene_name": gene_name,
                 # "protein_name": protein_name,
 
-        print("++++ NO PROTEINS")
-        print(len(list(results.keys())))
+        # print("++++ NO PROTEINS")
+        # print(len(list(results.keys())))
 
         self._addProteinOscillations(results, with_bugs)
 
 
 
-    def _phospho(self, project, replicates, phospho_readings, column_names, with_bugs: bool):
+    def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, with_bugs: bool):
         logger.info("Processing phosphoproteome")
 
         # TODO - convert this in to a DB query to save having to run it manually?
         readings_by_rep_stage = self._format_phospho_readings(phospho_readings)
+        phosphosites = self._get_phosphosites(phosphos)
 
         # raw_readings = self._qc_phospho_readings(readings_by_rep_stage)
+
+        del(phospho_readings)
+        del(phosphos)
 
         raw_readings = readings_by_rep_stage
 
@@ -168,6 +176,7 @@ class Command(BaseCommand):
                 )
 
                 results[protein][mod] = {
+                    PHOSPHORYLATION_SITE: phosphosites[mod],
                     POSITION_ABUNDANCES: {
                         RAW: {},
                         NORMALISED: {},
@@ -309,12 +318,6 @@ class Command(BaseCommand):
         #                 mod_result['PepTools_annotations'] = index_protein_names[protein.accession_number]['phospho'][mod]
 
         #             mod_result['kinase_prediction'] = {}
-        #             print("++++++ FOO")
-        #             print("++++++ FOO")
-        #             print("++++++ FOO")
-        #             print("++++++ FOO")
-        #             print(mod_result)
-        #             exit()
 
         #             phospho_kinases_class = self._getConsensusKinasePred(protein.accession_number, mod_result)
         #             mod_result['kinase_prediction']['peptide_seq'] = phospho_kinases_class['peptide_seq']
@@ -390,6 +393,8 @@ class Command(BaseCommand):
         #   with a dict of sample stage names and abundances as keys.
         # TODO - convert this in to a DB query to save having to run it manually?
         readings_by_rep_stage = self._format_protein_readings(protein_readings)
+
+        del(protein_readings)
 
         raw_readings = self._qc_protein_readings(readings_by_rep_stage)
 
@@ -535,7 +540,7 @@ class Command(BaseCommand):
 
         # TODO - converting to a dataframe seems excessive. Find an alternative.
         prot_anova_info_df = pd.DataFrame(prot_anova_info).T
-        prot_anova_info_df["q_value"] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
+        prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
 
         prot_anova_info = prot_anova_info_df.to_dict("index")
 
@@ -546,12 +551,12 @@ class Command(BaseCommand):
             q_value = 1
 
             if protein in prot_anova_info:
-                q_value = prot_anova_info[protein]["q_value"]
+                q_value = prot_anova_info[protein][Q_VALUE]
 
             results[protein][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = q_value
 
             # Fisher
-            fisher = {"G_statistic": 1, P_VALUE: 1, "frequency": 1, "q_value": 1}
+            fisher = {"G_statistic": 1, P_VALUE: 1, "frequency": 1, Q_VALUE: 1}
 
             if protein in fisher_stats:
                 fisher = fisher_stats[protein]
@@ -569,16 +574,18 @@ class Command(BaseCommand):
         Add all metrics for each phosphosite.
         """
         metrics = {}
-    
+
+        # TODO - finish all these
+        # TODO - looks like some duplication, simplify    
         # # Fisher G Statistic
-        # time_course_fisher_dict = self._calcFisherG(time_course_phospho, LOG2_MEAN, raw = False, phospho = True)
+        # time_course_fisher_dict = self._calculate_fisher(time_course_phospho, phospho = True)
 
         # Corrected q values - Phospho
         # 1) Create a dataframe with the desired regression info
         # phospho_anova_info = {}
         # for uniprot_accession in time_course_phospho:
         #     for site in time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-        #         phospho_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site]['phosphorylation_site']
+        #         phospho_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
         #         if phospho_key not in phospho_anova_info:
         #             phospho_anova_info[phospho_key] = {}
         #         phospho_anova_info[phospho_key]['p_value'] = time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA][P_VALUE]
@@ -592,12 +599,12 @@ class Command(BaseCommand):
         # # 4) Add Regression info in time_course_phospho dictionary
         # for uniprot_accession in time_course_phospho:
         #     for site in time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-        #         site_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession]['phosphorylation_abundances'][site]['phosphorylation_site']
+        #         site_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
         #         # ANOVA q values
         #         if site_key in phospho_anova_info:
-        #             time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA]["q_value"] = phospho_anova_info[site_key]['q_value']
+        #             time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = phospho_anova_info[site_key]['q_value']
         #         else:
-        #             time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA]["q_value"] = 1
+        #             time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = 1
         #         # # Fisher
         #         # if site_key in time_course_fisher_dict:
         #         #     time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN]["Fisher_G"] = time_course_fisher_dict[site_key]
@@ -609,7 +616,7 @@ class Command(BaseCommand):
 
     def _calculate_fisher(
         self,
-        combined_time_course_info,
+        results,
         phospho=False,
         phospho_ab=False,
         phospho_reg=False,
@@ -619,16 +626,7 @@ class Command(BaseCommand):
         # norm_method = LOG2_MEAN
         # raw = False
 
-        if phospho:
-            raise Exception("Phospho not implemented yet.")
-
-        if phospho_ab:
-            raise Exception("Phospho_ab not implemented yet.")
-
-        if phospho_reg:
-            raise Exception("Phospho_reg not implemented yet.")
-
-        time_course_fisher = self.create_readings_dataframe(combined_time_course_info)
+        time_course_fisher = self._create_results_dataframe(results, phospho, phospho_ab, phospho_reg)
 
         time_course_fisher = time_course_fisher.dropna()
 
@@ -659,13 +657,15 @@ class Command(BaseCommand):
         time_course_fisher[P_VALUE] = p_values
         time_course_fisher["frequency"] = frequencies
 
-        time_course_fisher["q_value"] = self.p_adjust_bh(time_course_fisher[P_VALUE])
+        time_course_fisher[Q_VALUE] = self.p_adjust_bh(time_course_fisher[P_VALUE])
 
         # Return only the Fisher columns
-        fisher_cols = ["G_statistic", P_VALUE, "frequency", "q_value"]
+        fisher_cols = ["G_statistic", P_VALUE, "frequency", Q_VALUE]
         time_course_fisher = time_course_fisher[fisher_cols]
 
         return time_course_fisher.to_dict("index")
+
+
 
     # TODO - lifted from ICR, rewrite
     # TODO - does it really need to be a dataframe? Write tests and change if possible.
@@ -680,41 +680,131 @@ class Command(BaseCommand):
         return q[by_orig]
 
     # TODO - lifted from ICR, rewrite
-    def create_readings_dataframe(self, readings):
+    def _create_results_dataframe(self, results, phospho, phospho_ab, phospho_reg):
         # TODO - raw is always False, ignore all raw code
         # TODO - norm_method is always log2_mean, ignore all norm_method code
         abundance_table = {}
         final_protein = None
+        final_mod = None
 
         # TODO - maybe this and other similar loops could be changed to use items()?
         #   That way the value variable could be used in each successive loop, e.g.
         #   for protein, p_readings in readings.items():
         #       for replicate_name, rn_readings = p_readings.items():
         #           etc.
-        for protein in readings:
+        for protein in results:
+            prs = results[protein]
+
+            # TODO - just needed for getting replicates I think, could be disposed of
             final_protein = protein
 
-            abundance_table[protein] = {}
+            # TODO - put this 'if' outside the loop? It may be more efficient
+            if phospho:
+                # print("++++ PRS")
+                # print(protein)
+                # print(prs[PHOSPHORYLATION_ABUNDANCES])
 
-            for replicate_name in readings[protein]:
-                for stage_name in readings[protein][replicate_name].keys():
-                    rep_stage_name = f"{replicate_name}_{stage_name}"
-                    abundance_table[protein][rep_stage_name] = readings[protein][
-                        replicate_name
-                    ][stage_name]
+                for mod in prs[PHOSPHORYLATION_ABUNDANCES]:
+                    final_mod = mod
+
+                    protein_abundances_all = prs[PHOSPHORYLATION_ABUNDANCES][mod][POSITION_ABUNDANCES]
+
+                    # print("++++ PAA")
+                    # print(protein_abundances_all)
+                    # exit()
+
+                    mod_key = protein.accession_number + "_" + prs[PHOSPHORYLATION_ABUNDANCES][mod][PHOSPHORYLATION_SITE]
+
+                    # print("+++++ LEN")
+                    # print(len(protein_abundances_all))
+
+                    if len(protein_abundances_all) != 0:
+                        # TODO - tidy this
+                        protein_abundances = protein_abundances_all[NORMALISED][LOG2_MEAN]
+
+                        # print("++++++++ FOO")
+                        # # print(protein_abundances)
+
+                        # print(prs[PHOSPHORYLATION_ABUNDANCES][mod].keys())
+
+                        if phospho_ab:
+                            if PROTEIN_OSCILLATION_ABUNDANCES in prs[PHOSPHORYLATION_ABUNDANCES][mod]:
+                                protein_abundances = prs[PHOSPHORYLATION_ABUNDANCES][mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
+                            else:
+                                continue
+                        if phospho_reg:
+                            if PHOSPHO_REGRESSION in prs[PHOSPHORYLATION_ABUNDANCES][mod]:
+                                protein_abundances = prs[PHOSPHORYLATION_ABUNDANCES][mod][PHOSPHO_REGRESSION][LOG2_MEAN]
+                            else:
+                                continue
+
+                        # TODO - make generic
+                        # TODO - tidy this
+                        for abundance_rep in ['abundance_One','abundance_Two']:
+                            if mod_key not in abundance_table:
+                                abundance_table[mod_key] = {}
+
+                            # TODO - not in original, why here?
+                            if not protein_abundances.get(abundance_rep):
+                                continue
+
+                            for timepoint in protein_abundances[abundance_rep]:
+                                rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
+                                rep_timepoint = rep + "_" + timepoint
+                                abundance_table[mod_key][rep_timepoint] = protein_abundances[abundance_rep][timepoint]
+
+            else:
+                abundance_table[protein] = {}
+
+                for replicate_name in results[protein]:
+                    for stage_name in results[protein][replicate_name].keys():
+                        rep_stage_name = f"{replicate_name}_{stage_name}"
+                        abundance_table[protein][rep_stage_name] = results[protein][
+                            replicate_name
+                        ][stage_name]
+
+        # if phospho:
+        #     print("++++ A TABLE")
+        #     print(abundance_table)
+        #     exit()
 
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
 
         new_cols = []
 
-        replicate_names = list(readings[final_protein].keys())
+        # if phospho:
+        #     print("++++++ FOO")
+        #     print(results[final_protein][PHOSPHORYLATION_ABUNDANCES].keys())
 
-        for stage_name in readings[final_protein][replicate_names[0]]:
+        #     replicate_names = list(results[final_protein][final_mod].keys())
+
+        #     for stage_name in results[final_protein][final_mod][replicate_names[0]]:
+        #         for rn in replicate_names:
+        #             new_cols.append(f"{rn}_{stage_name}")
+        # else:
+        replicate_names = list(results[final_protein].keys())
+
+        # print("++++++ R NAMES")
+        # print(replicate_names)
+
+        for stage_name in results[final_protein][replicate_names[0]]:
             for rn in replicate_names:
                 new_cols.append(f"{rn}_{stage_name}")
 
-        time_course_abundance_df = time_course_abundance_df[new_cols]
+        # Rearrange the column order so replicates are near eatch other
+        try:
+            time_course_abundance_df = time_course_abundance_df[new_cols]
+        except Exception as e:
+            print("++++ DF FAILED")
+            print(phospho)
+            print(time_course_abundance_df)
+            print(e)
+            exit()
+
+        # print("++++ DF")
+        # print(time_course_abundance_df)
+        # exit()
 
         return time_course_abundance_df
 
@@ -773,16 +863,15 @@ class Command(BaseCommand):
             # TODO - is this necessary?
             timepoints = [x for x in timepoints_1 if x != []]
 
-            # Protein info in at least 2 reps:
-            # TODO - why is that comment above? There's no mention of two reps.
-            if len(timepoints) != 0:
+            # f_oneway needs at least 2 stage names
+            if len(timepoints) > 1:
                 one_way_anova = f_oneway(*timepoints)
                 f_statistic = one_way_anova[0].item()
                 p_value = one_way_anova[1].item()
                 if np.isnan(p_value):
                     p_value = 1
         except Exception as e:
-            print("++++ ERROR CALCULATING ANOVA")
+            print("ERROR CALCULATING ANOVA")
             print(e)
 
         return {
@@ -818,7 +907,7 @@ class Command(BaseCommand):
         if len(abundances) > 1:
             std_dev = statistics.stdev(abundances)
         else:
-            print("+++ NO ABUNDANCES FOR STANDARD DEVIATION")
+            print("NO ABUNDANCES FOR STANDARD DEVIATION")
             print(readings)
 
         try:
@@ -1227,6 +1316,26 @@ class Command(BaseCommand):
 
         return readings_by_rep_stage
 
+    def _get_phosphosites(self, phosphos: QuerySet[Phospho]):
+        logger.info(
+            "Get all the phosphites"
+        )
+        phosphosites: dict = {}
+
+        mod_no = 0
+
+        for phospho in phosphos:
+            mod_no += 1
+            self._count_logger(
+                mod_no,
+                10000,
+                f"Formatting for {phospho.mod}",
+            )
+
+            phosphosites[phospho.mod] = phospho.phosphosite
+
+        return phosphosites
+
     def _calculate_first_level_normalisation(self, readings: dict, medians):
         normalised_readings: dict = {}
 
@@ -1529,7 +1638,16 @@ class Command(BaseCommand):
             # If we have info both in protein and in phospho level
             prpa = results[protein][PHOSPHORYLATION_ABUNDANCES]
 
+            # print("+++++ BAR")
+            # print(len(prpa))
+            # print(prpa)
+            # print(len(results[protein][PROTEIN_ABUNDANCES][RAW]))
+            # print(results[protein][PROTEIN_ABUNDANCES][RAW])
+
             if len(prpa) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
+                # print("+++++ ADDING")
+                # exit()
+
                 # Add the Protein Oscillation Normalised Abundances
                 for mod in prpa:
                     # TODO - could be initialised in loop below
@@ -1540,7 +1658,7 @@ class Command(BaseCommand):
                         protein_oscillation_abundances = prpampoa[norm_method]
 
                         phospho_oscillations = self._calculateProteinOscillationAbundances(
-                            results, norm_method, protein.accession_number, mod
+                            results, norm_method, protein, mod
                         )
                         # TODO - make generic
                         for rep in ["One", "Two"]:
@@ -1548,8 +1666,8 @@ class Command(BaseCommand):
                                 key = "abundance_" + rep
                                 protein_oscillation_abundances[key] = phospho_oscillations[rep]
 
-                        protein_oscillation_abundances[ABUNDANCE_AVERAGE] = self._calculateAverageRepAbundance(
-                            protein_oscillation_abundances,imputed=False,phospho_oscillation=False, with_bugs=with_bugs)
+                        protein_oscillation_abundances[ABUNDANCE_AVERAGE] = self._calculate_means(
+                            protein_oscillation_abundances, imputed=False, with_bugs=with_bugs)
 
                     # if we have info in Protein Oscillation Normalised Abundances
                     if (
@@ -1560,59 +1678,66 @@ class Command(BaseCommand):
 
                             # Metrics
                             prpampoa[norm_method][METRICS] = self._calcAbundanceMetrics(
-                                protein_oscillation_abundances, protein.name)
+                                protein_oscillation_abundances, protein)
 
                         # ANOVA
                         norm_abundances = prpampoa[LOG2_MEAN]
 
-                        p_value, f_statistic = self._calcANOVA(norm_abundances)
+                        anovas = self._calcANOVA(norm_abundances)
 
-                        prpampoa[LOG2_MEAN][METRICS][ANOVA] = {
-                            P_VALUE: p_value,
-                            F_STATISTICS: f_statistic
-                        }
-
-        return results
+                        prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
 
         # Fisher G Statistic - Phospho
-        time_course_fisher_dict = calcFisherG(combined_time_course_info, LOG2_MEAN, raw = False,  phospho = True, phospho_ab = True)
+        # TODO - figure out how to get this working for protein oscillations
+        # time_course_fisher_dict = self._calculate_fisher(results, phospho = True, phospho_ab = True)
+
+        # return
 
         # Corrected q values - Phospho
         # 1) Create a dataframe with the desired Protein-Phospho info
         prot_phospho_info = {}
-        for uniprot_accession in combined_time_course_info:
-            if len(combined_time_course_info[uniprot_accession]['phosphorylation_abundances']) != 0:
-                for site in combined_time_course_info[uniprot_accession]['phosphorylation_abundances']:
-                    if 'protein_oscillation_abundances' in combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site]:
-                        phospho_key = uniprot_accession + "_" + combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site]['phosphorylation_site']
+        for protein in results:
+            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0:
+                for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
+                    if 'protein_oscillation_abundances' in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
+                        phospho_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
                         if phospho_key not in prot_phospho_info:
                             prot_phospho_info[phospho_key] = {}
-                        prot_phospho_info[phospho_key]['p_value'] = combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+                        prot_phospho_info[phospho_key]['p_value'] = results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+
+        if not prot_phospho_info:
+            # TODO - make this an exception? Shouldn't happen for large data sets
+            print("++++ NO PROT_PHOSPHO_INFO")
+            exit()
+            return results
 
         prot_phospho_info_df = pd.DataFrame(prot_phospho_info)
         prot_phospho_info_df = prot_phospho_info_df.T
         # 2) Protein-Phospho ANOVA q values
-        prot_phospho_info_df['q_value'] = p_adjust_bh(prot_phospho_info_df['p_value'])
+        prot_phospho_info_df['q_value'] = self.p_adjust_bh(prot_phospho_info_df['p_value'])
         # 3) Turn dataframe into a dictionary
         prot_phospho_info = prot_phospho_info_df.to_dict('index')
-        # 4) Add Protein-Phospho info in combined_time_course_info dictionary
-        for uniprot_accession in combined_time_course_info:
-            if len(combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][RAW]) != 0:
-                for site in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-                    if PROTEIN_OSCILLATION_ABUNDANCES in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site]:
-                        site_key = uniprot_accession + "_" + combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site]['phosphorylation_site']
-                        # ANOVA q values
-                        if site_key in prot_phospho_info:
-                            combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA]["q_value"] = prot_phospho_info[site_key]['q_value']
-                        else:
-                            combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA]["q_value"] = 1
-                        # Fisher
-                        if site_key in time_course_fisher_dict:
-                            combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
-                        else:
-                            combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
 
-        return combined_time_course_info
+        # 4) Add Protein-Phospho info in combined_time_course_info dictionary
+        # TODO - tidy up, two loops not necessary?
+        for protein in results:
+            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
+                for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
+                    if PROTEIN_OSCILLATION_ABUNDANCES in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
+                        site_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
+                        # ANOVA q values
+                        # TODO - tidy
+                        if site_key in prot_phospho_info:
+                            results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = prot_phospho_info[site_key]['q_value']
+                        else:
+                            results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = 1
+                        # # Fisher
+                        # if site_key in time_course_fisher_dict:
+                        #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
+                        # else:
+                        #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
+
+        return results
 
 
 
@@ -1640,9 +1765,9 @@ class Command(BaseCommand):
 #                 PHOSPHORYLATION_ABUNDANCES
 #             ]:  
 #                 rep1_phosho = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["position_abundances"][NORMALISED][LOG2_MEAN]['abundance_rep_1']
+#                     phosphosite][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]['abundance_rep_1']
 #                 rep2_phosho = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["position_abundances"][NORMALISED][LOG2_MEAN]['abundance_rep_2']
+#                     phosphosite][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]['abundance_rep_2']
 #                 rep1_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]['abundance_rep_1']
 #                 rep2_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]['abundance_rep_2']
                 
@@ -1652,7 +1777,7 @@ class Command(BaseCommand):
                 
 #                 # Add the Regressed Phospho Normalised Abundances
 #                 combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["phospho_regression"] = {ZERO_MAX:{}, LOG2_MEAN:{}}
+#                     phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
 
 #                 # converting dictionary values to list for both replicates
 #                 phospho_Y_list = list(rep1_phosho.values()) + list(rep2_phosho.values())
@@ -1682,7 +1807,7 @@ class Command(BaseCommand):
 
 #                 phospho_regression = combined_time_course_info[
 #                     uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][
-#                     "phospho_regression"]
+#                     PHOSPHO_REGRESSION]
                 
 #                 phospho_regression[LOG2_MEAN] = res_dic
 
@@ -1707,23 +1832,23 @@ class Command(BaseCommand):
 #                 phospho_regression[LOG2_MEAN][METRICS] = {}
 #                 phospho_regression[LOG2_MEAN][METRICS][ANOVA] = {}
 #                 combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA][P_VALUE] = p_value
+#                     phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE] = p_value
 #                 combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                     phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA][F_STATISTICS] = f_statistic
+#                     phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][F_STATISTICS] = f_statistic
 
 #     # Fisher G Statistic - Phospho
-#     time_course_fisher_dict = calcFisherG(combined_time_course_info, LOG2_MEAN, raw = False,  phospho = True, phospho_ab = False, phospho_reg = True)
+#     time_course_fisher_dict = self._calculate_fisher(combined_time_course_info, phospho = True, phospho_ab = False, phospho_reg = True)
 #     # Corrected q values - Phospho
 #     # 1) Create a dataframe with the desired regression info
 #     regression_info = {}
 #     for uniprot_accession in combined_time_course_info:
-#         if len(combined_time_course_info[uniprot_accession]['phosphorylation_abundances']) != 0:
-#             for site in combined_time_course_info[uniprot_accession]['phosphorylation_abundances']:
-#                 if 'phospho_regression' in combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site]:
-#                     phospho_key = uniprot_accession + "_" + combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site]['phosphorylation_site']
+#         if len(combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]) != 0:
+#             for site in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
+#                 if 'phospho_regression' in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site]:
+#                     phospho_key = uniprot_accession + "_" + combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
 #                     if phospho_key not in regression_info:
 #                         regression_info[phospho_key] = {}
-#                     regression_info[phospho_key]['p_value'] = combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA']['p_value']
+#                     regression_info[phospho_key]['p_value'] = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA']['p_value']
 
 #     regression_info_df = pd.DataFrame(regression_info)
 #     regression_info_df = regression_info_df.T
@@ -1735,19 +1860,175 @@ class Command(BaseCommand):
 #     for uniprot_accession in combined_time_course_info:
 #         if len(combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][RAW]) != 0:
 #             for phosphosite in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-#                 if "phospho_regression" in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]:
-#                     site_key = uniprot_accession + "_" + combined_time_course_info[uniprot_accession]['phosphorylation_abundances'][phosphosite]['phosphorylation_site']
+#                 if PHOSPHO_REGRESSION in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]:
+#                     site_key = uniprot_accession + "_" + combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHORYLATION_SITE]
 #                     # ANOVA q values
 #                     if site_key in regression_info:
-#                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA]["q_value"] = regression_info[site_key]['q_value']
+#                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = regression_info[site_key]['q_value']
 #                     else:
-#                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]["phospho_regression"][LOG2_MEAN][METRICS][ANOVA]["q_value"] = 1
+#                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = 1
 #                     # Fisher
 #                     phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
 #                     if site_key in time_course_fisher_dict:
-#                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]["phospho_regression"][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
+#                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
 #                     else:
 #                         combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-#                                     phosphosite]["phospho_regression"][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
+#                                     phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
 
 #     return combined_time_course_info
+
+
+
+
+    # TODO - lifted from ICR
+    def _calculateProteinOscillationAbundances(self, combined_time_course_info, norm_method, uniprot_accession, phosphosite):
+        """
+        # Protein oscillation normalised abundances to the phospho part of the JSON too.
+        # It would just be the normalised phopho abundances minus the normalised protein abundances per replicate.
+        # And then the average of them.
+        """
+        phospho_oscillations = {}
+
+        # protein exists
+        if "One" in combined_time_course_info[uniprot_accession]["protein_abundances"]["normalised"][norm_method]:
+            # site exists
+            if ("One" in combined_time_course_info[uniprot_accession]["phosphorylation_abundances"][
+                    phosphosite]["position_abundances"]["normalised"][norm_method]):
+
+                protein_oscillation_abundances_rep_1 = {}
+                protein_normed_abundance_rep_1 = combined_time_course_info[uniprot_accession][
+                    "protein_abundances"]["normalised"][norm_method]["One"]
+            
+                phosho_normed_abundance_rep_1 = combined_time_course_info[uniprot_accession][
+                    "phosphorylation_abundances"][phosphosite]["position_abundances"]["normalised"][norm_method][
+                    "One"]
+            
+                for time_point in protein_normed_abundance_rep_1:
+                    if time_point in phosho_normed_abundance_rep_1:
+                        protein_oscillation_abundances_rep_1[time_point] = (
+                            phosho_normed_abundance_rep_1[time_point]
+                            - protein_normed_abundance_rep_1[time_point]
+                        )
+                phospho_oscillations["One"] = protein_oscillation_abundances_rep_1
+
+        # Replicate 2
+        if "Two" in combined_time_course_info[uniprot_accession]["protein_abundances"]["normalised"][norm_method]:
+            if ("Two" in combined_time_course_info[uniprot_accession]["phosphorylation_abundances"][
+                    phosphosite]["position_abundances"]["normalised"][norm_method]):
+            
+                protein_oscillation_abundances_rep_2 = {}
+                protein_normed_abundance_rep_2 = combined_time_course_info[uniprot_accession][
+                    "protein_abundances"]["normalised"][norm_method]["Two"]
+                phosho_normed_abundance_rep_2 = combined_time_course_info[uniprot_accession][
+                    "phosphorylation_abundances"][phosphosite]["position_abundances"]["normalised"][norm_method][
+                    "Two"]
+                for time_point in protein_normed_abundance_rep_2:
+                    if time_point in phosho_normed_abundance_rep_2:
+                        protein_oscillation_abundances_rep_2[time_point] = (
+                            phosho_normed_abundance_rep_2[time_point]
+                            - protein_normed_abundance_rep_2[time_point]
+                            )
+                phospho_oscillations["Two"] = protein_oscillation_abundances_rep_2
+    
+        return phospho_oscillations
+
+
+
+    # TODO - lifted from ICR
+    # TODO - there is duplicate here with another function
+    # TODO - study this
+    def _calcAbundanceMetrics(self, norm_abundances, uniprot_accession):
+        """
+        Calculates the moments and peaks for the average for the three replicates normalised abundance for each protein.
+        """
+        metrics = {}
+        norm_abundance_average = norm_abundances["abundance_average"]
+        norm_abundance_average_list = list(norm_abundance_average.values())
+
+        norm_method = '0-max'
+
+        # TODO - make generic
+        time_points = [
+	        "Palbo",
+	        "Late G1_1",
+	        "G1/S",
+	        "S",
+    	    "S/G2",
+	        "G2_2",
+    	    "G2/M_1",
+	        "M/Early G1",
+        ]
+
+        abundance = []
+        for timepoint in time_points:
+            for rep in norm_abundances:
+                if rep != "abundance_average":
+                    if timepoint in norm_abundances[rep]:
+                        abundance.append(norm_abundances[rep][timepoint])
+    
+        std = statistics.stdev(abundance)
+
+        try:
+            residuals_array = np.polyfit(
+                range(0, len(norm_abundance_average)),
+                norm_abundance_average_list,
+                2,
+                full=True,
+            )[1]
+
+            if len(residuals_array) == 0:
+                # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
+                residuals = 5
+            else:
+                residuals = np.polyfit(
+                range(0, len(norm_abundance_average)),
+                norm_abundance_average_list,
+                2,
+                full=True,)[1][0]
+
+            r_squared = np.polyfit(
+                range(0, len(norm_abundance_average)), norm_abundance_average_list, 2
+            )
+            max_fold_change = max(norm_abundance_average.values()) - min(
+                norm_abundance_average.values()
+            )
+            metrics = {
+                "variance": moment(norm_abundance_average_list, moment=2),
+                "skewness": moment(norm_abundance_average_list, moment=3),
+                "kurtosis": moment(norm_abundance_average_list, moment=4),
+                "peak": max(norm_abundance_average, key=norm_abundance_average.get),
+                "max_fold_change": max_fold_change,
+                "residuals": residuals,
+                "R_squared": r_squared,
+            }
+            # if we have info for the protein in at least 2 replicates
+            if len(norm_abundances) == 3:
+                curve_fold_change, curve_peak = self._calcCurveFoldChange(
+                    # norm_abundances, uniprot_accession
+                    norm_abundances
+                )
+                residuals_all, r_squared_all = self._calcResidualsR2All(norm_abundances)
+                metrics = {
+                    "standard_deviation": std, 
+                    "variance_average": round(moment(norm_abundance_average_list, moment=2),2),
+                    "skewness_average": moment(norm_abundance_average_list, moment=3),
+                    "kurtosis_average": moment(norm_abundance_average_list, moment=4),
+                    "peak_average": max(norm_abundance_average, key=norm_abundance_average.get),
+                    "max_fold_change_average": max_fold_change,
+                    "residuals_average": residuals,
+                    "R_squared_average": r_squared,
+                    "residuals_all": residuals_all,
+                    "R_squared_all": r_squared_all,
+                    "curve_fold_change": curve_fold_change,
+                    "curve_peak": curve_peak,
+                }
+
+        except Exception as e:
+            print("+++++ EXCEPTION")
+            print(e)
+            # print(uniprot_accession)
+            # print(norm_abundance_average)
+            # print(norm_abundance_average_list)
+            # print(range(0, len(norm_abundance_average)))
+
+        return metrics

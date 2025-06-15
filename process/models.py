@@ -80,6 +80,9 @@ class Phospho(models.Model):
     # TODO - is this long enough?
     mod = models.CharField(max_length=255)
 
+    # TODO - what is this for?
+    phosphosite = models.CharField(max_length=255)
+
     def __str__(self):
         return f"Phospho for {self.protein.accession_number}"
 
