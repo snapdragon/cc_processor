@@ -356,3 +356,40 @@ def test_calculate_metrics(load_json):
     assert isclose(metrics['R_squared_all'], 0.47, rel_tol=1e-5) == True
     assert isclose(metrics['curve_fold_change'], 1.8033637502236521, rel_tol=1e-5) == True
     assert metrics['curve_peak'] == 'Palbo'
+
+
+# TODO - more of these
+# TODO - do SL version
+@pytest.mark.django_db
+def test_calculate_ANOVA():
+    command = Command()
+
+    abundances = {
+        'abundance_rep_1': {
+            'Palbo': -0.2308,
+            'Late G1_1': 0.4059,
+            'G1/S': -0.7048,
+            'S': 0.0117,
+            'S/G2': -0.4986,
+            'G2_2': -0.3323,
+            'G2/M_1': -0.232,
+            'M/Early G1': 0.6562
+        },
+        'abundance_rep_2': {
+            'Palbo': 0.1586,
+            'Late G1_1': 0.1537,
+            'G1/S': 0.1503,
+            'S': 0.0468,
+            'S/G2': 0.1054,
+            'G2_2': 0.1219,
+            'G2/M_1': 0.0836,
+            'M/Early G1': 0.1045
+        }
+    }
+
+    anovas = command._calculate_ANOVA(abundances)
+
+    assert anovas == {
+        "p_value": 0.5788203095177293,
+        "F_statistics": 0.849268808563235
+    }

@@ -630,43 +630,36 @@ class Command(BaseCommand):
         return res
     
     # TODO - straight up lifted from ICR, simplify ideally using a library
-    def _calcANOVA(self, readings: dict):
-        """
-        Groups by time point and performs ANOVA between all time point groups.
-        """
+    def _calculate_ANOVA(self, readings: dict):
         # Defaults if not enough replicate
         # TODO - why these values?
         p_value = 1
         f_statistic = 1
 
+        # TODO - why is it the first replicate?
         first_replicate_name = list(readings.keys())[0]
 
         # TODO - change to stage_names
-        timepoints_1 = []
+        stage_names = []
 
-        # TODO - don't attempt if less than two values, it errors
         try:
+            # TODO - change this to use sample_stages?
             for stage_name in readings[first_replicate_name]:
-                timepoints_1.append(self._tp(stage_name, readings))
-    
-            # TODO - is this necessary?
-            # timepoints = [x for x in timepoints_1 if x != []]
-            # TODO - old version sometimes was of the like:
-            #   [[-0.0214], [0.0265], [0.009], [0.0785], [0.1633], [0.1042], [0.0646], [-0.4246]]
-            #   which errored
-            #   all input arrays have length 1.
-            #   f_oneway requires that at least one input has length greater than 1.
-            timepoints = [x for x in timepoints_1 if x != [] and len(x) > 1]
+                stage_names.append(self._tp(stage_name, readings))
 
-            # f_oneway needs at least 2 stage names
-            # print(f"+++ LEN TIMEPOINTS {len(timepoints)}")
-            # print(timepoints)
+            # Each entry must have at least two points for f_oneway to work    
+            timepoints = [x for x in stage_names if x != [] and len(x) > 1]
+
             if len(timepoints) > 1:
+                # TODO - study f_oneway
                 one_way_anova = f_oneway(*timepoints)
+
                 f_statistic = one_way_anova[0].item()
                 p_value = one_way_anova[1].item()
+
                 if np.isnan(p_value):
                     p_value = 1
+
         except Exception as e:
             print("ERROR CALCULATING ANOVA")
             print(e)
@@ -678,6 +671,7 @@ class Command(BaseCommand):
 
     # TODO - tidy this up
     # TODO - lifted from ICR, change names
+    # TODO - tested
     def _calculate_metrics(
         self,
         readings: dict,
@@ -1490,7 +1484,7 @@ class Command(BaseCommand):
                         # ANOVA
                         norm_abundances = prpampoa[LOG2_MEAN]
 
-                        anovas = self._calcANOVA(norm_abundances)
+                        anovas = self._calculate_ANOVA(norm_abundances)
 
                         prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
 
@@ -1658,7 +1652,7 @@ class Command(BaseCommand):
                         phosphosite][METRICS][ZERO_MAX]['curve_fold_change'] / combined_time_course_info[uniprot_accession][METRICS]['0-max']['curve_fold_change']
 
                     # ANOVA
-                    anova = self._calcANOVA(phospho_regression[LOG2_MEAN])
+                    anova = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
                     phospho_regression[LOG2_MEAN][METRICS] = {}
                     phospho_regression[LOG2_MEAN][METRICS][ANOVA] = {}
                     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
@@ -1712,6 +1706,7 @@ class Command(BaseCommand):
 
 
     # calculateProteinOscillationAbundances
+    # TODO - tested
     def _calculate_protein_oscillation(self, results_single, norm_method, phosphosite, replicates):
         phospho_oscillations = {}
 
@@ -1843,7 +1838,7 @@ class Command(BaseCommand):
             sample_stages
         )
 
-        anovas[protein] = self._calcANOVA(log2_readings)
+        anovas[protein] = self._calculate_ANOVA(log2_readings)
 
         relative_log2_readings_by_protein[
             protein
