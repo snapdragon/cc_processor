@@ -30,7 +30,7 @@ def test_all_replicates():
 
 
 @pytest.mark.django_db
-def test_calculate_means_across_replicates_by_stage():
+def test_calculate_means():
     command = Command()
 
     project = ProjectFactory()
@@ -87,7 +87,7 @@ def test_calculate_means_across_replicates_by_stage():
         },
     }
 
-    results = command._calculate_means_across_replicates_by_stage(readings, False)
+    results = command._calculate_means(readings, False)
 
     assert results == {
         sample_stage1.name: 4,
@@ -232,3 +232,51 @@ def test_calcCurveFoldChange():
     result = command._calcCurveFoldChange(readings)
 
     assert result == (1.8033637502236528, 'Palbo')
+
+
+# TODO - write a deliberate, miniature version of this
+# TODO - do one for SL as well
+@pytest.mark.django_db
+def test_calculate_protein_oscillation(load_json):
+    command = Command()
+
+    results_single = load_json("calculate_protein_oscillation_results_data.json")
+
+    norm_method = "0-max"
+    phosphosite = "212"
+
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="abundance_rep_1", project=project)
+    replicate2 = ReplicateFactory(name="abundance_rep_2", project=project)
+
+    result = command._calculate_protein_oscillation(
+        results_single,
+        norm_method,
+        phosphosite,
+        [replicate1, replicate2]
+    )
+
+    assert results_single["gene_name"] == "AHNAK"
+    assert result == {
+        "abundance_rep_1": {
+            "Palbo": 0.45930000000000004,
+            "Late G1_1": 0.14100000000000001,
+            "G1/S": 0.5424,
+            "S": 0.30889999999999995,
+            "S/G2": 0.5092000000000001,
+            "G2_2": 0.48460000000000003,
+            "G2/M_1": 0.31079999999999997,
+            "M/Early G1": -0.17710000000000004
+        },
+        "abundance_rep_2": {
+            "Palbo": 0,
+            "Late G1_1": -0.023700000000000054,
+            "G1/S": -0.12629999999999997,
+            "S": 0.027200000000000002,
+            "S/G2": -0.03539999999999999,
+            "G2_2": -0.03739999999999999,
+            "G2/M_1": -0.10670000000000002,
+            "M/Early G1": -0.1630999999999999
+        }
+    }

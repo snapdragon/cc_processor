@@ -15,7 +15,7 @@ from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading
+from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage
 
 # TODO - make this configurable by flag?
 logging.basicConfig(
@@ -94,6 +94,7 @@ class Command(BaseCommand):
         protein_readings = ProteinReading.objects.filter(
             column_name__replicate__project=project
         )
+        sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
         FOCUS_PROTEIN = Protein.objects.get(
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
@@ -142,12 +143,12 @@ class Command(BaseCommand):
                 # "gene_name": gene_name,
                 # "protein_name": protein_name,
 
-        self._addProteinOscillations(results, with_bugs)
+        self._addProteinOscillations(results, replicates, with_bugs)
 
         # Add the Regressed Phospho Normalised Abundances        
-        results = self._addPhosphoRegression(results, with_bugs)
+        results = self._addPhosphoRegression(results, replicates, with_bugs)
 
-        print(json.dumps(results[FOCUS_PROTEIN], default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))
+        self.dump(results[FOCUS_PROTEIN])
         # print(results[FOCUS_PROTEIN])
 
         # json_results = {}
@@ -1656,7 +1657,7 @@ class Command(BaseCommand):
 
 
     # TODO - lifted from ICR
-    def _addProteinOscillations(self, results, with_bugs):
+    def _addProteinOscillations(self, results, replicates, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
 
@@ -1664,16 +1665,8 @@ class Command(BaseCommand):
             # If we have info both in protein and in phospho level
             prpa = results[protein][PHOSPHORYLATION_ABUNDANCES]
 
-            # print("+++++ BAR")
-            # print(len(prpa))
-            # print(prpa)
-            # print(len(results[protein][PROTEIN_ABUNDANCES][RAW]))
-            # print(results[protein][PROTEIN_ABUNDANCES][RAW])
 
             if len(prpa) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
-                # print("+++++ ADDING")
-                # exit()
-
                 # Add the Protein Oscillation Normalised Abundances
                 for mod in prpa:
                     # TODO - could be initialised in loop below
@@ -1683,12 +1676,13 @@ class Command(BaseCommand):
                     for norm_method in [ZERO_MAX, LOG2_MEAN]:
                         protein_oscillation_abundances = prpampoa[norm_method]
 
-                        phospho_oscillations = self._calculateProteinOscillationAbundances(
-                            results, norm_method, protein, mod
+                        # TODO - should this be passing phosphosite, not mod?
+                        phospho_oscillations = self._calculate_protein_oscillation(
+                            results[protein], norm_method, mod, replicates
                         )
-                        # TODO - make generic
-                        for rep in ["One", "Two"]:
-                            if rep in phospho_oscillations:
+                        for rep in replicates:
+                            if rep.name in phospho_oscillations:
+                                # TODO - is this needed? Why not just use the rep name?
                                 key = "abundance_" + rep
                                 protein_oscillation_abundances[key] = phospho_oscillations[rep]
 
@@ -1770,7 +1764,7 @@ class Command(BaseCommand):
 
 
     # TODO - lifted from ICR
-    def _addPhosphoRegression(self, combined_time_course_info, with_bugs):
+    def _addPhosphoRegression(self, combined_time_course_info, replicates, with_bugs):
         """
         Normalise the phospho abundance on the protein abundance
         Calculates and adds all the Regressed Phospho Abundance and their metrics for each phosphosite.
@@ -1840,15 +1834,16 @@ class Command(BaseCommand):
                     # Calculate Residuals
                     residuals = (phospho_y - y_pred)
                     # Create new regressed phospho abundances dictionaries
-                    replicates = ["One", "Two"]
                     res_dic = {}  
                     for replicate in replicates:
-                        res_dic[replicate] = {}
-                        if replicate == "One":
+                        res_dic[replicate.name] = {}
+
+                        # TODO - WHY ARE THESE TWO DIFFERENT?
+                        if replicate.name == "One":
                             for index, value in enumerate(residuals[0:8]):
                                 key = time_points[index]
                                 res_dic[replicate][key] = value[0]
-                        if replicate == "Two":
+                        if replicate.name == "Two":
                             for index, value in enumerate(residuals[8::]):
                                 key = time_points[index]
                                 res_dic[replicate][key] = value[0]
@@ -1929,55 +1924,31 @@ class Command(BaseCommand):
 
 
 
-    # TODO - lifted from ICR
-    def _calculateProteinOscillationAbundances(self, combined_time_course_info, norm_method, uniprot_accession, phosphosite):
-        """
-        # Protein oscillation normalised abundances to the phospho part of the JSON too.
-        # It would just be the normalised phopho abundances minus the normalised protein abundances per replicate.
-        # And then the average of them.
-        """
+    # calculateProteinOscillationAbundances
+    def _calculate_protein_oscillation(self, results_single, norm_method, phosphosite, replicates):
         phospho_oscillations = {}
 
-        # protein exists
-        if "One" in combined_time_course_info[uniprot_accession]["protein_abundances"]["normalised"][norm_method]:
-            # site exists
-            if ("One" in combined_time_course_info[uniprot_accession]["phosphorylation_abundances"][
-                    phosphosite]["position_abundances"]["normalised"][norm_method]):
+        rspannm = results_single[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
+        rspappann = results_single[PHOSPHORYLATION_ABUNDANCES][
+                        phosphosite][POSITION_ABUNDANCES][NORMALISED][norm_method]
 
-                protein_oscillation_abundances_rep_1 = {}
-                protein_normed_One = combined_time_course_info[uniprot_accession][
-                    "protein_abundances"]["normalised"][norm_method]["One"]
-            
-                phosho_normed_One = combined_time_course_info[uniprot_accession][
-                    "phosphorylation_abundances"][phosphosite]["position_abundances"]["normalised"][norm_method][
-                    "One"]
-            
-                for time_point in protein_normed_One:
-                    if time_point in phosho_normed_One:
-                        protein_oscillation_abundances_rep_1[time_point] = (
-                            phosho_normed_One[time_point]
-                            - protein_normed_One[time_point]
-                        )
-                phospho_oscillations["One"] = protein_oscillation_abundances_rep_1
+        for replicate in replicates:
+            if replicate.name in rspannm:
+                if (replicate.name in rspappann):
 
-        # Replicate 2
-        if "Two" in combined_time_course_info[uniprot_accession]["protein_abundances"]["normalised"][norm_method]:
-            if ("Two" in combined_time_course_info[uniprot_accession]["phosphorylation_abundances"][
-                    phosphosite]["position_abundances"]["normalised"][norm_method]):
+                    protein_oscillation_abundances = {}
+                    protein_normed = rspannm[replicate.name]
+
+                    phosho_normed = rspappann[replicate.name]
             
-                protein_oscillation_abundances_rep_2 = {}
-                protein_normed_Two = combined_time_course_info[uniprot_accession][
-                    "protein_abundances"]["normalised"][norm_method]["Two"]
-                phosho_normed_Two = combined_time_course_info[uniprot_accession][
-                    "phosphorylation_abundances"][phosphosite]["position_abundances"]["normalised"][norm_method][
-                    "Two"]
-                for time_point in protein_normed_Two:
-                    if time_point in phosho_normed_Two:
-                        protein_oscillation_abundances_rep_2[time_point] = (
-                            phosho_normed_Two[time_point]
-                            - protein_normed_Two[time_point]
+                    for stage_name in protein_normed:
+                        if stage_name in phosho_normed:
+                            protein_oscillation_abundances[stage_name] = (
+                                phosho_normed[stage_name]
+                                - protein_normed[stage_name]
                             )
-                phospho_oscillations["Two"] = protein_oscillation_abundances_rep_2
+                    
+                    phospho_oscillations[replicate.name] = protein_oscillation_abundances
     
         return phospho_oscillations
 
@@ -2014,8 +1985,15 @@ class Command(BaseCommand):
                 if rep != "abundance_average":
                     if timepoint in norm_abundances[rep]:
                         abundance.append(norm_abundances[rep][timepoint])
-    
-        std = statistics.stdev(abundance)
+
+        std = None
+
+        # TODO - very simliar to _calculate_metrics, consolidate
+        if len(abundance) > 1:
+            std = statistics.stdev(abundance)
+        else:
+            print("NO ABUNDANCES FOR STANDARD DEVIATION")
+            print(norm_abundances)
 
         try:
             residuals_array = np.polyfit(
@@ -2081,3 +2059,6 @@ class Command(BaseCommand):
             # print(range(0, len(norm_abundance_average)))
 
         return metrics
+
+    def dump(self, obj):
+        print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))
