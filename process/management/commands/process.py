@@ -40,8 +40,7 @@ ABUNDANCE_AVERAGE = "average"
 NORMALISED = "normalised"
 MEDIAN = "median"
 MIN_MAX = "min-max"
-# TODO - change this name, it's specific to ICR
-LOG2_PALBO = "log2 palbo"
+LOG2_ARREST = "log2 arrest"
 IMPUTED = "imputed"
 P_VALUE = "p_value"
 # TODO - should it be F_statistic, singular?
@@ -198,125 +197,20 @@ class Command(BaseCommand):
                     METRICS: {}
                 }
 
-                # firstLevelNormalisationProteomics
-                # firstLevelNormalisationPhospho
-                normalised_readings = self._calculate_first_level_normalisation(
-                    readings, medians
-                )
-
-                # calclog2PalboNormalisation
-                arrest_readings = self._calculate_arrest_log2_normalisation(
-                    normalised_readings, project
-                )
-
-                # calclog2RelativeAbundance
-                log2_readings = (
-                    self._calculate_relative_log2_normalisation(normalised_readings)
-                )
-
-                # normaliseData
-                min_max_readings = self._calculate_level_two_normalisation(
-                    normalised_readings
-                )
-
-                # normaliseData
-                zero_max_readings = self._calculate_level_two_normalisation(
-                    normalised_readings, True
-                )
-
-                imputed_readings = self._impute(
-                    min_max_readings, replicates, column_names
-                )
-
-                raw_averages = (
-                    self._calculate_means(
-                        readings, with_bugs
-                    )
-                )
-
-                normalised_averages = (
-                    self._calculate_means(
-                        normalised_readings, with_bugs
-                    )
-                )
-
-                min_max_averages = (
-                    self._calculate_means(
-                        min_max_readings, with_bugs
-                    )
-                )
-
-                zero_max_averages = (
-                    self._calculate_means(
-                        zero_max_readings, with_bugs
-                    )
-                )
-
-                log2_averages = (
-                    self._calculate_means(
-                        log2_readings, with_bugs
-                    )
-                )
-
-                # TODO - why is this called median when it's from normalised?
-                median_averages = (
-                    self._calculate_means(
-                        normalised_readings, with_bugs
-                    )
-                )
-
-                arrest_averages = (
-                    self._calculate_means(
-                        arrest_readings, with_bugs
-                    )
-                )
-
-                imputed_averages = (
-                    self._calculate_means(
-                        imputed_readings, imputed=True, with_bugs = with_bugs
-                    )
-                )
-
-                log2_mean_metrics = self._calculate_metrics(
-                    log2_readings,
-                    log2_averages,
+                self._calculate_abundances_metrics(
+                    results[protein][mod],
+                    project,
+                    protein,
                     replicates,
-                    sample_stages
+                    readings,
+                    column_names,
+                    sample_stages,
+                    medians,
+                    anovas,
+                    relative_log2_readings_by_protein,
+                    POSITION_ABUNDANCES,
+                    with_bugs
                 )
-
-                zero_max_mean_metrics = self._calculate_metrics(
-                    zero_max_readings,
-                    zero_max_averages,
-                    replicates,
-                    sample_stages
-                )
-
-                anovas[protein] = self._calcANOVA(log2_readings)
-
-                relative_log2_readings_by_protein[
-                    protein
-                ] = log2_readings
-
-                # TODO - these calculations and these results can be combined in one function
-                #   with proteo
-                results[protein][mod][POSITION_ABUNDANCES][RAW] = readings
-                results[protein][mod][POSITION_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_averages
-                # TODO - confirm the output later calculations are as they should be after this
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MIN_MAX] = min_max_readings
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MEDIAN] = normalised_readings
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][ZERO_MAX] = zero_max_readings
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
-                # TODO - this should be called 'arrest'
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_PALBO] = arrest_readings
-                results[protein][mod][POSITION_ABUNDANCES][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_averages
-                results[protein][mod][POSITION_ABUNDANCES][IMPUTED] = imputed_readings
-                results[protein][mod][POSITION_ABUNDANCES][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
-                results[protein][mod][METRICS][LOG2_MEAN] = log2_mean_metrics
-                results[protein][mod][METRICS][ZERO_MAX] = zero_max_mean_metrics
 
         # # Kinase Consensus Prediction
         # # TODO - lifted, change
@@ -424,115 +318,20 @@ class Command(BaseCommand):
                 METRICS: {}
             }
 
-            # TODO - check whether all means calculations need with-bugs
-            # TODO - change all these to 'raw_averages' and the like
-            raw_averages = (
-                self._calculate_means(
-                    readings, with_bugs
-                )
-            )
-
-            # firstLevelNormalisationProteomics
-            normalised_readings = self._calculate_first_level_normalisation(
-                readings, medians
-            )
-
-            normalised_averages = (
-                self._calculate_means(
-                    normalised_readings, with_bugs
-                )
-            )
-
-            # calclog2PalboNormalisation
-            arrest_readings = self._calculate_arrest_log2_normalisation(
-                normalised_readings, project
-            )
-
-            arrest_averages = (
-                self._calculate_means(
-                    arrest_readings, with_bugs
-                )
-            )
-
-            # calclog2RelativeAbundance
-            log2_readings = (
-                self._calculate_relative_log2_normalisation(normalised_readings)
-            )
-
-            log2_averages = (
-                self._calculate_means(
-                    log2_readings, with_bugs
-                )
-            )
-
-            # normaliseData
-            min_max_readings = self._calculate_level_two_normalisation(
-                log2_readings
-            )
-
-            min_max_averages = (
-                self._calculate_means(
-                    min_max_readings, with_bugs
-                )
-            )
-
-            zero_max_readings = self._calculate_level_two_normalisation(
-                normalised_readings, True
-            )
-
-            zero_max_averages = (
-                self._calculate_means(
-                    zero_max_readings, with_bugs
-                )
-            )
-
-            imputed_readings = self._impute(
-                min_max_readings, replicates, column_names
-            )
-
-            imputed_averages = (
-                self._calculate_means(
-                    imputed_readings, with_bugs, imputed=True
-                )
-            )
-
-            log2_mean_metrics = self._calculate_metrics(
-                log2_readings,
-                log2_averages,
+            self._calculate_abundances_metrics(
+                results[protein],
+                project,
+                protein,
                 replicates,
-                sample_stages
+                readings,
+                column_names,
+                sample_stages,
+                medians,
+                anovas,
+                relative_log2_readings_by_protein,
+                PROTEIN_ABUNDANCES,
+                with_bugs
             )
-
-            zero_max_mean_metrics = self._calculate_metrics(
-                zero_max_readings,
-                zero_max_averages,
-                replicates,
-                sample_stages
-            )
-
-            anovas[protein] = self._calcANOVA(log2_readings)
-
-            relative_log2_readings_by_protein[
-                protein
-            ] = log2_readings
-
-            results[protein][PROTEIN_ABUNDANCES][RAW] = readings
-            results[protein][PROTEIN_ABUNDANCES][RAW][ABUNDANCE_AVERAGE] = raw_averages
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN] = normalised_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
-            # TODO - confirm the output later calculations are as they should be after this
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX] = zero_max_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX] = min_max_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO] = arrest_readings
-            results[protein][PROTEIN_ABUNDANCES][NORMALISED][LOG2_PALBO][ABUNDANCE_AVERAGE] = arrest_averages
-            results[protein][PROTEIN_ABUNDANCES][IMPUTED] = imputed_readings
-            results[protein][PROTEIN_ABUNDANCES][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
-            results[protein][METRICS][LOG2_MEAN] = log2_mean_metrics
-            results[protein][METRICS][ZERO_MAX] = zero_max_mean_metrics
 
         # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
 
@@ -1942,3 +1741,130 @@ class Command(BaseCommand):
 
     def dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))
+
+    def _calculate_abundances_metrics(
+        self,
+        obj,
+        project,
+        protein,
+        replicates,
+        readings,
+        column_names,
+        sample_stages,
+        medians,
+        anovas,
+        relative_log2_readings_by_protein,
+        location,
+        with_bugs
+    ):
+        # firstLevelNormalisationProteomics
+        # firstLevelNormalisationPhospho
+        normalised_readings = self._calculate_first_level_normalisation(
+            readings, medians
+        )
+
+        # calclog2PalboNormalisation
+        arrest_readings = self._calculate_arrest_log2_normalisation(
+            normalised_readings, project
+        )
+
+        # calclog2RelativeAbundance
+        log2_readings = (
+            self._calculate_relative_log2_normalisation(normalised_readings)
+        )
+
+        # normaliseData
+        min_max_readings = self._calculate_level_two_normalisation(
+            normalised_readings
+        )
+
+        # normaliseData
+        zero_max_readings = self._calculate_level_two_normalisation(
+            normalised_readings, True
+        )
+
+        imputed_readings = self._impute(
+            min_max_readings, replicates, column_names
+        )
+
+        raw_averages = (
+            self._calculate_means(
+                readings, with_bugs
+            )
+        )
+
+        normalised_averages = (
+            self._calculate_means(
+                normalised_readings, with_bugs
+            )
+        )
+
+        min_max_averages = (
+            self._calculate_means(
+                min_max_readings, with_bugs
+            )
+        )
+
+        zero_max_averages = (
+            self._calculate_means(
+                zero_max_readings, with_bugs
+            )
+        )
+
+        log2_averages = (
+            self._calculate_means(
+                log2_readings, with_bugs
+            )
+        )
+
+        arrest_averages = (
+            self._calculate_means(
+                arrest_readings, with_bugs
+            )
+        )
+
+        imputed_averages = (
+            self._calculate_means(
+                imputed_readings, imputed=True, with_bugs = with_bugs
+            )
+        )
+
+        log2_mean_metrics = self._calculate_metrics(
+            log2_readings,
+            log2_averages,
+            replicates,
+            sample_stages
+        )
+
+        zero_max_mean_metrics = self._calculate_metrics(
+            zero_max_readings,
+            zero_max_averages,
+            replicates,
+            sample_stages
+        )
+
+        anovas[protein] = self._calcANOVA(log2_readings)
+
+        relative_log2_readings_by_protein[
+            protein
+        ] = log2_readings
+
+        # TODO - these calculations and these results can be combined in one function
+        #   with proteo
+        obj[location][RAW] = readings
+        obj[location][RAW][ABUNDANCE_AVERAGE] = raw_averages
+        # TODO - confirm the output later calculations are as they should be after this
+        obj[location][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
+        obj[location][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
+        obj[location][NORMALISED][MIN_MAX] = min_max_readings
+        obj[location][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
+        obj[location][NORMALISED][MEDIAN] = normalised_readings
+        obj[location][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
+        obj[location][NORMALISED][ZERO_MAX] = zero_max_readings
+        obj[location][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
+        obj[location][NORMALISED][LOG2_ARREST] = arrest_readings
+        obj[location][NORMALISED][LOG2_ARREST][ABUNDANCE_AVERAGE] = arrest_averages
+        obj[location][IMPUTED] = imputed_readings
+        obj[location][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
+        obj[METRICS][LOG2_MEAN] = log2_mean_metrics
+        obj[METRICS][ZERO_MAX] = zero_max_mean_metrics
