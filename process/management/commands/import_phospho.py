@@ -130,9 +130,10 @@ class Command(BaseCommand):
 
         for uniprot_accession in time_course_phospho_reps:
             # TODO - remove this, it's for development only
-            if uniprot_accession not in proteins.keys():
-                print(f"Skipping {uniprot_accession}")
-                continue
+            # TODO - make this a flag
+            # if uniprot_accession not in proteins.keys():
+            #     print(f"Skipping {uniprot_accession}")
+            #     continue
 
             if not proteins.get(uniprot_accession):
                 new_protein = Protein.objects.create(

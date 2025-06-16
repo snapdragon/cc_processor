@@ -55,8 +55,9 @@ class Command(BaseCommand):
         for index, row in df.iterrows():
             row_no += 1
 
-            if row_no == 100:
-                exit()
+            # TODO - make this a flag with a number
+            # if row_no == 100:
+            #     exit()
 
             is_contaminant = False
 

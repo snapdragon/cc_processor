@@ -1,3 +1,14 @@
+# TODO - phosphorylation min-max is wrong, maybe the code is inconsisten?
+#   That is, it works one way for protein and another for phospho?
+# TODO - phosphorylation imputed is wrong, imputed is based on min-max
+# TODO - put kinase prediction back in
+# TODO - put PepTools_annotations in
+# TODO - phosphorylation metrics log2_mean anova is wrong
+# TODO - ICR doesn't have phospho_regression (??)
+# TODO - get rid of 'abundance_average' as an output field name
+# TODO - put peptide_abundances in SL?
+
+
 import json
 import logging
 import math
@@ -17,7 +28,6 @@ from scipy import stats
 
 from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage
 
-# TODO - make this configurable by flag?
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s - %(message)s",
@@ -27,7 +37,8 @@ logger = logging.getLogger(__name__)
 
 # TODO - move constants elsewhere
 FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
-# FOCUS_PROTEIN_ACCESSION_NUMBER = "O95714"
+FOCUS_MOD = "2928"
+
 RAW = "raw"
 METRICS = "metrics"
 LOG2_MEAN = "log2_mean"
@@ -49,7 +60,6 @@ PROTEIN_OSCILLATION_ABUNDANCES = "protein_oscillation_abundances"
 ABUNDANCE_AVERAGE = "abundance_average"
 
 POSITION_ABUNDANCES = "position_abundances"
-FOCUS_MOD = "2928"
 PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"
 PHOSPHO_REGRESSION = "phospho_regression"
 PHOSPHORYLATION_SITE = "phosphorylation_site"
@@ -58,7 +68,6 @@ CURVE_FOLD_CHANGE = "curve_fold_change"
 PROTEIN_PHOSPHO_CORRELATION = "protein-phospho-correlation"
 # TODO - misspelled, but it's difficult to replace it in the fixture json files
 PHOSPHO_PROTEIN_CFC_RATIO = "phosho-protein-cfc_ratio"
-
 
 TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
 
@@ -69,7 +78,7 @@ with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
 
 
 class Command(BaseCommand):
-    help = "Processes all proteins for a given project"
+    help = "Processes all proteins and phosphoproteins for a given project"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -99,6 +108,8 @@ class Command(BaseCommand):
             column_name__replicate__project=project
         )
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
+        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
+        phosphos = Phospho.objects.filter(protein__project=project)
 
         FOCUS_PROTEIN = Protein.objects.get(
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
@@ -106,65 +117,24 @@ class Command(BaseCommand):
 
         results = self._proteo(project, replicates, protein_readings, column_names, sample_stages, with_bugs)
 
-        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
-        # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:1000]
-        phosphos = Phospho.objects.filter(protein__project=project)
-
         phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
 
-        # Not all phospho proteins are in the protein results, add them if required
-        for protein in phospho_results:
-            # TODO - this can be tidied, has duplication
-            # TODO - lots of code should be put in functions and tested
-            if protein in results:
-                results[protein][
-                    PHOSPHORYLATION_ABUNDANCES
-                ] = phospho_results[protein]
-            else:
-                # TODO - put these in as needed
-                # if protein in index_protein_names:
-                #     gene_name = index_protein_names[protein.accession_number]["gene_name"]
-                #     protein_name = index_protein_names[protein.accession_number][
-                #         "protein_name"
-                #     ]
-                # else:
-                #     gene_name, protein_name = getProteinInfo(protein.accession_number)
-
-                results[protein] = {
-                    PROTEIN_ABUNDANCES: {RAW: {}, NORMALISED: {}, IMPUTED: {}},
-                    PHOSPHORYLATION_ABUNDANCES: phospho_results[protein],
-                }
-                # "gene_name": gene_name,
-                # "protein_name": protein_name,
+        self._merge_phospho_with_proteo(results, phospho_results)
 
         self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
 
-        # Add the Regressed Phospho Normalised Abundances        
         results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
-        # self._dump(results[FOCUS_PROTEIN])
-        # print(results[FOCUS_PROTEIN])
-
-        # json_results = {}
-
-        # for protein in results:
-        #     json_results[protein.accession_number] = results[protein]
-
-        # # TODO - convert proteins to strings
-        # with open("results.json", "w") as outfile:
-        #     json.dump(json_results, outfile)    
+        self._save_data(results[FOCUS_PROTEIN], "Q09666.json", False)
 
 
     def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs: bool):
         logger.info("Processing phosphoproteome")
 
         # TODO - convert this in to a DB query to save having to run it manually?
-        readings_by_rep_stage = self._format_phospho_readings(phospho_readings)
+        # No QC for phosphoproteome needed so far
+        raw_readings = self._format_phospho_readings(phospho_readings)
         phosphosites = self._get_phosphosites(phosphos)
-
-        # raw_readings = self._qc_phospho_readings(readings_by_rep_stage)
-
-        raw_readings = readings_by_rep_stage
 
         medians = self._calculate_phospho_medians(raw_readings)
 
@@ -173,12 +143,6 @@ class Command(BaseCommand):
         relative_log2_readings_by_protein = {}
         anovas = {}
         results = {}
-
-        # TODO - make this a flag
-        # TODO - this is a duplicate
-        FOCUS_PROTEIN = Protein.objects.get(
-            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
-        )
 
         for protein in raw_readings.keys():
             results[protein] = {}
@@ -451,7 +415,6 @@ class Command(BaseCommand):
         # TODO - norm_method is always log2_mean, ignore all norm_method code
         abundance_table = {}
         final_protein = None
-        final_mod = None
 
         # TODO - maybe this and other similar loops could be changed to use items()?
         #   That way the value variable could be used in each successive loop, e.g.
@@ -468,8 +431,6 @@ class Command(BaseCommand):
             if phospho:
 
                 for mod in prs[PHOSPHORYLATION_ABUNDANCES]:
-                    final_mod = mod
-
                     protein_abundances_all = prs[PHOSPHORYLATION_ABUNDANCES][mod][POSITION_ABUNDANCES]
 
                     mod_key = protein.accession_number + "_" + prs[PHOSPHORYLATION_ABUNDANCES][mod][PHOSPHORYLATION_SITE]
@@ -489,23 +450,7 @@ class Command(BaseCommand):
                             else:
                                 continue
 
-                        # TODO - make generic
-                        # TODO - tidy this
-                        # for abundance_rep in ['abundance_One','abundance_Two']:
-                        for rep in replicates:
-                            abundance_rep = f"abundance_{rep.name}"
-                            if mod_key not in abundance_table:
-                                abundance_table[mod_key] = {}
-
-                            # TODO - not in original, why here?
-                            if not protein_abundances.get(abundance_rep):
-                                continue
-
-                            for timepoint in protein_abundances[abundance_rep]:
-                                rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
-                                rep_timepoint = rep + "_" + timepoint
-                                abundance_table[mod_key][rep_timepoint] = protein_abundances[abundance_rep][timepoint]
-
+                        self._build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key)
             else:
                 abundance_table[protein] = {}
 
@@ -1444,6 +1389,7 @@ class Command(BaseCommand):
     # addPhosphoRegression
     def _add_phospho_regression(self, results, replicates, sample_stages, with_bugs):
         # TODO - check and revise all comments
+        # Add the Regressed Phospho Normalised Abundances
         """
         Normalise the phospho abundance on the protein abundance
         Calculates and adds all the Regressed Phospho Abundance and their metrics for each phosphosite.
@@ -1561,13 +1507,14 @@ class Command(BaseCommand):
 
         # normaliseData
         min_max_readings = self._calculate_level_two_normalisation(
-            normalised_readings
+            log2_readings
         )
 
         # normaliseData
         zero_max_readings = self._calculate_level_two_normalisation(
             normalised_readings, True
         )
+
 
         imputed_readings = self._impute(
             min_max_readings, replicates, column_names
@@ -1805,6 +1752,67 @@ class Command(BaseCommand):
 
         return results
 
+    def _merge_phospho_with_proteo(self, results, phospho_results):
+        # Not all phospho proteins are in the protein results, add them if required
+        for protein in phospho_results:
+            # TODO - this can be tidied, has duplication
+            # TODO - lots of code should be put in functions and tested
+            if protein in results:
+                results[protein][
+                    PHOSPHORYLATION_ABUNDANCES
+                ] = phospho_results[protein]
+            else:
+                # TODO - put these in as needed
+                # if protein in index_protein_names:
+                #     gene_name = index_protein_names[protein.accession_number]["gene_name"]
+                #     protein_name = index_protein_names[protein.accession_number][
+                #         "protein_name"
+                #     ]
+                # else:
+                #     gene_name, protein_name = getProteinInfo(protein.accession_number)
+
+                results[protein] = {
+                    PROTEIN_ABUNDANCES: {RAW: {}, NORMALISED: {}, IMPUTED: {}},
+                    PHOSPHORYLATION_ABUNDANCES: phospho_results[protein],
+                }
+                # "gene_name": gene_name,
+                # "protein_name": protein_name,
+
+        return results
+
+    def _build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key):
+        # TODO - tidy this
+        print("+++++ BUILD")
+        print(abundance_table)
+        print(replicates)
+        print(protein_abundances)
+        print(mod_key)
+
+
+        for rep in replicates:
+            # TODO - is the "abundance_" bit really needed?
+            abundance_rep = f"abundance_{rep.name}"
+            if mod_key not in abundance_table:
+                abundance_table[mod_key] = {}
+
+            # TODO - not in original, why here?
+            if not protein_abundances.get(abundance_rep):
+                continue
+
+            # TODO - change timepoint to stage_name
+            # TODO - use sample_stages
+            for timepoint in protein_abundances[abundance_rep]:
+                rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
+                rep_timepoint = rep + "_" + timepoint
+                abundance_table[mod_key][rep_timepoint] = protein_abundances[abundance_rep][timepoint]
+
+        print("+++++ BUILD")
+        print(abundance_table)
+        exit()
+
+        return abundance_table
+
+    # TODO - tested
     def _generate_df(self, info):
         info_df = pd.DataFrame(info)
         info_df = info_df.T
@@ -1815,7 +1823,7 @@ class Command(BaseCommand):
         # 3) Turn dataframe into a dictionary
         return info_df.to_dict('index')
 
-    def _convert_results(self, results, file, results_based = True):
+    def _save_data(self, results, file, results_based = True):
         stripped = {}
 
         if results_based:
