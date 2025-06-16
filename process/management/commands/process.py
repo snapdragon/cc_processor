@@ -100,23 +100,13 @@ class Command(BaseCommand):
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
-        results = self._proteo(project, replicates, protein_readings, column_names, with_bugs)
+        results = self._proteo(project, replicates, protein_readings, column_names, sample_stages, with_bugs)
 
         phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
         # phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)[:1000]
         phosphos = Phospho.objects.filter(protein__project=project)
 
-        phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, with_bugs)
-
-        # print("++++ NO PROTEINS BEFORE")
-        # print(len(list(results.keys())))
-
-        # print("+++++ KEYS")
-        # print(phospho_results.keys())
-
-        # print("++++ PHO")
-        # print(phospho_results[FOCUS_PROTEIN])
-        # exit()
+        phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
 
         # Not all phospho proteins are in the protein results, add them if required
         for protein in phospho_results:
@@ -143,12 +133,12 @@ class Command(BaseCommand):
                 # "gene_name": gene_name,
                 # "protein_name": protein_name,
 
-        self._addProteinOscillations(results, replicates, with_bugs)
+        self._addProteinOscillations(results, replicates, sample_stages, with_bugs)
 
         # Add the Regressed Phospho Normalised Abundances        
         results = self._addPhosphoRegression(results, replicates, with_bugs)
 
-        self.dump(results[FOCUS_PROTEIN])
+        # self.dump(results[FOCUS_PROTEIN])
         # print(results[FOCUS_PROTEIN])
 
         # json_results = {}
@@ -161,7 +151,7 @@ class Command(BaseCommand):
         #     json.dump(json_results, outfile)    
 
 
-    def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, with_bugs: bool):
+    def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs: bool):
         logger.info("Processing phosphoproteome")
 
         # TODO - convert this in to a DB query to save having to run it manually?
@@ -290,11 +280,15 @@ class Command(BaseCommand):
                 log2_mean_metrics = self._calculate_metrics(
                     log2_readings,
                     log2_averages,
+                    replicates,
+                    sample_stages
                 )
 
                 zero_max_mean_metrics = self._calculate_metrics(
                     zero_max_readings,
                     zero_max_averages,
+                    replicates,
+                    sample_stages
                 )
 
                 anovas[protein] = self._calcANOVA(log2_readings)
@@ -350,7 +344,7 @@ class Command(BaseCommand):
 
 
     def _proteo(
-        self, project, replicates, protein_readings, column_names, with_bugs: bool
+        self, project, replicates, protein_readings, column_names, sample_stages, with_bugs: bool
     ):
         """
         Does all the required calculations. The steps are:
@@ -398,13 +392,6 @@ class Command(BaseCommand):
             for stage_name in medians["One"].keys():
                 medians["One"][stage_name] = r2_medians[stage_name]
 
-        # TODO - is this used for anything?
-        # means_across_replicates_by_stage = (
-        #     self._calculate_means(
-        #         protein_readings, with_bugs
-        #     )
-        # )
-
         # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
         #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
         #   is a dict with Protein object keys. The values is a dict of replicate name keys
@@ -412,6 +399,7 @@ class Command(BaseCommand):
         # TODO - convert this in to a DB query to save having to run it manually?
         readings_by_rep_stage = self._format_protein_readings(protein_readings)
 
+        # TODO - do other optimisations like this
         del(protein_readings)
 
         raw_readings = self._qc_protein_readings(readings_by_rep_stage)
@@ -511,11 +499,15 @@ class Command(BaseCommand):
             log2_mean_metrics = self._calculate_metrics(
                 log2_readings,
                 log2_averages,
+                replicates,
+                sample_stages
             )
 
             zero_max_mean_metrics = self._calculate_metrics(
                 zero_max_readings,
                 zero_max_averages,
+                replicates,
+                sample_stages
             )
 
             anovas[protein] = self._calcANOVA(log2_readings)
@@ -542,7 +534,7 @@ class Command(BaseCommand):
             results[protein][METRICS][LOG2_MEAN] = log2_mean_metrics
             results[protein][METRICS][ZERO_MAX] = zero_max_mean_metrics
 
-        fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein)
+        # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
 
         # TODO - fisher stats vary wildly from ICR, investigate
         # print("++++++ FISHER STATS")
@@ -573,13 +565,13 @@ class Command(BaseCommand):
 
             results[protein][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = q_value
 
-            # Fisher
-            fisher = {"G_statistic": 1, P_VALUE: 1, "frequency": 1, Q_VALUE: 1}
+            # # Fisher
+            # fisher = {"G_statistic": 1, P_VALUE: 1, "frequency": 1, Q_VALUE: 1}
 
-            if protein in fisher_stats:
-                fisher = fisher_stats[protein]
+            # if protein in fisher_stats:
+            #     fisher = fisher_stats[protein]
 
-            results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
+            # results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
         # print(f"Number of proteins: {num_proteins}")
         # print(json.dumps(results[FOCUS_PROTEIN]))
@@ -635,6 +627,7 @@ class Command(BaseCommand):
     def _calculate_fisher(
         self,
         results,
+        replicates,
         phospho=False,
         phospho_ab=False,
         phospho_reg=False,
@@ -644,7 +637,7 @@ class Command(BaseCommand):
         # norm_method = LOG2_MEAN
         # raw = False
 
-        time_course_fisher = self._create_results_dataframe(results, phospho, phospho_ab, phospho_reg)
+        time_course_fisher = self._create_results_dataframe(results, phospho, phospho_ab, phospho_reg, replicates)
 
         time_course_fisher = time_course_fisher.dropna()
 
@@ -697,8 +690,12 @@ class Command(BaseCommand):
 
         return q[by_orig]
 
+
+
     # TODO - lifted from ICR, rewrite
-    def _create_results_dataframe(self, results, phospho, phospho_ab, phospho_reg):
+    # TODO - try to get rid of dataframes if possible
+    # TODO - needs a test if to be used, is only used by fisher
+    def _create_results_dataframe(self, results, phospho, phospho_ab, phospho_reg, replicates):
         # TODO - raw is always False, ignore all raw code
         # TODO - norm_method is always log2_mean, ignore all norm_method code
         abundance_table = {}
@@ -718,32 +715,17 @@ class Command(BaseCommand):
 
             # TODO - put this 'if' outside the loop? It may be more efficient
             if phospho:
-                # print("++++ PRS")
-                # print(protein)
-                # print(prs[PHOSPHORYLATION_ABUNDANCES])
 
                 for mod in prs[PHOSPHORYLATION_ABUNDANCES]:
                     final_mod = mod
 
                     protein_abundances_all = prs[PHOSPHORYLATION_ABUNDANCES][mod][POSITION_ABUNDANCES]
 
-                    # print("++++ PAA")
-                    # print(protein_abundances_all)
-                    # exit()
-
                     mod_key = protein.accession_number + "_" + prs[PHOSPHORYLATION_ABUNDANCES][mod][PHOSPHORYLATION_SITE]
-
-                    # print("+++++ LEN")
-                    # print(len(protein_abundances_all))
 
                     if len(protein_abundances_all) != 0:
                         # TODO - tidy this
                         protein_abundances = protein_abundances_all[NORMALISED][LOG2_MEAN]
-
-                        # print("++++++++ FOO")
-                        # # print(protein_abundances)
-
-                        # print(prs[PHOSPHORYLATION_ABUNDANCES][mod].keys())
 
                         if phospho_ab:
                             if PROTEIN_OSCILLATION_ABUNDANCES in prs[PHOSPHORYLATION_ABUNDANCES][mod]:
@@ -758,7 +740,9 @@ class Command(BaseCommand):
 
                         # TODO - make generic
                         # TODO - tidy this
-                        for abundance_rep in ['abundance_One','abundance_Two']:
+                        # for abundance_rep in ['abundance_One','abundance_Two']:
+                        for rep in replicates:
+                            abundance_rep = f"abundance_{rep.name}"
                             if mod_key not in abundance_table:
                                 abundance_table[mod_key] = {}
 
@@ -781,11 +765,6 @@ class Command(BaseCommand):
                             replicate_name
                         ][stage_name]
 
-        # if phospho:
-        #     print("++++ A TABLE")
-        #     print(abundance_table)
-        #     exit()
-
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
 
@@ -803,9 +782,6 @@ class Command(BaseCommand):
         # else:
         replicate_names = list(results[final_protein].keys())
 
-        # print("++++++ R NAMES")
-        # print(replicate_names)
-
         for stage_name in results[final_protein][replicate_names[0]]:
             for rn in replicate_names:
                 new_cols.append(f"{rn}_{stage_name}")
@@ -819,10 +795,6 @@ class Command(BaseCommand):
             print(time_course_abundance_df)
             print(e)
             exit()
-
-        # print("++++ DF")
-        # print(time_course_abundance_df)
-        # exit()
 
         return time_course_abundance_df
 
@@ -905,10 +877,14 @@ class Command(BaseCommand):
             F_STATISTICS: f_statistic
         }
 
+    # TODO - tidy this up
+    # TODO - lifted from ICR, change names
     def _calculate_metrics(
         self,
         readings: dict,
         readings_averages: dict,
+        replicates,
+        sample_stages
     ):
         metrics = {}
 
@@ -920,70 +896,72 @@ class Command(BaseCommand):
         ]
         # abundance_averages_list = list(abundance_averages.values())
 
-        for replicate_name in readings:
-            for stage_name in readings[replicate_name]:
-                abundance = readings[replicate_name][stage_name]
-
-                if abundance is not None:
+        for replicate in replicates:
+            for sample_stage in sample_stages:
+                if abundance := readings[replicate.name].get(sample_stage.name):
+                    # TODO - sometimes the sample_stage.name isn't set. Why?
+                    #   Is there something wrong with the populate script?
                     # TODO - why does this add all reps for standard deviation calculation?
+                    #   Why isn't it on a per-replicate basis?
                     abundances.append(abundance)
 
-        std_dev = None
+        std = None
 
         if len(abundances) > 1:
-            std_dev = statistics.stdev(abundances)
+            std = statistics.stdev(abundances)
         else:
             print("NO ABUNDANCES FOR STANDARD DEVIATION")
             print(readings)
 
         try:
-            _, residuals, *_ = np.polyfit(
-                range(len(abundance_averages)),
+            residuals_array = np.polyfit(
+                range(0, len(abundance_averages)),
                 abundance_averages_list,
                 2,
                 full=True,
-            )
+            )[1]
 
-            if len(residuals) == 0:
-                # TODO - why 5?
-                # TODO - 5 for ICR, but what about others?
+            if len(residuals_array) == 0:
                 # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
-                residual = 5
+                residuals = 5
             else:
-                residual = residuals[0]
+                residuals = np.polyfit(
+                range(0, len(abundance_averages)),
+                abundance_averages_list,
+                2,
+                full=True,)[1][0]
 
-            # TODO - find out what this all means
             r_squared = self._polyfit(
                 range(0, len(abundance_averages)), abundance_averages_list, 2
             )
-            # TODO - find out what this all means
-            max_fold_change = max(abundance_averages_list) - min(
-                abundance_averages_list
+            max_fold_change = max(abundance_averages.values()) - min(
+                abundance_averages.values()
             )
-
-            # TODO - what does all this mean?
-            base_metrics = {
-                # Why is variance average 2 sig fig in ICR but several here?
+            metrics = {
                 "variance": moment(abundance_averages_list, moment=2),
                 "skewness": moment(abundance_averages_list, moment=3),
                 "kurtosis": moment(abundance_averages_list, moment=4),
                 "peak": max(abundance_averages, key=abundance_averages.get),
                 "max_fold_change": max_fold_change,
-                "residuals": residual,
+                "residuals": residuals,
                 "R_squared": r_squared,
             }
-
-            # If we have info for the protein in at least 2 replicates
+            # if we have info for the protein in at least 2 replicates
+            # TODO - why does it need to be two? Don't we just need the last one?
             if len(readings) >= 2:
                 curve_fold_change, curve_peak = self._calcCurveFoldChange(
-                    # readings, protein.accession_number
                     readings
                 )
                 residuals_all, r_squared_all = self._calcResidualsR2All(readings)
-
                 metrics = {
-                    "standard_deviation": std_dev,
-                    **{f"{k}_average": v for k, v in base_metrics.items()},
+                    "standard_deviation": std, 
+                    "variance_average": round(moment(abundance_averages_list, moment=2),2),
+                    "skewness_average": moment(abundance_averages_list, moment=3),
+                    "kurtosis_average": moment(abundance_averages_list, moment=4),
+                    "peak_average": max(abundance_averages, key=abundance_averages.get),
+                    "max_fold_change_average": max_fold_change,
+                    "residuals_average": residuals,
+                    "R_squared_average": r_squared,
                     "residuals_all": residuals_all,
                     "R_squared_all": r_squared_all,
                     "curve_fold_change": curve_fold_change,
@@ -991,7 +969,7 @@ class Command(BaseCommand):
                 }
 
         except Exception as e:
-            print("Exception in _calculate_metrics")
+            print("Error in _calculate_metrics")
             print(e)
 
         return metrics
@@ -1016,6 +994,7 @@ class Command(BaseCommand):
         return residuals_all, r_squared_all
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
+    # TODO - only
     def _calcCurveFoldChange(self, readings):
         """
         Calculates the curve_fold_change and curve peaks for the three or two replicates normalised abundance for each protein.
@@ -1657,7 +1636,7 @@ class Command(BaseCommand):
 
 
     # TODO - lifted from ICR
-    def _addProteinOscillations(self, results, replicates, with_bugs):
+    def _addProteinOscillations(self, results, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
 
@@ -1682,14 +1661,17 @@ class Command(BaseCommand):
                         )
                         for rep in replicates:
                             if rep.name in phospho_oscillations:
-                                # TODO - is this needed? Why not just use the rep name?
-                                key = "abundance_" + rep
-                                protein_oscillation_abundances[key] = phospho_oscillations[rep]
+                                # # TODO - is this needed? Why not just use the rep name?
+                                # key = f"abundance_{rep.name}"
 
+                                protein_oscillation_abundances[rep.name] = phospho_oscillations[rep.name]
+
+                        # TODO - split this out into its own variable? That's done with other average
                         protein_oscillation_abundances[ABUNDANCE_AVERAGE] = self._calculate_means(
                             protein_oscillation_abundances, imputed=False, with_bugs=with_bugs)
 
                     # if we have info in Protein Oscillation Normalised Abundances
+                    # TODO - check all comments to make sure they're non-ICR
                     if (
                         len(prpampoa[LOG2_MEAN]) > 1
                     ):
@@ -1697,8 +1679,14 @@ class Command(BaseCommand):
                             protein_oscillation_abundances = prpampoa[norm_method]
 
                             # Metrics
-                            prpampoa[norm_method][METRICS] = self._calcAbundanceMetrics(
-                                protein_oscillation_abundances, protein)
+                            # prpampoa[norm_method][METRICS] = self._calcAbundanceMetrics(
+                            #     protein_oscillation_abundances, protein)
+                            prpampoa[norm_method][METRICS] = self._calculate_metrics(
+                                protein_oscillation_abundances,
+                                protein_oscillation_abundances[ABUNDANCE_AVERAGE],
+                                replicates,
+                                sample_stages
+                            )
 
                         # ANOVA
                         norm_abundances = prpampoa[LOG2_MEAN]
@@ -1842,11 +1830,11 @@ class Command(BaseCommand):
                         if replicate.name == "One":
                             for index, value in enumerate(residuals[0:8]):
                                 key = time_points[index]
-                                res_dic[replicate][key] = value[0]
+                                res_dic[replicate.name][key] = value[0]
                         if replicate.name == "Two":
                             for index, value in enumerate(residuals[8::]):
                                 key = time_points[index]
-                                res_dic[replicate][key] = value[0]
+                                res_dic[replicate.name][key] = value[0]
 
                     phospho_regression = combined_time_course_info[
                         uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][
@@ -1951,114 +1939,6 @@ class Command(BaseCommand):
                     phospho_oscillations[replicate.name] = protein_oscillation_abundances
     
         return phospho_oscillations
-
-
-
-    # TODO - lifted from ICR
-    # TODO - there is duplicate here with another function
-    # TODO - study this
-    def _calcAbundanceMetrics(self, norm_abundances, uniprot_accession):
-        """
-        Calculates the moments and peaks for the average for the three replicates normalised abundance for each protein.
-        """
-        metrics = {}
-        norm_abundance_average = norm_abundances["abundance_average"]
-        norm_abundance_average_list = list(norm_abundance_average.values())
-
-        norm_method = ZERO_MAX
-
-        # TODO - make generic
-        time_points = [
-	        "Palbo",
-	        "Late G1_1",
-	        "G1/S",
-	        "S",
-    	    "S/G2",
-	        "G2_2",
-    	    "G2/M_1",
-	        "M/Early G1",
-        ]
-
-        abundance = []
-        for timepoint in time_points:
-            for rep in norm_abundances:
-                if rep != "abundance_average":
-                    if timepoint in norm_abundances[rep]:
-                        abundance.append(norm_abundances[rep][timepoint])
-
-        std = None
-
-        # TODO - very simliar to _calculate_metrics, consolidate
-        if len(abundance) > 1:
-            std = statistics.stdev(abundance)
-        else:
-            print("NO ABUNDANCES FOR STANDARD DEVIATION")
-            print(norm_abundances)
-
-        try:
-            residuals_array = np.polyfit(
-                range(0, len(norm_abundance_average)),
-                norm_abundance_average_list,
-                2,
-                full=True,
-            )[1]
-
-            if len(residuals_array) == 0:
-                # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
-                residuals = 5
-            else:
-                residuals = np.polyfit(
-                range(0, len(norm_abundance_average)),
-                norm_abundance_average_list,
-                2,
-                full=True,)[1][0]
-
-            r_squared = np.polyfit(
-                range(0, len(norm_abundance_average)), norm_abundance_average_list, 2
-            )
-            max_fold_change = max(norm_abundance_average.values()) - min(
-                norm_abundance_average.values()
-            )
-            metrics = {
-                "variance": moment(norm_abundance_average_list, moment=2),
-                "skewness": moment(norm_abundance_average_list, moment=3),
-                "kurtosis": moment(norm_abundance_average_list, moment=4),
-                "peak": max(norm_abundance_average, key=norm_abundance_average.get),
-                "max_fold_change": max_fold_change,
-                "residuals": residuals,
-                "R_squared": r_squared,
-            }
-            # if we have info for the protein in at least 2 replicates
-            if len(norm_abundances) == 3:
-                curve_fold_change, curve_peak = self._calcCurveFoldChange(
-                    # norm_abundances, uniprot_accession
-                    norm_abundances
-                )
-                residuals_all, r_squared_all = self._calcResidualsR2All(norm_abundances)
-                metrics = {
-                    "standard_deviation": std, 
-                    "variance_average": round(moment(norm_abundance_average_list, moment=2),2),
-                    "skewness_average": moment(norm_abundance_average_list, moment=3),
-                    "kurtosis_average": moment(norm_abundance_average_list, moment=4),
-                    "peak_average": max(norm_abundance_average, key=norm_abundance_average.get),
-                    "max_fold_change_average": max_fold_change,
-                    "residuals_average": residuals,
-                    "R_squared_average": r_squared,
-                    "residuals_all": residuals_all,
-                    "R_squared_all": r_squared_all,
-                    "curve_fold_change": curve_fold_change,
-                    "curve_peak": curve_peak,
-                }
-
-        except Exception as e:
-            print("+++++ EXCEPTION")
-            print(e)
-            # print(uniprot_accession)
-            # print(norm_abundance_average)
-            # print(norm_abundance_average_list)
-            # print(range(0, len(norm_abundance_average)))
-
-        return metrics
 
     def dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))

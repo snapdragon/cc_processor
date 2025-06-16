@@ -1,4 +1,6 @@
 import pytest
+import numpy as np
+from math import isclose
 
 from process.factories import (
     ColumnNameFactory,
@@ -280,3 +282,77 @@ def test_calculate_protein_oscillation(load_json):
             "M/Early G1": -0.1630999999999999
         }
     }
+
+# TODO - find out why these results are what they are
+# TODO - do one for SL as well
+@pytest.mark.django_db
+def test_calculate_metrics(load_json):
+    command = Command()
+
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="rep_1", project=project)
+    replicate2 = ReplicateFactory(name="rep_2", project=project)
+
+    sample_stage1 = SampleStageFactory(name='Palbo', rank=1, project=project)
+    sample_stage2 = SampleStageFactory(name='Late G1_1', rank=2, project=project)
+    sample_stage3 = SampleStageFactory(name='G1/S', rank=3, project=project)
+    sample_stage4 = SampleStageFactory(name='S', rank=4, project=project)
+    sample_stage5 = SampleStageFactory(name='S/G2', rank=5, project=project)
+    sample_stage6 = SampleStageFactory(name='G2_2', rank=6, project=project)
+    sample_stage7 = SampleStageFactory(name='G2/M_1', rank=7, project=project)
+    sample_stage8 = SampleStageFactory(name='M/Early G1', rank=8, project=project)
+
+    readings = {
+        replicate1.name: {
+            sample_stage1.name: -0.2308,
+            sample_stage2.name: 0.4059,
+            sample_stage3.name: -0.7048,
+            sample_stage4.name: 0.0117,
+            sample_stage5.name: -0.4986,
+            sample_stage6.name: -0.3323,
+            sample_stage7.name: -0.232,
+            sample_stage8.name: 0.6562
+        },
+        replicate2.name: {
+            sample_stage1.name: 0.1586,
+            sample_stage2.name: 0.1537,
+            sample_stage3.name: 0.1503,
+            sample_stage4.name: 0.0468,
+            sample_stage5.name: 0.1054,
+            sample_stage6.name: 0.1219,
+            sample_stage7.name: 0.0836,
+            sample_stage8.name: 0.1045
+        }
+    }
+        
+    readings_average = {
+        sample_stage1.name: -0.2308,
+        sample_stage2.name: 0.4059,
+        sample_stage3.name: -0.7048,
+        sample_stage4.name: 0.0117,
+        sample_stage5.name: -0.4986,
+        sample_stage6.name: -0.3323,
+        sample_stage7.name: -0.232,
+        sample_stage8.name: 0.6562
+    }
+
+    metrics = command._calculate_metrics(
+        readings,
+        readings_average,
+        [replicate1, replicate2],
+        [sample_stage1, sample_stage2, sample_stage3, sample_stage4, sample_stage5, sample_stage6, sample_stage7, sample_stage8]
+    )
+
+    assert isclose(metrics['standard_deviation'], 0.3342441252911809, rel_tol=1e-5) == True
+    assert isclose(metrics['variance_average'].item(), 0.18, rel_tol=1e-5) == True
+    assert isclose(metrics['skewness_average'].item(), 0.04119630918711327, rel_tol=1e-5) == True
+    assert isclose(metrics['kurtosis_average'].item(), 0.07170485201257046, rel_tol=1e-5) == True
+    assert metrics['peak_average'] == 'M/Early G1'
+    assert isclose(metrics['max_fold_change_average'], 1.361, rel_tol=1e-5) == True
+    assert isclose(metrics['residuals_average'].item(), 0.9228990995833334, rel_tol=1e-5) == True
+    assert isclose(metrics['R_squared_average'].item(), 0.36, rel_tol=1e-5) == True
+    assert isclose(metrics['residuals_all'], 0.0056324395238095265, rel_tol=1e-5) == True
+    assert isclose(metrics['R_squared_all'], 0.47, rel_tol=1e-5) == True
+    assert isclose(metrics['curve_fold_change'], 1.8033637502236521, rel_tol=1e-5) == True
+    assert metrics['curve_peak'] == 'Palbo'
