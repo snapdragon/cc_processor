@@ -502,9 +502,23 @@ def test_generate_phospho_regression_metrics(load_json):
     replicate1 = ReplicateFactory(name="One", project=project)
     replicate2 = ReplicateFactory(name="Two", project=project)
 
+    sample_stage1 = SampleStageFactory(name='Palbo', rank=1, project=project)
+    sample_stage2 = SampleStageFactory(name='Late G1_1', rank=2, project=project)
+    sample_stage3 = SampleStageFactory(name='G1/S', rank=3, project=project)
+    sample_stage4 = SampleStageFactory(name='S', rank=4, project=project)
+    sample_stage5 = SampleStageFactory(name='S/G2', rank=5, project=project)
+    sample_stage6 = SampleStageFactory(name='G2_2', rank=6, project=project)
+    sample_stage7 = SampleStageFactory(name='G2/M_1', rank=7, project=project)
+    sample_stage8 = SampleStageFactory(name='M/Early G1', rank=8, project=project)
+
     pre_phospho_metrics = load_json("pre_phospho_metrics.json")
     post_phospho_metrics = load_json("post_phospho_metrics.json")
 
-    output = command._generate_phospho_regression_metrics(pre_phospho_metrics, [replicate1, replicate2], with_bugs=True)
+    output = command._generate_phospho_regression_metrics(
+        pre_phospho_metrics,
+        [replicate1, replicate2],
+        [sample_stage1, sample_stage2, sample_stage3, sample_stage4, sample_stage5, sample_stage6, sample_stage7, sample_stage8],
+        with_bugs=True
+    )
 
     assert output == post_phospho_metrics

@@ -135,7 +135,7 @@ class Command(BaseCommand):
         self._addProteinOscillations(results, replicates, sample_stages, with_bugs)
 
         # Add the Regressed Phospho Normalised Abundances        
-        results = self._addPhosphoRegression(results, replicates, with_bugs)
+        results = self._addPhosphoRegression(results, replicates, sample_stages, with_bugs)
 
         # self._dump(results[FOCUS_PROTEIN])
         # print(results[FOCUS_PROTEIN])
@@ -1542,7 +1542,8 @@ class Command(BaseCommand):
 
 
     # TODO - lifted from ICR
-    def _addPhosphoRegression(self, combined_time_course_info, replicates, with_bugs):
+    def _addPhosphoRegression(self, combined_time_course_info, replicates, sample_stages, with_bugs):
+        # TODO - check and revise all comments
         """
         Normalise the phospho abundance on the protein abundance
         Calculates and adds all the Regressed Phospho Abundance and their metrics for each phosphosite.
@@ -1553,20 +1554,7 @@ class Command(BaseCommand):
         """
         logger.info("Adding Phospho Normalised on Protein Abundances - Regression")
 
-        print("+++++ COMBINED")
-        print("+++++ COMBINED")
-        print("+++++ COMBINED")
-        print("+++++ COMBINED")
-        self._convert_results(combined_time_course_info, "pre_phospho_metrics.json")
-
-        self._generate_phospho_regression_metrics(combined_time_course_info, replicates, with_bugs)
-
-        print("+++++ COMBINED2")
-        print("+++++ COMBINED2")
-        print("+++++ COMBINED2")
-        print("+++++ COMBINED2")
-        self._convert_results(combined_time_course_info, "post_phospho_metrics.json")
-        exit()
+        self._generate_phospho_regression_metrics(combined_time_course_info, replicates, sample_stages, with_bugs)
 
         # # Fisher G Statistic - Phospho
         # time_course_fisher_dict = self._calculate_fisher(combined_time_course_info, phospho = True, phospho_ab = False, phospho_reg = True)
@@ -1766,112 +1754,101 @@ class Command(BaseCommand):
         obj[METRICS][LOG2_MEAN] = log2_mean_metrics
         obj[METRICS][ZERO_MAX] = zero_max_mean_metrics
 
-    def _generate_phospho_regression_metrics(self, combined_time_course_info, replicates, with_bugs):
-        # TODO - make generic
-        time_points = [
-	        "Palbo",
-	        "Late G1_1",
-	        "G1/S",
-	        "S",
-    	    "S/G2",
-	        "G2_2",
-    	    "G2/M_1",
-	        "M/Early G1",
-        ]
+    def _generate_phospho_regression_metrics(self, results, replicates, sample_stages, with_bugs):
+        stages = [s.name for s in sample_stages]
 
-        # TODO - lots of 'One' and 'Two' here, make generic
-        for uniprot_accession in combined_time_course_info:
-            # If we have info both in protein and in phospho level
-            if len(combined_time_course_info[uniprot_accession][
-                    PHOSPHORYLATION_ABUNDANCES]) != 0 and len(combined_time_course_info[uniprot_accession][
-                    PROTEIN_ABUNDANCES][RAW]) != 0:
-                for phosphosite in combined_time_course_info[uniprot_accession][
-                    PHOSPHORYLATION_ABUNDANCES
-                ]:
-                    # TODO - not in the original
-                    if not combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN].get('One'):
-                        continue
+        for protein in results:
+            phosphoryl_abundances = results[protein][PHOSPHORYLATION_ABUNDANCES]
+            protein_abundances = results[protein][PROTEIN_ABUNDANCES]
 
-                    if not combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN].get('Two'):
-                        continue
+            if len(phosphoryl_abundances) == 0 or len(protein_abundances[RAW]) == 0:
+                continue
 
-                    rep1_phosho = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]['One']
-                    rep2_phosho = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]['Two']
-                    rep1_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]['One']
-                    rep2_prot = combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]['Two']
+            for phosphosite in phosphoryl_abundances:
+                # TODO - not in the original
+                pappan = phosphoryl_abundances[
+                    phosphosite][POSITION_ABUNDANCES][NORMALISED]
+
+                if not pappan[LOG2_MEAN].get('One'):
+                    continue
+
+                if not pappan[LOG2_MEAN].get('Two'):
+                    continue
+
+                rep1_phosho = pappan[LOG2_MEAN]['One']
+                rep2_phosho = pappan[LOG2_MEAN]['Two']
+                rep1_prot = protein_abundances[NORMALISED][LOG2_MEAN]['One']
+                rep2_prot = protein_abundances[NORMALISED][LOG2_MEAN]['Two']
                 
-                    # TODO - make generic
-                    # If we don't have missing values in the protein and phospho abundances
-                    if len(rep1_phosho) != 8 or len(rep1_prot) != 8 or len(rep2_phosho) != 8 or len(rep2_prot) != 8:
-                        continue
+                # TODO - make generic
+                # If we don't have missing values in the protein and phospho abundances
+                if len(rep1_phosho) != 8 or len(rep1_prot) != 8 or len(rep2_phosho) != 8 or len(rep2_prot) != 8:
+                    continue
                         
-                    # Add the Regressed Phospho Normalised Abundances
-                    combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
+                # Add the Regressed Phospho Normalised Abundances
+                phosphoryl_abundances[
+                    phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
 
-                    # converting dictionary values to list for both replicates
-                    phospho_Y_list = list(rep1_phosho.values()) + list(rep2_phosho.values())
-                    protein_X_list = list(rep1_prot.values()) + list(rep2_prot.values())
-                    # converting list to array
-                    prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
-                    phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
-                    # Fit the linear model
-                    model = linear_model.LinearRegression().fit(prot_x,phospho_y)
-                    # Predict new Phospho Values
-                    y_pred = model.predict(prot_x)
-                    # Calculate Residuals
-                    residuals = (phospho_y - y_pred)
-                    # Create new regressed phospho abundances dictionaries
-                    res_dic = {}  
-                    for replicate in replicates:
-                        res_dic[replicate.name] = {}
+                # converting dictionary values to list for both replicates
+                phospho_Y_list = list(rep1_phosho.values()) + list(rep2_phosho.values())
+                protein_X_list = list(rep1_prot.values()) + list(rep2_prot.values())
+                # converting list to array
+                prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
+                phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
+                # Fit the linear model
+                model = linear_model.LinearRegression().fit(prot_x,phospho_y)
+                # Predict new Phospho Values
+                y_pred = model.predict(prot_x)
+                # Calculate Residuals
+                residuals = (phospho_y - y_pred)
+                # Create new regressed phospho abundances dictionaries
+                res_dic = {}  
+                for replicate in replicates:
+                    res_dic[replicate.name] = {}
 
-                        # TODO - WHY ARE THESE TWO DIFFERENT?
-                        if replicate.name == "One":
-                            for index, value in enumerate(residuals[0:8]):
-                                key = time_points[index]
-                                res_dic[replicate.name][key] = value[0]
-                        if replicate.name == "Two":
-                            for index, value in enumerate(residuals[8::]):
-                                key = time_points[index]
-                                res_dic[replicate.name][key] = value[0]
+                    # TODO - WHY ARE THESE TWO DIFFERENT?
+                    if replicate.name == "One":
+                        for index, value in enumerate(residuals[0:8]):
+                            key = stages[index]
+                            res_dic[replicate.name][key] = value[0]
+                    if replicate.name == "Two":
+                        for index, value in enumerate(residuals[8::]):
+                            key = stages[index]
+                            res_dic[replicate.name][key] = value[0]
 
-                    phospho_regression = combined_time_course_info[
-                        uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][
-                        PHOSPHO_REGRESSION]
+                phospho_regression = phosphoryl_abundances[phosphosite][
+                    PHOSPHO_REGRESSION]
                 
-                    phospho_regression[LOG2_MEAN] = res_dic
+                phospho_regression[LOG2_MEAN] = res_dic
 
-                    phospho_regression[LOG2_MEAN][
-                            ABUNDANCE_AVERAGE
-                        ] = self._calculate_means(
-                            phospho_regression[LOG2_MEAN],
-                            imputed=False,
-                            with_bugs=with_bugs
-                        )
+                phospho_regression[LOG2_MEAN][
+                        ABUNDANCE_AVERAGE
+                    ] = self._calculate_means(
+                        phospho_regression[LOG2_MEAN],
+                        imputed=False,
+                        with_bugs=with_bugs
+                    )
 
-                    # Add metrics
-                    # Calculate the protein - phospho vector correlation
-                    phospho_regression[ZERO_MAX][METRICS] = {}
-                    phospho_regression[ZERO_MAX][METRICS]["protein-phospho-correlation"] = stats.pearsonr(protein_X_list, phospho_Y_list)[0] # [0] to get the correlation coefficient, [1] = p-value
-                    # curve fold change phosphorylation/curve fold change protein for  0-max
-                    phospho_regression[ZERO_MAX][METRICS]["phosho-protein-cfc_ratio"] = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][METRICS][ZERO_MAX]['curve_fold_change'] / combined_time_course_info[uniprot_accession][METRICS]['0-max']['curve_fold_change']
+                # Add metrics
+                # Calculate the protein - phospho vector correlation
+                phospho_regression[ZERO_MAX][METRICS] = {}
+                # [0] to get the correlation coefficient, [1] = p-value
+                phospho_regression[ZERO_MAX][METRICS]["protein-phospho-correlation"] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
+                # curve fold change phosphorylation/curve fold change protein for 0-max
+                phospho_regression[ZERO_MAX][METRICS]["phosho-protein-cfc_ratio"] = results[protein][PHOSPHORYLATION_ABUNDANCES][
+                    phosphosite][METRICS][ZERO_MAX]['curve_fold_change'] / results[protein][METRICS][ZERO_MAX]['curve_fold_change']
 
-                    # ANOVA
-                    anova = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
-                    phospho_regression[LOG2_MEAN][METRICS] = {}
-                    phospho_regression[LOG2_MEAN][METRICS][ANOVA] = {}
-                    combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE] = anova[P_VALUE]
-                    combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][F_STATISTICS] = anova[F_STATISTICS]
+                # ANOVA
+                anova = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
+                phospho_regression[LOG2_MEAN][METRICS] = {}
+                phospho_regression[LOG2_MEAN][METRICS][ANOVA] = {}
 
-        return combined_time_course_info
+                phosphoryl_abundances[
+                    phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE] = anova[P_VALUE]
+                phosphoryl_abundances[
+                    phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][F_STATISTICS] = anova[F_STATISTICS]
+
+        return results
 
     def _convert_results(self, results, file):
         stripped = {}
