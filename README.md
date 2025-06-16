@@ -104,3 +104,10 @@ docker run -it --rm cc_processor
 ```sh
 pre-commit run --all-files
 ```
+
+
+### Running tests
+```sh
+pytest
+pytest --cov=process
+```
