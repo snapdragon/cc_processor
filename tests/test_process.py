@@ -200,7 +200,7 @@ def test_tp():
 
 
 @pytest.mark.django_db
-def test_calcResidualsR2All():
+def test_calculate_residuals_R2_all():
     command = Command()
 
     # TODO - this is just captured output, not reasoned. Fix.
@@ -213,15 +213,19 @@ def test_calcResidualsR2All():
         }
     }
 
-    result = command._calcResidualsR2All(readings)
+    result = command._calculate_residuals_R2_all(readings)
 
     assert result == (0.005632439523809521, 0.47)
 
 @pytest.mark.django_db
-def test_calcCurveFoldChange():
+def test_calculate_curve_fold_change():
     command = Command()
 
-    # TODO - this is just captured output, not reasoned. Fix.
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="One", project=project)
+    replicate2 = ReplicateFactory(name="Two", project=project)
+
     readings = {
         'One': {
             'Palbo': -0.2308, 'Late G1_1': 0.4059, 'G1/S': -0.7048, 'S': 0.0117, 'S/G2': -0.4986, 'G2_2': -0.3323, 'G2/M_1': -0.232, 'M/Early G1': 0.6562
@@ -231,7 +235,7 @@ def test_calcCurveFoldChange():
         }
     }
 
-    result = command._calcCurveFoldChange(readings)
+    result = command._calculate_curve_fold_change(readings, [replicate1, replicate2])
 
     assert result == (1.8033637502236528, 'Palbo')
 
@@ -393,3 +397,95 @@ def test_calculate_ANOVA():
         "p_value": 0.5788203095177293,
         "F_statistics": 0.849268808563235
     }
+
+
+# TODO - more of these
+# TODO - do SL version
+@pytest.mark.django_db
+def test_calculate_residuals_R2_all():
+    command = Command()
+
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="rep_1", project=project)
+    replicate2 = ReplicateFactory(name="rep_2", project=project)
+
+    readings = {
+        'rep_1': {
+            'Palbo': -0.2308,
+            'Late G1_1': 0.4059,
+            'G1/S': -0.7048,
+            'S': 0.0117,
+            'S/G2': -0.4986,
+            'G2_2': -0.3323,
+            'G2/M_1': -0.232,
+            'M/Early G1': 0.6562
+        },
+        'rep_2': {
+            'Palbo': 0.1586,
+            'Late G1_1': 0.1537,
+            'G1/S': 0.1503,
+            'S': 0.0468,
+            'S/G2': 0.1054,
+            'G2_2': 0.1219,
+            'G2/M_1': 0.0836,
+            'M/Early G1': 0.1045
+        }, # TODO - does the real version have 'abundance_average'?
+        'abundance_average': {
+            'Palbo': -0.2308,
+            'Late G1_1': 0.4059,
+            'G1/S': -0.7048,
+            'S': 0.0117,
+            'S/G2': -0.4986,
+            'G2_2': -0.3323,
+            'G2/M_1': -0.232,
+            'M/Early G1': 0.6562
+        }
+    }
+
+    residuals_all, r_squared_all = command._calculate_residuals_R2_all(readings, [replicate1, replicate2])
+
+
+    assert isclose(residuals_all, 0.0056324395238095265, rel_tol=1e-5) == True
+    assert isclose(r_squared_all, 0.47, rel_tol=1e-5) == True
+
+
+# TODO - more of these
+# TODO - do SL version
+@pytest.mark.django_db
+def test_generate_xs_ys():
+    command = Command()
+
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="rep_1", project=project)
+    replicate2 = ReplicateFactory(name="rep_2", project=project)
+
+    readings = {
+        'rep_1': {
+            'Palbo': -0.2308,
+            'Late G1_1': 0.4059,
+            'G1/S': -0.7048,
+            'S': 0.0117,
+            'S/G2': -0.4986,
+            'G2_2': -0.3323,
+            'G2/M_1': -0.232,
+            'M/Early G1': 0.6562
+        },
+        'rep_2': {
+            'Palbo': 0.1586,
+            'Late G1_1': 0.1537,
+            'G1/S': 0.1503,
+            'S': 0.0468,
+            'S/G2': 0.1054,
+            'G2_2': 0.1219,
+            'G2/M_1': 0.0836,
+            'M/Early G1': 0.1045
+        },
+    }
+
+    # TODO - add test for stage_names_map
+    x, y, stage_names_map = command._generate_xs_ys(readings, [replicate1, replicate2])
+
+    assert x == [0, 1, 2, 3, 4, 5, 6, 7]
+    assert y == [0.1586, 0.1537, 0.1503, 0.0468, 0.1054, 0.1219, 0.0836, 0.1045]

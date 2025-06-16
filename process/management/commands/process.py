@@ -742,10 +742,12 @@ class Command(BaseCommand):
             # if we have info for the protein in at least 2 replicates
             # TODO - why does it need to be two? Don't we just need the last one?
             if len(readings) >= 2:
-                curve_fold_change, curve_peak = self._calcCurveFoldChange(
-                    readings
+                curve_fold_change, curve_peak = self._calculate_curve_fold_change(
+                    readings, replicates
                 )
-                residuals_all, r_squared_all = self._calcResidualsR2All(readings)
+
+                residuals_all, r_squared_all = self._calculate_residuals_R2_all(readings, replicates)
+
                 metrics = {
                     "standard_deviation": std, 
                     "variance_average": round(moment(abundance_averages_list, moment=2),2),
@@ -768,34 +770,32 @@ class Command(BaseCommand):
         return metrics
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
-    def _calcResidualsR2All(self, readings):
-        """
-        Calculate the residuals and the R squared for all the abundances from all the replicates for a protein.
-        """
+    # _calcResidualsR2All
+    # TODO - tested
+    def _calculate_residuals_R2_all(self, readings, replicates):
         residuals_all = None
         r_squared_all = None
 
-        x, y, _ = self._generate_xs_ys(readings)
+        x, y, _ = self._generate_xs_ys(readings, replicates)
 
         if len(x) == len(y):
             p = np.poly1d(np.polyfit(x, y, 2))
             curve_abundances = p(x)
             residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
-            residuals_all = residuals_all.item()
             r_squared_all = round(r2_score(y, curve_abundances), 2)
 
-        return residuals_all, r_squared_all
+        return residuals_all.item(), r_squared_all
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
     # TODO - only
-    def _calcCurveFoldChange(self, readings):
+    def _calculate_curve_fold_change(self, readings, replicates):
         """
         Calculates the curve_fold_change and curve peaks for the three or two replicates normalised abundance for each protein.
         """
         curve_fold_change = None
         curve_peak = None
 
-        x, y, stage_names_map = self._generate_xs_ys(readings)
+        x, y, stage_names_map = self._generate_xs_ys(readings, replicates)
 
         if len(x) == len(y):
             p = np.poly1d(np.polyfit(x, y, 2))
@@ -1267,22 +1267,26 @@ class Command(BaseCommand):
     def _round(self, value):
         return round(value, 4)
 
-    def _generate_xs_ys(self, readings):
-        final_replicate_name = list(readings.keys())[-1]
+    # TODO - think this could be tidied
+    # TODO - tested
+    def _generate_xs_ys(self, readings, replicates):
+        # TODO - why do we use the last replicate? It's in ICR
+        final_replicate = list(replicates)[-1]
 
         stage_names_map = {}
 
-        for i, stage_name in enumerate(readings[final_replicate_name].keys()):
+        # TODO - change this to use samples_stages list
+        for i, stage_name in enumerate(readings[final_replicate.name].keys()):
             stage_names_map[stage_name] = i
 
         x = []
-        for stage_name in readings.get(final_replicate_name, {}):
+        for stage_name in readings.get(final_replicate.name, {}):
             x.append(stage_names_map[stage_name])
         x.sort()
 
         y = []
         for stage_name in stage_names_map:
-            value = readings.get(final_replicate_name, {}).get(stage_name)
+            value = readings.get(final_replicate.name, {}).get(stage_name)
             if value is not None:
                 y.append(value)
 
