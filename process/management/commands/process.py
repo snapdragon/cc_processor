@@ -340,11 +340,6 @@ class Command(BaseCommand):
 
         # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
 
-        # TODO - fisher stats vary wildly from ICR, investigate
-        # print("++++++ FISHER STATS")
-        # print(fisher_stats[FOCUS_PROTEIN])
-        # return
-
         # TODO - rename this
         prot_anova_info: dict = {}
         for protein in anovas.keys():
@@ -353,6 +348,7 @@ class Command(BaseCommand):
             prot_anova_info[protein][P_VALUE] = anovas[protein][P_VALUE]
 
         # TODO - converting to a dataframe seems excessive. Find an alternative.
+        # TODO - is this the same as _generate_df?
         prot_anova_info_df = pd.DataFrame(prot_anova_info).T
         prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
 
@@ -377,56 +373,7 @@ class Command(BaseCommand):
 
             # results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
-        # print(f"Number of proteins: {num_proteins}")
-        # print(json.dumps(results[FOCUS_PROTEIN]))
         return results
-
-    # TODO - lifted from ICR, rename variables
-    # TODO - check all comments are not from ICR
-    def _calculate_phospho_metrics(self, readings, log2_readings, log2_averages, zero_max_readings, zero_max_averages):
-        """
-        Add all metrics for each phosphosite.
-        """
-        metrics = {}
-
-        # TODO - finish all these
-        # TODO - looks like some duplication, simplify    
-        # # Fisher G Statistic
-        # time_course_fisher_dict = self._calculate_fisher(time_course_phospho, phospho = True)
-
-        # Corrected q values - Phospho
-        # 1) Create a dataframe with the desired regression info
-        # phospho_anova_info = {}
-        # for uniprot_accession in time_course_phospho:
-        #     for site in time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-        #         phospho_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
-        #         if phospho_key not in phospho_anova_info:
-        #             phospho_anova_info[phospho_key] = {}
-        #         phospho_anova_info[phospho_key]['p_value'] = time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA][P_VALUE]
-    
-        # phospho_anova_info_df = pd.DataFrame(phospho_anova_info)
-        # phospho_anova_info_df = phospho_anova_info_df.T
-        # # 2) Regression ANOVA q values
-        # phospho_anova_info_df['q_value'] = p_adjust_bh(phospho_anova_info_df['p_value'])
-        # # 3) Turn dataframe into a dictionary
-        # phospho_anova_info = phospho_anova_info_df.to_dict('index')
-        # # 4) Add Regression info in time_course_phospho dictionary
-        # for uniprot_accession in time_course_phospho:
-        #     for site in time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-        #         site_key = uniprot_accession + "_" + time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
-        #         # ANOVA q values
-        #         if site_key in phospho_anova_info:
-        #             time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = phospho_anova_info[site_key]['q_value']
-        #         else:
-        #             time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = 1
-        #         # # Fisher
-        #         # if site_key in time_course_fisher_dict:
-        #         #     time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN]["Fisher_G"] = time_course_fisher_dict[site_key]
-        #         # else:
-        #         #     time_course_phospho[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][METRICS][LOG2_MEAN]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
-
-        return metrics
-
 
     def _calculate_fisher(
         self,
@@ -1462,12 +1409,7 @@ class Command(BaseCommand):
             exit()
             return results
 
-        prot_phospho_info_df = pd.DataFrame(prot_phospho_info)
-        prot_phospho_info_df = prot_phospho_info_df.T
-        # 2) Protein-Phospho ANOVA q values
-        prot_phospho_info_df['q_value'] = self.p_adjust_bh(prot_phospho_info_df['p_value'])
-        # 3) Turn dataframe into a dictionary
-        prot_phospho_info = prot_phospho_info_df.to_dict('index')
+        prot_phospho_info = self._generate_df(prot_phospho_info)
 
         # 4) Add Protein-Phospho info in combined_time_course_info dictionary
         # TODO - tidy up, two loops not necessary?
@@ -1476,13 +1418,17 @@ class Command(BaseCommand):
                 for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
                     if PROTEIN_OSCILLATION_ABUNDANCES in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
                         site_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
+
                         # ANOVA q values
-                        # TODO - tidy
+                        q_value = 1
+
                         if site_key in prot_phospho_info:
-                            results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = prot_phospho_info[site_key]['q_value']
-                        else:
-                            results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = 1
+                            q_value = prot_phospho_info[site_key]['q_value']
+                        
+                        results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
+
                         # # Fisher
+                        # TODO - tidy this and others like it
                         # if site_key in time_course_fisher_dict:
                         #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
                         # else:
@@ -1496,7 +1442,7 @@ class Command(BaseCommand):
 
     # TODO - lifted from ICR
     # addPhosphoRegression
-    def _add_phospho_regression(self, combined_time_course_info, replicates, sample_stages, with_bugs):
+    def _add_phospho_regression(self, results, replicates, sample_stages, with_bugs):
         # TODO - check and revise all comments
         """
         Normalise the phospho abundance on the protein abundance
@@ -1508,7 +1454,7 @@ class Command(BaseCommand):
         """
         logger.info("Adding Phospho Normalised on Protein Abundances - Regression")
 
-        self._generate_phospho_regression_metrics(combined_time_course_info, replicates, sample_stages, with_bugs)
+        self._generate_phospho_regression_metrics(results, replicates, sample_stages, with_bugs)
 
         # # Fisher G Statistic - Phospho
         # time_course_fisher_dict = self._calculate_fisher(combined_time_course_info, phospho = True, phospho_ab = False, phospho_reg = True)
@@ -1516,34 +1462,33 @@ class Command(BaseCommand):
         # Corrected q values - Phospho
         # 1) Create a dataframe with the desired regression info
         regression_info = {}
-        for uniprot_accession in combined_time_course_info:
-            if len(combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]) != 0:
-                for site in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-                    if 'phospho_regression' in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site]:
+
+        for protein in results:
+            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0:
+                for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
+                    if 'phospho_regression' in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
                         # TODO - a hack
-                        phospho_key = uniprot_accession.accession_number + "_" + combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
+                        phospho_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
                         if phospho_key not in regression_info:
                             regression_info[phospho_key] = {}
-                        regression_info[phospho_key]['p_value'] = combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA']['p_value']
+                        regression_info[phospho_key]['p_value'] = results[protein][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA']['p_value']
 
-        regression_info_df = pd.DataFrame(regression_info)
-        regression_info_df = regression_info_df.T
-        # 2) Regression ANOVA q values
-        regression_info_df['q_value'] = self.p_adjust_bh(regression_info_df['p_value'])
-        # 3) Turn dataframe into a dictionary
-        regression_info = regression_info_df.to_dict('index')
+        regression_info = self._generate_df(regression_info)
+
         # 4) Add Regression info in combined_time_course_info dictionary
-        for uniprot_accession in combined_time_course_info:
-            if len(combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(combined_time_course_info[uniprot_accession][PROTEIN_ABUNDANCES][RAW]) != 0:
-                for phosphosite in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
-                    if PHOSPHO_REGRESSION in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]:
-                        site_key = uniprot_accession.accession_number + "_" + combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHORYLATION_SITE]
+        for protein in results:
+            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
+                for phosphosite in results[protein][PHOSPHORYLATION_ABUNDANCES]:
+                    if PHOSPHO_REGRESSION in results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite]:
+                        site_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHORYLATION_SITE]
 
                         # ANOVA q values
+                        q_value = 1
+
                         if site_key in regression_info:
-                            combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = regression_info[site_key]['q_value']
-                        else:
-                            combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = 1
+                            q_value = regression_info[site_key]['q_value']
+
+                        results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
                         # # Fisher
                         # phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
@@ -1553,7 +1498,7 @@ class Command(BaseCommand):
                         #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
                         #                 phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
 
-        return combined_time_course_info
+        return results
 
     # calculateProteinOscillationAbundances
     # TODO - tested
@@ -1812,8 +1757,6 @@ class Command(BaseCommand):
 
         return results
 
-
-
     # TODO - tested
     def _generate_protein_metrics(self, results, replicates, sample_stages, with_bugs):
         for protein in results:
@@ -1862,11 +1805,24 @@ class Command(BaseCommand):
 
         return results
 
-    def _convert_results(self, results, file):
+    def _generate_df(self, info):
+        info_df = pd.DataFrame(info)
+        info_df = info_df.T
+
+        # 2) Regression ANOVA q values
+        info_df['q_value'] = self.p_adjust_bh(info_df['p_value'])
+
+        # 3) Turn dataframe into a dictionary
+        return info_df.to_dict('index')
+
+    def _convert_results(self, results, file, results_based = True):
         stripped = {}
 
-        for protein in results:
-            stripped[protein.accession_number] = results[protein]
+        if results_based:
+            for protein in results:
+                stripped[protein.accession_number] = results[protein]
+        else:
+            stripped = results
 
         with open(file, "w") as outfile:
             json.dump(stripped, outfile, default=lambda o: o.item() if isinstance(o, np.generic) else str(o))

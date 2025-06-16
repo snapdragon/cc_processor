@@ -556,3 +556,19 @@ def test_generate_protein_metrics(load_json):
     )
 
     assert output == post_generate_protein_metrics
+
+
+# TODO - write a deliberate, miniature version of this
+# TODO - do one for SL as well
+@pytest.mark.django_db
+def test_generate_df(load_json):
+    command = Command()
+
+    pre_generate_df = load_json("pre_generate_df.json")
+    post_generate_df = load_json("post_generate_df.json")
+
+    output = command._generate_df(
+        pre_generate_df,
+    )
+
+    assert output == post_generate_df
