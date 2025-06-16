@@ -489,3 +489,22 @@ def test_generate_xs_ys():
 
     assert x == [0, 1, 2, 3, 4, 5, 6, 7]
     assert y == [0.1586, 0.1537, 0.1503, 0.0468, 0.1054, 0.1219, 0.0836, 0.1045]
+
+
+# TODO - write a deliberate, miniature version of this
+# TODO - do one for SL as well
+@pytest.mark.django_db
+def test_generate_phospho_regression_metrics(load_json):
+    command = Command()
+
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="One", project=project)
+    replicate2 = ReplicateFactory(name="Two", project=project)
+
+    pre_phospho_metrics = load_json("pre_phospho_metrics.json")
+    post_phospho_metrics = load_json("post_phospho_metrics.json")
+
+    output = command._generate_phospho_regression_metrics(pre_phospho_metrics, [replicate1, replicate2], with_bugs=True)
+
+    assert output == post_phospho_metrics
