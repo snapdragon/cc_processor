@@ -653,11 +653,13 @@ class Command(BaseCommand):
 
         x, y, _ = self._generate_xs_ys(readings, replicates)
 
-        if len(x) == len(y):
-            p = np.poly1d(np.polyfit(x, y, 2))
-            curve_abundances = p(x)
-            residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
-            r_squared_all = round(r2_score(y, curve_abundances), 2)
+        if len(x) != len(y):
+            return residuals_all, r_squared_all
+
+        p = np.poly1d(np.polyfit(x, y, 2))
+        curve_abundances = p(x)
+        residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
+        r_squared_all = round(r2_score(y, curve_abundances), 2)
 
         return residuals_all.item(), r_squared_all
 
@@ -1602,104 +1604,111 @@ class Command(BaseCommand):
             phosphoryl_abundances = results[protein][PHOSPHORYLATION_ABUNDANCES]
             protein_abundances = results[protein][PROTEIN_ABUNDANCES]
 
-            if len(phosphoryl_abundances) == 0 or len(protein_abundances[RAW]) == 0:
-                continue
-
-            for phosphosite in phosphoryl_abundances:
-                # TODO - not in the original
-                pappan = phosphoryl_abundances[
-                    phosphosite][POSITION_ABUNDANCES][NORMALISED]
-
-                rep_proteos = []
-                rep_phosphos = []
-
-                for replicate in replicates:
-                    if not pappan[LOG2_MEAN].get(replicate.name):
-                        continue
-
-                    rep_proteo = protein_abundances[NORMALISED][LOG2_MEAN][replicate.name]
-                    rep_phospho = pappan[LOG2_MEAN][replicate.name]
-
-                    if len(rep_proteo) != len(sample_stages) or len(rep_phospho) != len(sample_stages):
-                        continue
-
-                    rep_phosphos.append(rep_phospho)
-                    rep_proteos.append(rep_proteo)
-
-                if len(rep_phosphos) != len(replicates) or len(rep_proteos) != len(replicates):
-                    # One of the replicates didn't have all the required data
+            try:
+                if len(phosphoryl_abundances) == 0 or len(protein_abundances[RAW]) == 0:
                     continue
 
-                # Add the Regressed Phospho Normalised Abundances
-                phosphoryl_abundances[
-                    phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
+                for phosphosite in phosphoryl_abundances:
+                    # TODO - not in the original
+                    pappan = phosphoryl_abundances[
+                        phosphosite][POSITION_ABUNDANCES][NORMALISED]
 
-                # converting dictionary values to list for both replicates
-                # TODO - study this
-                phospho_Y_list = [val for r_phos in rep_phosphos for val in r_phos.values()]
-                protein_X_list = [val for r_prot in rep_proteos for val in r_prot.values()]
+                    rep_proteos = []
+                    rep_phosphos = []
 
-                # converting list to array
-                prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
-                phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
+                    for replicate in replicates:
+                        if not pappan[LOG2_MEAN].get(replicate.name):
+                            continue
 
-                try:
-                    # Fit the linear model
-                    model = linear_model.LinearRegression().fit(prot_x, phospho_y)
-                except Exception as e:
-                    print("++++++ LINEAR REGRESSION")
-                    print(prot_x)
-                    print(phospho_y)
-                    print(e)
-                    continue
+                        rep_proteo = protein_abundances[NORMALISED][LOG2_MEAN][replicate.name]
+                        rep_phospho = pappan[LOG2_MEAN][replicate.name]
 
-                # Predict new Phospho Values
-                y_pred = model.predict(prot_x)
+                        if len(rep_proteo) != len(sample_stages) or len(rep_phospho) != len(sample_stages):
+                            continue
 
-                # Calculate Residuals
-                residuals = (phospho_y - y_pred)
+                        rep_phosphos.append(rep_phospho)
+                        rep_proteos.append(rep_proteo)
 
-                # Create new regressed phospho abundances dictionaries
-                # TODO - change this variable name
-                res_dic = {}
+                    if len(rep_phosphos) != len(replicates) or len(rep_proteos) != len(replicates):
+                        # One of the replicates didn't have all the required data
+                        continue
 
-                num_stages = len(sample_stages)
+                    # Add the Regressed Phospho Normalised Abundances
+                    phosphoryl_abundances[
+                        phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
 
-                # replicates is a list with len len(replicates) * len(sample_stages)
-                #   Chop it up in to bits for each replicate.
-                for i, replicate in enumerate(replicates):
-                    res_dic[replicate.name] = {}
+                    # converting dictionary values to list for both replicates
+                    # TODO - study this
+                    phospho_Y_list = [val for r_phos in rep_phosphos for val in r_phos.values()]
+                    protein_X_list = [val for r_prot in rep_proteos for val in r_prot.values()]
 
-                    for j, value in enumerate(residuals[(i*num_stages):((i+1)*num_stages)]):
-                        key = stages[j]
-                        res_dic[replicate.name][key] = value[0]
+                    # converting list to array
+                    prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
+                    phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
 
-                phospho_regression = phosphoryl_abundances[phosphosite][
-                    PHOSPHO_REGRESSION]
-                
-                phospho_regression[LOG2_MEAN] = res_dic
+                    try:
+                        # Fit the linear model
+                        if None in prot_x or None in phospho_y:
+                            continue
 
-                phospho_regression[LOG2_MEAN][ABUNDANCE_AVERAGE] = self._calculate_means(
-                    phospho_regression[LOG2_MEAN],
-                    imputed=False,
-                    with_bugs=with_bugs
-                )
+                        model = linear_model.LinearRegression().fit(prot_x, phospho_y)
+                    except Exception as e:
+                        print("++++++ LINEAR REGRESSION")
+                        print(prot_x)
+                        print(phospho_y)
+                        print(e)
 
-                # Add metrics
+                    # Predict new Phospho Values
+                    y_pred = model.predict(prot_x)
 
-                # Calculate the protein - phospho vector correlation
-                phospho_regression[ZERO_MAX][METRICS] = {}
+                    # Calculate Residuals
+                    residuals = (phospho_y - y_pred)
 
-                # [0] to get the correlation coefficient, [1] = p-value
-                phospho_regression[ZERO_MAX][METRICS][PROTEIN_PHOSPHO_CORRELATION] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
+                    # Create new regressed phospho abundances dictionaries
+                    # TODO - change this variable name
+                    res_dic = {}
 
-                # curve fold change phosphorylation/curve fold change protein for 0-max
-                phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = results[protein][PHOSPHORYLATION_ABUNDANCES][
-                    phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / results[protein][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
+                    num_stages = len(sample_stages)
 
-                # ANOVA
-                phospho_regression[LOG2_MEAN][METRICS] = {}
-                phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
+                    # replicates is a list with len len(replicates) * len(sample_stages)
+                    #   Chop it up in to bits for each replicate.
+                    for i, replicate in enumerate(replicates):
+                        res_dic[replicate.name] = {}
+
+                        for j, value in enumerate(residuals[(i*num_stages):((i+1)*num_stages)]):
+                            key = stages[j]
+                            res_dic[replicate.name][key] = value[0]
+
+                    phospho_regression = phosphoryl_abundances[phosphosite][
+                        PHOSPHO_REGRESSION]
+                    
+                    phospho_regression[LOG2_MEAN] = res_dic
+
+                    phospho_regression[LOG2_MEAN][ABUNDANCE_AVERAGE] = self._calculate_means(
+                        phospho_regression[LOG2_MEAN],
+                        imputed=False,
+                        with_bugs=with_bugs
+                    )
+
+                    # Add metrics
+
+                    # Calculate the protein - phospho vector correlation
+                    phospho_regression[ZERO_MAX][METRICS] = {}
+
+                    # [0] to get the correlation coefficient, [1] = p-value
+                    phospho_regression[ZERO_MAX][METRICS][PROTEIN_PHOSPHO_CORRELATION] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
+
+                    # curve fold change phosphorylation/curve fold change protein for 0-max
+                    phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = results[protein][PHOSPHORYLATION_ABUNDANCES][
+                        phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / results[protein][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
+
+                    # ANOVA
+                    phospho_regression[LOG2_MEAN][METRICS] = {}
+                    phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
+            except Exception as e:
+                print("+++++ ERROR")
+                print(e)
+                exit()
 
         return results
 
