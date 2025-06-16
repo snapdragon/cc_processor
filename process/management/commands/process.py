@@ -54,6 +54,11 @@ PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"
 PHOSPHO_REGRESSION = "phospho_regression"
 PHOSPHORYLATION_SITE = "phosphorylation_site"
 Q_VALUE = Q_VALUE
+CURVE_FOLD_CHANGE = "curve_fold_change"
+PROTEIN_PHOSPHO_CORRELATION = "protein-phospho-correlation"
+# TODO - misspelled, but it's difficult to replace it in the fixture json files
+PHOSPHO_PROTEIN_CFC_RATIO = "phosho-protein-cfc_ratio"
+
 
 TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
 
@@ -759,7 +764,7 @@ class Command(BaseCommand):
                     "R_squared_average": r_squared,
                     "residuals_all": residuals_all,
                     "R_squared_all": r_squared_all,
-                    "curve_fold_change": curve_fold_change,
+                    CURVE_FOLD_CHANGE: curve_fold_change,
                     "curve_peak": curve_peak,
                 }
 
@@ -1610,16 +1615,15 @@ class Command(BaseCommand):
         for replicate in replicates:
             if replicate.name in rspannm:
                 if (replicate.name in rspappann):
-
                     protein_oscillation_abundances = {}
                     protein_normed = rspannm[replicate.name]
 
-                    phosho_normed = rspappann[replicate.name]
-            
+                    phospho_normed = rspappann[replicate.name]
+
                     for stage_name in protein_normed:
-                        if stage_name in phosho_normed:
+                        if stage_name in phospho_normed:
                             protein_oscillation_abundances[stage_name] = (
-                                phosho_normed[stage_name]
+                                phospho_normed[stage_name]
                                 - protein_normed[stage_name]
                             )
                     
@@ -1754,6 +1758,7 @@ class Command(BaseCommand):
         obj[METRICS][LOG2_MEAN] = log2_mean_metrics
         obj[METRICS][ZERO_MAX] = zero_max_mean_metrics
 
+    # TODO - tested
     def _generate_phospho_regression_metrics(self, results, replicates, sample_stages, with_bugs):
         stages = [s.name for s in sample_stages]
 
@@ -1769,84 +1774,89 @@ class Command(BaseCommand):
                 pappan = phosphoryl_abundances[
                     phosphosite][POSITION_ABUNDANCES][NORMALISED]
 
-                if not pappan[LOG2_MEAN].get('One'):
+                rep_proteos = []
+                rep_phosphos = []
+
+                for replicate in replicates:
+                    if not pappan[LOG2_MEAN].get(replicate.name):
+                        continue
+
+                    rep_proteo = protein_abundances[NORMALISED][LOG2_MEAN][replicate.name]
+                    rep_phospho = pappan[LOG2_MEAN][replicate.name]
+
+                    if len(rep_proteo) != len(sample_stages) or len(rep_phospho) != len(sample_stages):
+                        continue
+
+                    rep_phosphos.append(rep_phospho)
+                    rep_proteos.append(rep_proteo)
+
+                if len(rep_phosphos) != len(replicates) or len(rep_proteos) != len(replicates):
+                    # One of the replicates didn't have all the required data
                     continue
 
-                if not pappan[LOG2_MEAN].get('Two'):
-                    continue
-
-                rep1_phosho = pappan[LOG2_MEAN]['One']
-                rep2_phosho = pappan[LOG2_MEAN]['Two']
-                rep1_prot = protein_abundances[NORMALISED][LOG2_MEAN]['One']
-                rep2_prot = protein_abundances[NORMALISED][LOG2_MEAN]['Two']
-                
-                # TODO - make generic
-                # If we don't have missing values in the protein and phospho abundances
-                if len(rep1_phosho) != 8 or len(rep1_prot) != 8 or len(rep2_phosho) != 8 or len(rep2_prot) != 8:
-                    continue
-                        
                 # Add the Regressed Phospho Normalised Abundances
                 phosphoryl_abundances[
                     phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
 
                 # converting dictionary values to list for both replicates
-                phospho_Y_list = list(rep1_phosho.values()) + list(rep2_phosho.values())
-                protein_X_list = list(rep1_prot.values()) + list(rep2_prot.values())
+                # TODO - study this
+                phospho_Y_list = [val for r_phos in rep_phosphos for val in r_phos.values()]
+                protein_X_list = [val for r_prot in rep_proteos for val in r_prot.values()]
+
                 # converting list to array
                 prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
                 phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
+
                 # Fit the linear model
                 model = linear_model.LinearRegression().fit(prot_x,phospho_y)
+
                 # Predict new Phospho Values
                 y_pred = model.predict(prot_x)
+
                 # Calculate Residuals
                 residuals = (phospho_y - y_pred)
+
                 # Create new regressed phospho abundances dictionaries
-                res_dic = {}  
-                for replicate in replicates:
+                # TODO - change this variable name
+                res_dic = {}
+
+                num_stages = len(sample_stages)
+
+                # replicates is a list with len len(replicates) * len(sample_stages)
+                #   Chop it up in to bits for each replicate.
+                for i, replicate in enumerate(replicates):
                     res_dic[replicate.name] = {}
 
-                    # TODO - WHY ARE THESE TWO DIFFERENT?
-                    if replicate.name == "One":
-                        for index, value in enumerate(residuals[0:8]):
-                            key = stages[index]
-                            res_dic[replicate.name][key] = value[0]
-                    if replicate.name == "Two":
-                        for index, value in enumerate(residuals[8::]):
-                            key = stages[index]
-                            res_dic[replicate.name][key] = value[0]
+                    for j, value in enumerate(residuals[(i*num_stages):((i+1)*num_stages)]):
+                        key = stages[j]
+                        res_dic[replicate.name][key] = value[0]
 
                 phospho_regression = phosphoryl_abundances[phosphosite][
                     PHOSPHO_REGRESSION]
                 
                 phospho_regression[LOG2_MEAN] = res_dic
 
-                phospho_regression[LOG2_MEAN][
-                        ABUNDANCE_AVERAGE
-                    ] = self._calculate_means(
-                        phospho_regression[LOG2_MEAN],
-                        imputed=False,
-                        with_bugs=with_bugs
-                    )
+                phospho_regression[LOG2_MEAN][ABUNDANCE_AVERAGE] = self._calculate_means(
+                    phospho_regression[LOG2_MEAN],
+                    imputed=False,
+                    with_bugs=with_bugs
+                )
 
                 # Add metrics
+
                 # Calculate the protein - phospho vector correlation
                 phospho_regression[ZERO_MAX][METRICS] = {}
+
                 # [0] to get the correlation coefficient, [1] = p-value
-                phospho_regression[ZERO_MAX][METRICS]["protein-phospho-correlation"] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
+                phospho_regression[ZERO_MAX][METRICS][PROTEIN_PHOSPHO_CORRELATION] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
+
                 # curve fold change phosphorylation/curve fold change protein for 0-max
-                phospho_regression[ZERO_MAX][METRICS]["phosho-protein-cfc_ratio"] = results[protein][PHOSPHORYLATION_ABUNDANCES][
-                    phosphosite][METRICS][ZERO_MAX]['curve_fold_change'] / results[protein][METRICS][ZERO_MAX]['curve_fold_change']
+                phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = results[protein][PHOSPHORYLATION_ABUNDANCES][
+                    phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / results[protein][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
 
                 # ANOVA
-                anova = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
                 phospho_regression[LOG2_MEAN][METRICS] = {}
-                phospho_regression[LOG2_MEAN][METRICS][ANOVA] = {}
-
-                phosphoryl_abundances[
-                    phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE] = anova[P_VALUE]
-                phosphoryl_abundances[
-                    phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][F_STATISTICS] = anova[F_STATISTICS]
+                phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
 
         return results
 
