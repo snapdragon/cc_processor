@@ -137,10 +137,10 @@ class Command(BaseCommand):
                 # "gene_name": gene_name,
                 # "protein_name": protein_name,
 
-        self._addProteinOscillations(results, replicates, sample_stages, with_bugs)
+        self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
 
         # Add the Regressed Phospho Normalised Abundances        
-        results = self._addPhosphoRegression(results, replicates, sample_stages, with_bugs)
+        results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
         # self._dump(results[FOCUS_PROTEIN])
         # print(results[FOCUS_PROTEIN])
@@ -1431,64 +1431,12 @@ class Command(BaseCommand):
 
 
     # TODO - lifted from ICR
-    def _addProteinOscillations(self, results, replicates, sample_stages, with_bugs):
+    # addProteinOscillations
+    def _add_protein_oscillations(self, results, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
 
-        for protein in results:
-            # If we have info both in protein and in phospho level
-            prpa = results[protein][PHOSPHORYLATION_ABUNDANCES]
-
-
-            if len(prpa) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
-                # Add the Protein Oscillation Normalised Abundances
-                for mod in prpa:
-                    # TODO - could be initialised in loop below
-                    prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {ZERO_MAX:{}, LOG2_MEAN:{}}
-                    prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
-
-                    for norm_method in [ZERO_MAX, LOG2_MEAN]:
-                        protein_oscillation_abundances = prpampoa[norm_method]
-
-                        # TODO - should this be passing phosphosite, not mod?
-                        phospho_oscillations = self._calculate_protein_oscillation(
-                            results[protein], norm_method, mod, replicates
-                        )
-                        for rep in replicates:
-                            if rep.name in phospho_oscillations:
-                                # # TODO - is this needed? Why not just use the rep name?
-                                # key = f"abundance_{rep.name}"
-
-                                protein_oscillation_abundances[rep.name] = phospho_oscillations[rep.name]
-
-                        # TODO - split this out into its own variable? That's done with other average
-                        protein_oscillation_abundances[ABUNDANCE_AVERAGE] = self._calculate_means(
-                            protein_oscillation_abundances, imputed=False, with_bugs=with_bugs)
-
-                    # if we have info in Protein Oscillation Normalised Abundances
-                    # TODO - check all comments to make sure they're non-ICR
-                    if (
-                        len(prpampoa[LOG2_MEAN]) > 1
-                    ):
-                        for norm_method in [ZERO_MAX, LOG2_MEAN]:
-                            protein_oscillation_abundances = prpampoa[norm_method]
-
-                            # Metrics
-                            # prpampoa[norm_method][METRICS] = self._calcAbundanceMetrics(
-                            #     protein_oscillation_abundances, protein)
-                            prpampoa[norm_method][METRICS] = self._calculate_metrics(
-                                protein_oscillation_abundances,
-                                protein_oscillation_abundances[ABUNDANCE_AVERAGE],
-                                replicates,
-                                sample_stages
-                            )
-
-                        # ANOVA
-                        norm_abundances = prpampoa[LOG2_MEAN]
-
-                        anovas = self._calculate_ANOVA(norm_abundances)
-
-                        prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
+        self._generate_protein_metrics(results, replicates, sample_stages, with_bugs)
 
         # Fisher G Statistic - Phospho
         # TODO - figure out how to get this working for protein oscillations
@@ -1547,7 +1495,8 @@ class Command(BaseCommand):
 
 
     # TODO - lifted from ICR
-    def _addPhosphoRegression(self, combined_time_course_info, replicates, sample_stages, with_bugs):
+    # addPhosphoRegression
+    def _add_phospho_regression(self, combined_time_course_info, replicates, sample_stages, with_bugs):
         # TODO - check and revise all comments
         """
         Normalise the phospho abundance on the protein abundance
@@ -1563,6 +1512,7 @@ class Command(BaseCommand):
 
         # # Fisher G Statistic - Phospho
         # time_course_fisher_dict = self._calculate_fisher(combined_time_course_info, phospho = True, phospho_ab = False, phospho_reg = True)
+
         # Corrected q values - Phospho
         # 1) Create a dataframe with the desired regression info
         regression_info = {}
@@ -1588,11 +1538,13 @@ class Command(BaseCommand):
                 for phosphosite in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES]:
                     if PHOSPHO_REGRESSION in combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite]:
                         site_key = uniprot_accession.accession_number + "_" + combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHORYLATION_SITE]
+
                         # ANOVA q values
                         if site_key in regression_info:
                             combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = regression_info[site_key]['q_value']
                         else:
                             combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = 1
+
                         # # Fisher
                         # phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
                         # if site_key in time_course_fisher_dict:
@@ -1857,6 +1809,56 @@ class Command(BaseCommand):
                 # ANOVA
                 phospho_regression[LOG2_MEAN][METRICS] = {}
                 phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
+
+        return results
+
+
+
+    # TODO - tested
+    def _generate_protein_metrics(self, results, replicates, sample_stages, with_bugs):
+        for protein in results:
+            # If we have info both in protein and in phospho level
+            prpa = results[protein][PHOSPHORYLATION_ABUNDANCES]
+
+            if len(prpa) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
+                for mod in prpa:
+                    prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {ZERO_MAX:{}, LOG2_MEAN:{}}
+                    prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
+
+                    for norm_method in [ZERO_MAX, LOG2_MEAN]:
+                        protein_oscillation_abundances = prpampoa[norm_method]
+
+                        # TODO - should this be passing phosphosite, not mod?
+                        phospho_oscillations = self._calculate_protein_oscillation(
+                            results[protein], norm_method, mod, replicates
+                        )
+
+                        for rep in replicates:
+                            if rep.name in phospho_oscillations:
+                                protein_oscillation_abundances[rep.name] = phospho_oscillations[rep.name]
+
+                        # TODO - split this out into its own variable? That's done with other average
+                        protein_oscillation_abundances[ABUNDANCE_AVERAGE] = self._calculate_means(
+                            protein_oscillation_abundances, imputed = False, with_bugs = with_bugs
+                        )
+
+                    # if we have info in Protein Oscillation Normalised Abundances
+                    # TODO - check all comments to make sure they're non-ICR
+                    if len(prpampoa[LOG2_MEAN]) > 1:
+                        for norm_method in [ZERO_MAX, LOG2_MEAN]:
+                            protein_oscillation_abundances = prpampoa[norm_method]
+
+                            # Metrics
+                            prpampoa[norm_method][METRICS] = self._calculate_metrics(
+                                protein_oscillation_abundances,
+                                protein_oscillation_abundances[ABUNDANCE_AVERAGE],
+                                replicates,
+                                sample_stages
+                            )
+
+                        anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN])
+
+                        prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
 
         return results
 
