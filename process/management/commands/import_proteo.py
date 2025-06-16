@@ -56,8 +56,8 @@ class Command(BaseCommand):
             row_no += 1
 
             # TODO - make this a flag with a number
-            # if row_no == 100:
-            #     exit()
+            if row_no == 100:
+                exit()
 
             is_contaminant = False
 

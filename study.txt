@@ -3,3 +3,8 @@ _calculate_metrics
 _calculate_ANOVA
 _generate_phospho_regression_metrics
 _generate_df
+_generate_kinase
+_getConsensusKinasePred
+_getPeptideAligned
+_getPeptideSequence
+_getProteinSeq

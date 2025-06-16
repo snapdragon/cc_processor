@@ -1,6 +1,3 @@
-# TODO - phosphorylation min-max is wrong, maybe the code is inconsisten?
-#   That is, it works one way for protein and another for phospho?
-# TODO - phosphorylation imputed is wrong, imputed is based on min-max
 # TODO - put kinase prediction back in
 # TODO - put PepTools_annotations in
 # TODO - phosphorylation metrics log2_mean anova is wrong
@@ -9,6 +6,7 @@
 # TODO - put peptide_abundances in SL?
 
 
+import re
 import json
 import logging
 import math
@@ -36,7 +34,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # TODO - move constants elsewhere
-FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+# FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+FOCUS_PROTEIN_ACCESSION_NUMBER = "A0AVT1"
 FOCUS_MOD = "2928"
 
 RAW = "raw"
@@ -125,7 +124,7 @@ class Command(BaseCommand):
 
         results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
-        self._save_data(results[FOCUS_PROTEIN], "Q09666.json", False)
+        self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
 
 
     def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs: bool):
@@ -181,27 +180,7 @@ class Command(BaseCommand):
                     with_bugs
                 )
 
-        # # Kinase Consensus Prediction
-        # # TODO - lifted, change
-        # # TODO - what does all this do?
-        # # TODO - put back in and fix
-        # for protein in raw_readings:
-        #     for mod in raw_readings[protein]:
-        #         # only for certain phosphorylation sites
-        #         # TODO - why? What does the lack of dash mean?
-        #         if mod.find("-") == -1:
-        #             print(f"+++++ NO DASH {protein} {mod}")
-        #             # Add PepTools Phospho annotations
-        #             mod_result = results[protein][mod]
-
-        #             if 'phospho' in index_protein_names[protein.accession_number] and mod in index_protein_names[protein.accession_number]['phospho']:
-        #                 mod_result['PepTools_annotations'] = index_protein_names[protein.accession_number]['phospho'][mod]
-
-        #             mod_result['kinase_prediction'] = {}
-
-        #             phospho_kinases_class = self._getConsensusKinasePred(protein.accession_number, mod_result)
-        #             mod_result['kinase_prediction']['peptide_seq'] = phospho_kinases_class['peptide_seq']
-        #             mod_result['kinase_prediction']['consenus_motif_match'] = phospho_kinases_class['kinase_motif_match']
+        # self._generate_kinase(raw_readings, results)
 
         return results
 
@@ -584,7 +563,6 @@ class Command(BaseCommand):
         abundance_averages_list = [
             val for val in abundance_averages.values() if val is not None
         ]
-        # abundance_averages_list = list(abundance_averages.values())
 
         for replicate in replicates:
             for sample_stage in sample_stages:
@@ -1417,7 +1395,10 @@ class Command(BaseCommand):
                         phospho_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
                         if phospho_key not in regression_info:
                             regression_info[phospho_key] = {}
-                        regression_info[phospho_key]['p_value'] = results[protein][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA']['p_value']
+
+                        if results[protein][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'].get(METRICS):
+                            # TODO - why would it not have metrics? Lack of data maybe?
+                            regression_info[phospho_key]['p_value'] = results[protein][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA']['p_value']
 
         regression_info = self._generate_df(regression_info)
 
@@ -1434,7 +1415,9 @@ class Command(BaseCommand):
                         if site_key in regression_info:
                             q_value = regression_info[site_key]['q_value']
 
-                        results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
+                        if results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
+                            # TODO - why no metrics? Not generated due to lack of data?
+                            results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
                         # # Fisher
                         # phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
@@ -1463,13 +1446,22 @@ class Command(BaseCommand):
 
                     phospho_normed = rspappann[replicate.name]
 
-                    for stage_name in protein_normed:
-                        if stage_name in phospho_normed:
+                    try:
+                        for stage_name in protein_normed:
+                            if not protein_normed[stage_name] or not phospho_normed.get(stage_name):
+                                continue
+
                             protein_oscillation_abundances[stage_name] = (
                                 phospho_normed[stage_name]
                                 - protein_normed[stage_name]
                             )
-                    
+                    except Exception as e:
+                        print("+++++ _calculate_protein_oscillation error")
+                        print(protein_normed)
+                        print(phospho_normed)
+                        print(e)
+                        exit()
+
                     phospho_oscillations[replicate.name] = protein_oscillation_abundances
     
         return phospho_oscillations
@@ -1651,8 +1643,15 @@ class Command(BaseCommand):
                 prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
                 phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
 
-                # Fit the linear model
-                model = linear_model.LinearRegression().fit(prot_x,phospho_y)
+                try:
+                    # Fit the linear model
+                    model = linear_model.LinearRegression().fit(prot_x, phospho_y)
+                except Exception as e:
+                    print("++++++ LINEAR REGRESSION")
+                    print(prot_x)
+                    print(phospho_y)
+                    print(e)
+                    continue
 
                 # Predict new Phospho Values
                 y_pred = model.predict(prot_x)
@@ -1822,6 +1821,27 @@ class Command(BaseCommand):
 
         # 3) Turn dataframe into a dictionary
         return info_df.to_dict('index')
+
+    def _generate_kinase(self, raw_readings, results):
+        # Kinase Consensus Prediction
+        # TODO - lifted, change
+        for protein in raw_readings:
+            for mod in raw_readings[protein]:
+                # only for certain phosphorylation sites
+                # TODO - why? What does the lack of dash mean?
+                if mod.find("-") == -1:
+                    # Add PepTools Phospho annotations
+                    mod_result = results[protein][mod]
+
+                    if 'phospho' in index_protein_names[protein.accession_number] and mod in index_protein_names[protein.accession_number]['phospho']:
+                        mod_result['PepTools_annotations'] = index_protein_names[protein.accession_number]['phospho'][mod]
+
+                    mod_result['kinase_prediction'] = {}
+
+                    phospho_kinases_class = self._getConsensusKinasePred(protein.accession_number, mod_result)
+                    mod_result['kinase_prediction']['peptide_seq'] = phospho_kinases_class['peptide_seq']
+                    mod_result['kinase_prediction']['consenus_motif_match'] = phospho_kinases_class['kinase_motif_match']
+
 
     def _save_data(self, results, file, results_based = True):
         stripped = {}

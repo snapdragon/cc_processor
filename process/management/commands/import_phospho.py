@@ -76,10 +76,21 @@ class Command(BaseCommand):
             for index, row in df.iterrows():
                 row_no += 1
 
-                if row_no == 3000:
-                    exit()
+                # if row_no == 3000:
+                #     exit()
 
                 accession_number = row[project.proteome_file_accession_number_column_name]
+
+                # Development only
+                if accession_number not in proteins.keys():
+                    print(f"Skipping {accession_number}")
+                    continue
+
+                if not proteins.get(accession_number):
+                    new_protein = Protein.objects.create(
+                        project=project, accession_number=uniprot_accession, is_contaminant=False
+                    )
+                    proteins[uniprot_accession] = new_protein
 
                 print(f"Adding phospho row {row_no} {accession_number}")
 
