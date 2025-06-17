@@ -1,4 +1,18 @@
-# TODO - store medians in the DB
+# TODO - q_value is wrong
+#      "ANOVA": {
+#        "p_value": 0.5788203095177293,
+#        "F_statistics": 0.849268808563235,
+#        "q_value": 0.6470752162303733
+#
+#      "ANOVA": {
+#        "p_value": 0.5788203095177293,
+#        "F_statistics": 0.849268808563235,
+#        "q value": 0.5788203095177293
+
+# TODO - move this out of _proteo, it is for multiple proteins
+#   anovas[protein] = self._calculate_ANOVA(log2_readings)
+
+
 # TODO - store protein results in the DB
 
 
@@ -170,7 +184,12 @@ class Command(BaseCommand):
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
-        results = self._proteo(project, replicates, protein_readings, column_names, sample_stages, calculate_medians, calculate_all, limit_proteins, with_bugs)
+        if (calculate_medians or calculate_all) and not limit_proteins:
+            proteo_medians = self._calculate_proteo_medians(project, replicates, protein_readings, column_names, with_bugs)
+        else:
+            proteo_medians = self._fetch_proteo_medians(project, with_bugs)
+
+        results = self._proteo(project, replicates, protein_readings, proteo_medians, column_names, sample_stages, with_bugs)
 
         # phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
 
@@ -180,7 +199,7 @@ class Command(BaseCommand):
 
         # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
-        # self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
+        self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
         # self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
@@ -243,7 +262,7 @@ class Command(BaseCommand):
 
 
     def _proteo(
-        self, project, replicates, protein_readings, column_names, sample_stages, calculate_medians, calculate_all, limit_proteins, with_bugs: bool
+        self, project, replicates, protein_readings, medians, column_names, sample_stages, with_bugs: bool
     ):
         """
         Does all the required calculations. The steps are:
@@ -270,37 +289,6 @@ class Command(BaseCommand):
         FOCUS_PROTEIN = Protein.objects.get(
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
-
-        # TODO - rename 'medians' to something more informative?
-        # TODO - does this need to be by replicate? Why not just all columns at once?
-        # TODO - is _all_replicates really useful?
-        if calculate_medians or calculate_all:
-            medians = self._all_replicates(
-                func=self._calculate_replicate_stage_name_medians,
-                replicates=replicates,
-                protein_readings=protein_readings,
-                column_names=column_names,
-            )
-
-            if with_bugs:
-                medians["One"] = medians["Two"]
-
-            run, create = Run.objects.get_or_create(
-                project=project, with_bugs=with_bugs, limit_proteins=limit_proteins
-            )
-
-            run.protein_medians = json.dumps(medians)
-
-            run.save()
-        else:
-            # Load the medians for this project.
-            # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
-            #   Not for limit_proteins, that has no use.
-            run = Run.objects.get(
-                project=project, with_bugs=with_bugs, limit_proteins=False
-            )
-
-            medians = json.loads(run.protein_medians)
 
         # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
         #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
@@ -346,6 +334,8 @@ class Command(BaseCommand):
             )
 
         # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
+
+        # TODO - should this be outside _proteo?
 
         # TODO - rename this
         prot_anova_info: dict = {}
@@ -1645,6 +1635,7 @@ class Command(BaseCommand):
             sample_stages
         )
 
+        # TODO - move this out, it is for multiple proteins
         anovas[protein] = self._calculate_ANOVA(log2_readings)
 
         relative_log2_readings_by_protein[
@@ -1925,6 +1916,41 @@ class Command(BaseCommand):
                     phospho_kinases_class = self._getConsensusKinasePred(protein.accession_number, mod_result)
                     mod_result['kinase_prediction']['peptide_seq'] = phospho_kinases_class['peptide_seq']
                     mod_result['kinase_prediction']['consenus_motif_match'] = phospho_kinases_class['kinase_motif_match']
+
+
+    def _calculate_proteo_medians(self, project, replicates, protein_readings, column_names, with_bugs):
+        # TODO - rename 'medians' to something more informative?
+        # TODO - does this need to be by replicate? Why not just all columns at once?
+        # TODO - is _all_replicates really useful?
+        medians = self._all_replicates(
+            func=self._calculate_replicate_stage_name_medians,
+            replicates=replicates,
+            protein_readings=protein_readings,
+            column_names=column_names,
+        )
+
+        if with_bugs:
+            medians["One"] = medians["Two"]
+
+        run, create = Run.objects.get_or_create(
+            project=project, with_bugs=with_bugs, limit_proteins=False
+        )
+
+        run.protein_medians = json.dumps(medians)
+
+        return medians
+
+    def _fetch_proteo_medians(self, project, with_bugs):
+        # Load the medians for this project.
+        # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
+        #   Not for limit_proteins, that has no use.
+        run = Run.objects.get(
+            project=project, with_bugs=with_bugs, limit_proteins=False
+        )
+
+        medians = json.loads(run.protein_medians)
+
+        return medians
 
 
     def _save_data(self, results, file, results_based = True):
