@@ -557,7 +557,6 @@ def test_generate_protein_metrics(load_json):
 
     assert output == post_generate_protein_metrics
 
-
 # TODO - write a deliberate, miniature version of this then get rid of the files
 @pytest.mark.django_db
 def test_generate_df(load_json):

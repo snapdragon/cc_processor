@@ -1,5 +1,7 @@
-# TODO - split processing into individual rows and total results, put individual row
-#   results into DB? Have one process for processing, one for summarising?
+# TODO - store medians in the DB
+# TODO - store protein results in the DB
+
+
 # TODO - limit number of proteins processed here, not in import. It's more efficient.
 #   Maybe limit to a set of proteins?
 # TODO - put kinase prediction back in. Make them a flag?
@@ -8,6 +10,8 @@
 # TODO - ICR doesn't have phospho_regression (??)
 # TODO - get rid of 'abundance_average' as an output field name
 # TODO - put peptide_abundances in SL?
+# TODO - most of the warnings are from _calculate_metrics
+
 
 
 import re
@@ -28,7 +32,7 @@ from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage
+from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,6 +42,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 PROTEIN_LIMITS = [
+ "Q09666",
  "Q01433",
  "Q01459",
  "Q02241",
@@ -46,17 +51,11 @@ PROTEIN_LIMITS = [
  "Q02535",
  "Q02543",
  "Q02750",
- "Q02790",
- "Q02809",
- "Q02818",
- "Q02878",
- "Q02880",
- "Q02952",
- "Q02978"
  ]
+
 # TODO - move constants elsewhere
-# FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
-FOCUS_PROTEIN_ACCESSION_NUMBER = "A0AVT1"
+FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
+# FOCUS_PROTEIN_ACCESSION_NUMBER = "A0AVT1"
 FOCUS_MOD = "2928"
 
 RAW = "raw"
@@ -83,11 +82,12 @@ POSITION_ABUNDANCES = "position_abundances"
 PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"
 PHOSPHO_REGRESSION = "phospho_regression"
 PHOSPHORYLATION_SITE = "phosphorylation_site"
-Q_VALUE = Q_VALUE
 CURVE_FOLD_CHANGE = "curve_fold_change"
 PROTEIN_PHOSPHO_CORRELATION = "protein-phospho-correlation"
 # TODO - misspelled, but it's difficult to replace it in the fixture json files
 PHOSPHO_PROTEIN_CFC_RATIO = "phosho-protein-cfc_ratio"
+G_STATISTIC = "G_statistic"
+FREQUENCY = "frequency"
 
 TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
 
@@ -116,11 +116,23 @@ class Command(BaseCommand):
             help="Limit processing to a subset of proteins",
             action="store_true"
         )
+        parser.add_argument(
+            "--calculate-medians",
+            help="Calculate and store medians",
+            action="store_true"
+        )
+        parser.add_argument(
+            "--calculate-all",
+            help="Calculate and store all values",
+            action="store_true"
+        )
 
     def handle(self, *args, **options):
         project_name = options["project"]
         with_bugs = options["with_bugs"]
         limit_proteins = options["limit_proteins"]
+        calculate_medians = options["calculate_medians"]
+        calculate_all = options["calculate_all"]
 
         if with_bugs and project_name != "ICR":
             raise CommandError("Only an ICR project can run --with-bugs")
@@ -158,18 +170,18 @@ class Command(BaseCommand):
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
-        results = self._proteo(project, replicates, protein_readings, column_names, sample_stages, with_bugs)
+        results = self._proteo(project, replicates, protein_readings, column_names, sample_stages, calculate_medians, calculate_all, limit_proteins, with_bugs)
 
-        phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
+        # phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
 
-        self._merge_phospho_with_proteo(results, phospho_results)
+        # self._merge_phospho_with_proteo(results, phospho_results)
 
-        self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
+        # self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
 
-        results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
+        # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
         # self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
-        self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
+        # self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
     def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs: bool):
@@ -231,7 +243,7 @@ class Command(BaseCommand):
 
 
     def _proteo(
-        self, project, replicates, protein_readings, column_names, sample_stages, with_bugs: bool
+        self, project, replicates, protein_readings, column_names, sample_stages, calculate_medians, calculate_all, limit_proteins, with_bugs: bool
     ):
         """
         Does all the required calculations. The steps are:
@@ -262,22 +274,33 @@ class Command(BaseCommand):
         # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
-        medians = self._all_replicates(
-            func=self._calculate_replicate_stage_name_medians,
-            replicates=replicates,
-            protein_readings=protein_readings,
-            column_names=column_names,
-        )
+        if calculate_medians or calculate_all:
+            medians = self._all_replicates(
+                func=self._calculate_replicate_stage_name_medians,
+                replicates=replicates,
+                protein_readings=protein_readings,
+                column_names=column_names,
+            )
 
-        if with_bugs:
-            r2_medians = {}
+            if with_bugs:
+                medians["One"] = medians["Two"]
 
-            # TODO - is this still needed now we use replicate names instead of replicates?
-            for stage_name in medians["Two"].keys():
-                r2_medians[stage_name] = medians["Two"][stage_name]
+            run, create = Run.objects.get_or_create(
+                project=project, with_bugs=with_bugs, limit_proteins=limit_proteins
+            )
 
-            for stage_name in medians["One"].keys():
-                medians["One"][stage_name] = r2_medians[stage_name]
+            run.protein_medians = json.dumps(medians)
+
+            run.save()
+        else:
+            # Load the medians for this project.
+            # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
+            #   Not for limit_proteins, that has no use.
+            run = Run.objects.get(
+                project=project, with_bugs=with_bugs, limit_proteins=False
+            )
+
+            medians = json.loads(run.protein_medians)
 
         # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
         #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
@@ -350,7 +373,7 @@ class Command(BaseCommand):
             results[protein][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = q_value
 
             # # Fisher
-            # fisher = {"G_statistic": 1, P_VALUE: 1, "frequency": 1, Q_VALUE: 1}
+            # fisher = {G_STATISTIC: 1, P_VALUE: 1, FREQUENCY: 1, Q_VALUE: 1}
 
             # if protein in fisher_stats:
             #     fisher = fisher_stats[protein]
@@ -399,14 +422,14 @@ class Command(BaseCommand):
             p_values.append(p_value)
             frequencies.append(dominant_freq)
 
-        time_course_fisher["G_statistic"] = g_stats
+        time_course_fisher[G_STATISTIC] = g_stats
         time_course_fisher[P_VALUE] = p_values
-        time_course_fisher["frequency"] = frequencies
+        time_course_fisher[FREQUENCY] = frequencies
 
         time_course_fisher[Q_VALUE] = self.p_adjust_bh(time_course_fisher[P_VALUE])
 
         # Return only the Fisher columns
-        fisher_cols = ["G_statistic", P_VALUE, "frequency", Q_VALUE]
+        fisher_cols = [G_STATISTIC, P_VALUE, FREQUENCY, Q_VALUE]
         time_course_fisher = time_course_fisher[fisher_cols]
 
         return time_course_fisher.to_dict("index")
@@ -624,6 +647,12 @@ class Command(BaseCommand):
         #     print("NO ABUNDANCES FOR STANDARD DEVIATION")
         #     print(readings)
 
+        # TODO - is this the right thing to do? Go through all of this function
+        #   to check the behaviour of its various parts.
+        #   Almost all of the warnings output are from this function.
+        if not len(abundance_averages_list):
+            return metrics
+
         try:
             residuals_array = np.polyfit(
                 range(0, len(abundance_averages)),
@@ -657,6 +686,7 @@ class Command(BaseCommand):
                 "residuals": residuals,
                 "R_squared": r_squared,
             }
+
             # if we have info for the protein in at least 2 replicates
             # TODO - why does it need to be two? Don't we just need the last one?
             if len(readings) >= 2:
@@ -1898,6 +1928,14 @@ class Command(BaseCommand):
 
 
     def _save_data(self, results, file, results_based = True):
+        def convert_np(obj):
+            if isinstance(obj, np.generic):
+                return obj.item()
+            if isinstance(obj, float) and math.isnan(obj):
+                return None
+
+            return str(obj)
+        
         stripped = {}
 
         if results_based:
@@ -1907,7 +1945,7 @@ class Command(BaseCommand):
             stripped = results
 
         with open(f"output/{file}", "w") as outfile:
-            json.dump(stripped, outfile, default=lambda o: o.item() if isinstance(o, np.generic) else str(o))
+            json.dump(stripped, outfile, default=convert_np)
 
     def _dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))

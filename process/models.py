@@ -98,3 +98,29 @@ class PhosphoReading(models.Model):
 
     def __str__(self):
         return f"{self.reading}"
+
+
+class Run(models.Model):
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="run"
+    )
+    limit_proteins = models.BooleanField(default=False)
+    with_bugs = models.BooleanField(default=False)
+    protein_medians = models.JSONField(blank=True, null=True)
+    phospho_medians = models.JSONField(blank=True, null=True)
+    results = models.JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.project.name} {self.limit_proteins}"
+
+class RunResult(models.Model):
+    run = models.ForeignKey(
+        Run, on_delete=models.CASCADE, related_name="run_result"
+    )
+    protein = models.ForeignKey(
+        Protein, on_delete=models.CASCADE, related_name="run_result"
+    )
+    protein_result = models.JSONField(blank=True, null=True)
+    phospho_result = models.JSONField(blank=True, null=True)
+    protein_phospho_result = models.JSONField(blank=True, null=True)
+
