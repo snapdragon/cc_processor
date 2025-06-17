@@ -1,4 +1,8 @@
-# TODO - put kinase prediction back in
+# TODO - split processing into individual rows and total results, put individual row
+#   results into DB? Have one process for processing, one for summarising?
+# TODO - limit number of proteins processed here, not in import. It's more efficient.
+#   Maybe limit to a set of proteins?
+# TODO - put kinase prediction back in. Make them a flag?
 # TODO - put PepTools_annotations in
 # TODO - phosphorylation metrics log2_mean anova is wrong
 # TODO - ICR doesn't have phospho_regression (??)
@@ -33,6 +37,23 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+PROTEIN_LIMITS = [
+ "Q01433",
+ "Q01459",
+ "Q02241",
+ "Q02252",
+ "Q02447",
+ "Q02535",
+ "Q02543",
+ "Q02750",
+ "Q02790",
+ "Q02809",
+ "Q02818",
+ "Q02878",
+ "Q02880",
+ "Q02952",
+ "Q02978"
+ ]
 # TODO - move constants elsewhere
 # FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
 FOCUS_PROTEIN_ACCESSION_NUMBER = "A0AVT1"
@@ -90,10 +111,16 @@ class Command(BaseCommand):
             help="Run with the original ICR bugs",
             action="store_true",
         )
+        parser.add_argument(
+            "--limit-proteins",
+            help="Limit processing to a subset of proteins",
+            action="store_true"
+        )
 
     def handle(self, *args, **options):
         project_name = options["project"]
         with_bugs = options["with_bugs"]
+        limit_proteins = options["limit_proteins"]
 
         if with_bugs and project_name != "ICR":
             raise CommandError("Only an ICR project can run --with-bugs")
@@ -103,12 +130,29 @@ class Command(BaseCommand):
         project = Project.objects.get(name=project_name)
         replicates = Replicate.objects.filter(project=project)
         column_names = ColumnName.objects.filter(replicate__project=project)
-        protein_readings = ProteinReading.objects.filter(
-            column_name__replicate__project=project
-        )
+
+        protein_readings = None
+        phospho_readings = None
+        phosphos = None
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
-        phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
-        phosphos = Phospho.objects.filter(protein__project=project)
+
+        if limit_proteins:
+            logger.info("Limiting proteins.")
+            protein_readings = ProteinReading.objects.filter(
+                column_name__replicate__project=project, protein__accession_number__in = PROTEIN_LIMITS
+            )
+            phospho_readings = PhosphoReading.objects.filter(
+                phospho__protein__project=project, phospho__protein__accession_number__in = PROTEIN_LIMITS
+            )
+            phosphos = Phospho.objects.filter(
+                protein__project=project, protein__accession_number__in = PROTEIN_LIMITS
+            )
+        else:
+            protein_readings = ProteinReading.objects.filter(
+                column_name__replicate__project=project
+            )
+            phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
+            phosphos = Phospho.objects.filter(protein__project=project)
 
         FOCUS_PROTEIN = Protein.objects.get(
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
@@ -124,7 +168,8 @@ class Command(BaseCommand):
 
         results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
-        self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
+        # self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
+        self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
     def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs: bool):
@@ -152,7 +197,7 @@ class Command(BaseCommand):
                 self._count_logger(
                     num_proteins,
                     10,
-                    f"Formatting for {num_proteins}, {protein.accession_number}",
+                    f"Processing for {num_proteins}, {protein.accession_number}",
                 )
 
                 results[protein][mod] = {
@@ -246,16 +291,12 @@ class Command(BaseCommand):
 
         raw_readings = self._qc_protein_readings(readings_by_rep_stage)
 
-        num_proteins = 0
-
         relative_log2_readings_by_protein = {}
         anovas = {}
         results = {}
 
         for protein, readings in raw_readings.items():
             # logger.info(f"++ PROTEIN: {protein.accession_number}")
-            num_proteins += 1
-
             results[protein] = {
                 PROTEIN_ABUNDANCES: {
                     RAW: {},
@@ -558,10 +599,12 @@ class Command(BaseCommand):
         metrics = {}
 
         abundances = []
-        abundance_averages = readings_averages
         # TODO - how does ICR cope with Nones but not this? Does it use imputed values?
+        abundance_averages = {
+            key:val for key, val in readings_averages.items() if val is not None
+        }
         abundance_averages_list = [
-            val for val in abundance_averages.values() if val is not None
+            val for val in abundance_averages.values()
         ]
 
         for replicate in replicates:
@@ -577,9 +620,9 @@ class Command(BaseCommand):
 
         if len(abundances) > 1:
             std = statistics.stdev(abundances)
-        else:
-            print("NO ABUNDANCES FOR STANDARD DEVIATION")
-            print(readings)
+        # else:
+        #     print("NO ABUNDANCES FOR STANDARD DEVIATION")
+        #     print(readings)
 
         try:
             residuals_array = np.polyfit(
@@ -925,6 +968,7 @@ class Command(BaseCommand):
         logger.info(
             "Converting protein_readings QuerySet into dict by protein, replicate and stage name"
         )
+
         readings_by_rep_stage: dict = {}
 
         protein_no = 0
@@ -934,7 +978,7 @@ class Command(BaseCommand):
             self._count_logger(
                 protein_no,
                 10000,
-                f"Formatting for {protein_no}, {protein_reading.protein.accession_number}",
+                f"Formatting protein for {protein_no}, {protein_reading.protein.accession_number}",
             )
 
             # TODO - what about Nones? Will there be any here? Check the import script.
@@ -958,6 +1002,7 @@ class Command(BaseCommand):
         logger.info(
             "Converting phospho_readings QuerySet into dict by protein, mod, replicate and stage name"
         )
+
         readings_by_rep_stage: dict = {}
 
         mod_no = 0
@@ -967,7 +1012,7 @@ class Command(BaseCommand):
             self._count_logger(
                 mod_no,
                 10000,
-                f"Formatting for {mod_no}, protein {phospho_reading.phospho.protein.accession_number} mod {phospho_reading.phospho.mod}",
+                f"Formatting phospho for {mod_no}, protein {phospho_reading.phospho.protein.accession_number} mod {phospho_reading.phospho.mod}",
             )
 
             # TODO - what about Nones? Will there be any here? Check the import script.
@@ -1004,7 +1049,7 @@ class Command(BaseCommand):
             self._count_logger(
                 mod_no,
                 10000,
-                f"Formatting for {phospho.mod}",
+                f"Formatting phosphites for {phospho.mod}",
             )
 
             phosphosites[phospho.mod] = phospho.phosphosite
@@ -1861,7 +1906,7 @@ class Command(BaseCommand):
         else:
             stripped = results
 
-        with open(file, "w") as outfile:
+        with open(f"output/{file}", "w") as outfile:
             json.dump(stripped, outfile, default=lambda o: o.item() if isinstance(o, np.generic) else str(o))
 
     def _dump(self, obj):

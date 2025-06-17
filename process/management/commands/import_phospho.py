@@ -76,23 +76,16 @@ class Command(BaseCommand):
             for index, row in df.iterrows():
                 row_no += 1
 
-                # if row_no == 3000:
-                #     exit()
-
                 accession_number = row[project.proteome_file_accession_number_column_name]
 
-                # Development only
-                if accession_number not in proteins.keys():
-                    print(f"Skipping {accession_number}")
-                    continue
+                print(f"Adding phospho row {row_no} {accession_number}")
 
                 if not proteins.get(accession_number):
                     new_protein = Protein.objects.create(
-                        project=project, accession_number=uniprot_accession, is_contaminant=False
+                        project=project, accession_number=accession_number, is_contaminant=False
                     )
-                    proteins[uniprot_accession] = new_protein
+                    proteins[accession_number] = new_protein
 
-                print(f"Adding phospho row {row_no} {accession_number}")
 
                 protein, created = Protein.objects.get_or_create(
                     project=project, accession_number=accession_number, is_contaminant=False
@@ -140,12 +133,6 @@ class Command(BaseCommand):
             cns_by_replicate_and_column_name[cn.replicate.name][cn.sample_stage.name] = cn
 
         for uniprot_accession in time_course_phospho_reps:
-            # TODO - remove this, it's for development only
-            # TODO - make this a flag
-            # if uniprot_accession not in proteins.keys():
-            #     print(f"Skipping {uniprot_accession}")
-            #     continue
-
             if not proteins.get(uniprot_accession):
                 new_protein = Protein.objects.create(
                     project=project, accession_number=uniprot_accession, is_contaminant=False
