@@ -11,7 +11,6 @@
 
 # TODO - store phospho results in the DB
 
-
 # TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - put kinase prediction back in. Make them a flag?
 # TODO - put PepTools_annotations in
@@ -149,9 +148,10 @@ class Command(BaseCommand):
 
         logger.info(f"Processing for project {project_name}, with bugs {with_bugs}")
 
-        # TODO - return if no calculate flags are set
+        # TODO - return if no calculate flags are set?
 
         project = Project.objects.get(name=project_name)
+        proteins = Protein.objects.filter(project=project)
         replicates = Replicate.objects.filter(project=project)
         column_names = ColumnName.objects.filter(replicate__project=project)
 
@@ -184,7 +184,7 @@ class Command(BaseCommand):
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
-        if (calculate_protein_medians or calculate_all) and not limit_proteins:
+        if (calculate_protein_medians or calculate_all):
             protein_medians = self._calculate_protein_medians(run, replicates, protein_readings, column_names, with_bugs)
         else:
             protein_medians = self._fetch_protein_medians(run)
@@ -192,13 +192,13 @@ class Command(BaseCommand):
         if calculate_proteins or calculate_all:
             self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, limit_proteins, run, with_bugs)
 
-        if (calculate_phospho_medians or calculate_all) and not limit_proteins:
+        if (calculate_phospho_medians or calculate_all):
             phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
         else:
             phospho_medians = self._fetch_phospho_medians(run)
 
         if calculate_phosphos or calculate_all:
-            self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs)
+            self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
         # self._merge_phospho_with_proteo(results, phospho_results)
 
@@ -210,34 +210,39 @@ class Command(BaseCommand):
         # self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
-    def _phospho(self, project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs: bool):
+    def _phospho(self, project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs: bool):
         logger.info("Processing phosphoproteome")
 
         # Remove any earlier phospho_result values for this project
         RunResult.objects.filter(run=run).update(phospho_result=None)
 
-        # TODO - make this work one by one
-        raw_readings = self._format_phospho_readings(phospho_readings)
-
-        # TODO - should this be elsewhere? Or individual queries per loop?
-        phosphosites = self._get_phosphosites(phosphos)
-
-        num_proteins = 0
-
-        for protein in raw_readings.keys():
+        for pr in proteins:
             result = {}
+            # TODO - bad name, num_mods maybe?
+            num_readings = 0
 
-            for mod, readings in raw_readings[protein].items():
-                num_proteins += 1
+            phospho_readings_filtered = phospho_readings.filter(phospho__protein = pr)
+
+            if not phospho_readings_filtered:
+                print(f"Not processing for protein {pr}")
+                continue
+
+            readings = self._format_phospho_readings(phospho_readings_filtered)
+
+            for mod, readings in readings.items():
+                num_readings += 1
 
                 self._count_logger(
-                    num_proteins,
+                    num_readings,
                     10,
-                    f"Processing for {num_proteins}, {protein.accession_number}",
+                    f"Processing for {num_readings}, {pr.accession_number}",
                 )
 
+                # TODO - this seems daft, isn't there a neater way?
+                phosphosite = phospho_readings_filtered[0].phospho.phosphosite
+
                 result[mod] = {
-                    PHOSPHORYLATION_SITE: phosphosites[mod],
+                    PHOSPHORYLATION_SITE: phosphosite,
                     POSITION_ABUNDANCES: {
                         RAW: {},
                         NORMALISED: {},
@@ -260,15 +265,15 @@ class Command(BaseCommand):
 
             run_result, _ = RunResult.objects.get_or_create(
                 run=run,
-                protein=protein
+                protein=pr
             )
 
             run_result.phospho_result = result
 
             run_result.save()
 
-            if protein.accession_number == FOCUS_PROTEIN_ACCESSION_NUMBER:
-                self._save_data(result, "Q0966_phospho_only.json", False)
+            # if pr.accession_number == FOCUS_PROTEIN_ACCESSION_NUMBER:
+            #     self._save_data(result, "Q0966_phospho_only.json", False)
 
         # TODO - is this batch or single? I'm guessing batch.
         # self._generate_kinase(raw_readings, results)
@@ -317,17 +322,6 @@ class Command(BaseCommand):
         raw_readings = self._qc_protein_readings(readings_by_rep_stage)
 
         for protein, readings in raw_readings.items():
-            # logger.info(f"++ PROTEIN: {protein.accession_number}")
-            # results[protein] = {
-            #     PROTEIN_ABUNDANCES: {
-            #         RAW: {},
-            #         NORMALISED: {},
-            #         IMPUTED: {}
-            #     },
-            #     PHOSPHORYLATION_ABUNDANCES: {},
-            #     METRICS: {}
-            # }
-
             result = {
                 PROTEIN_ABUNDANCES: {
                     RAW: {},
@@ -1053,7 +1047,7 @@ class Command(BaseCommand):
 
         return readings_by_rep_stage
 
-    def _format_phospho_readings(self, phospho_readings: QuerySet[PhosphoReading]):
+    def _format_phospho_readings_full(self, phospho_readings: QuerySet[PhosphoReading]):
         logger.info(
             "Converting phospho_readings QuerySet into dict by protein, mod, replicate and stage name"
         )
@@ -1091,25 +1085,30 @@ class Command(BaseCommand):
 
         return readings_by_rep_stage
 
-    def _get_phosphosites(self, phosphos: QuerySet[Phospho]):
+    def _format_phospho_readings(self, phospho_readings: QuerySet[PhosphoReading]):
         logger.info(
-            "Get all the phosphites"
+            "Converting phospho_readings QuerySet into dict by mod, replicate and stage name"
         )
-        phosphosites: dict = {}
 
-        mod_no = 0
+        readings_by_rep_stage: dict = {}
 
-        for phospho in phosphos:
-            mod_no += 1
-            self._count_logger(
-                mod_no,
-                10000,
-                f"Formatting phosphites for {phospho.mod}",
-            )
+        for phospho_reading in phospho_readings:
+            # TODO - what about Nones? Will there be any here? Check the import script.
+            reading = phospho_reading.reading
 
-            phosphosites[phospho.mod] = phospho.phosphosite
+            mod = phospho_reading.phospho.mod
+            replicate_name = phospho_reading.column_name.replicate.name
+            stage_name = phospho_reading.column_name.sample_stage.name
 
-        return phosphosites
+            if not readings_by_rep_stage.get(mod):
+                readings_by_rep_stage[mod] = {}
+
+            if not readings_by_rep_stage[mod].get(replicate_name):
+                readings_by_rep_stage[mod][replicate_name] = {}
+
+            readings_by_rep_stage[mod][replicate_name][stage_name] = reading
+
+        return readings_by_rep_stage
 
     def _calculate_first_level_normalisation(self, readings: dict, medians):
         normalised_readings: dict = {}
@@ -1176,46 +1175,46 @@ class Command(BaseCommand):
         phospho_readings: dict,
         run
     ):
-        # TODO - get rid of _format_phospho_readings
         #   Correct output:
         #   {'One': {'Palbo': 83.6, 'Late G1_1': 90.7, 'G1/S': 73.4, 'S': 76.6, 'S/G2': 63.8, 'G2_2': 91.75, 'G2/M_1': 107.0, 'M/Early G1': 181.8}, 'Two': {'Palbo': 103.95, 'Late G1_1': 71.2, 'G1/S': 122.8, 'S': 77.9, 'S/G2': 89.3, 'G2_2': 116.0, 'G2/M_1': 122.9, 'M/Early G1': 122.7}}
 
-        readings = self._format_phospho_readings(phospho_readings)
+        # TODO - get rid of _format_phospho_readings, or at least put it in the loop
+        readings = self._format_phospho_readings_full(phospho_readings)
 
-        medians = {}
+        phospho_medians = {}
 
         for protein in readings.keys():
             for mod in readings[protein].keys():
                 for replicate_name in readings[protein][mod].keys():
-                    if not medians.get(replicate_name):
-                        medians[replicate_name] = {}
+                    if not phospho_medians.get(replicate_name):
+                        phospho_medians[replicate_name] = {}
 
                     for column_name in readings[protein][mod][replicate_name].keys():
-                        if not medians[replicate_name].get(column_name):
-                            medians[replicate_name][column_name] = []
+                        if not phospho_medians[replicate_name].get(column_name):
+                            phospho_medians[replicate_name][column_name] = []
 
                         reading = readings[protein][mod][replicate_name][column_name]
 
                         if reading is None:
                             continue
 
-                        medians[replicate_name][column_name].append(reading)
+                        phospho_medians[replicate_name][column_name].append(reading)
 
-        for replicate_name in medians.keys():
-            for column_name in medians[replicate_name].keys():
-                median = statistics.median(medians[replicate_name][column_name])
+        for replicate_name in phospho_medians.keys():
+            for column_name in phospho_medians[replicate_name].keys():
+                median = statistics.median(phospho_medians[replicate_name][column_name])
 
-                medians[replicate_name][column_name] = median
+                phospho_medians[replicate_name][column_name] = median
 
         run, _ = Run.objects.get_or_create(
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        run.phospho_medians = json.dumps(medians)
+        run.phospho_medians = json.dumps(phospho_medians)
 
         run.save()
 
-        return medians
+        return phospho_medians
 
 
     def _calculate_replicate_stage_name_medians(
@@ -1966,10 +1965,9 @@ class Command(BaseCommand):
 
 
     def _calculate_protein_medians(self, run, replicates, protein_readings, column_names, with_bugs):
-        # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
-        medians = self._all_replicates(
+        protein_medians = self._all_replicates(
             func=self._calculate_replicate_stage_name_medians,
             replicates=replicates,
             protein_readings=protein_readings,
@@ -1977,15 +1975,17 @@ class Command(BaseCommand):
         )
 
         if with_bugs:
-            medians["One"] = medians["Two"]
+            protein_medians["One"] = protein_medians["Two"]
 
         run, _ = Run.objects.get_or_create(
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        run.protein_medians = json.dumps(medians)
+        run.protein_medians = json.dumps(protein_medians)
 
-        return medians
+        run.save()
+
+        return protein_medians
 
     def _fetch_protein_medians(self, run):
         # Load the proteo medians for this project.
@@ -1995,12 +1995,17 @@ class Command(BaseCommand):
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        medians = unlimited_run.protein_medians
+        # print("Unlimited run")
+        # print(unlimited_run)
+        # print(unlimited_run.protein_medians)
+        # exit()
 
-        if not medians:
-            raise Exception(f"No medians created yet for {unlimited_run}")
+        protein_medians = unlimited_run.protein_medians
 
-        return json.loads(medians)
+        if not protein_medians:
+            raise Exception(f"No protein medians created yet for {unlimited_run}")
+
+        return json.loads(protein_medians)
 
     def _fetch_phospho_medians(self, run):
         # Load the phospho medians for this project.
@@ -2010,12 +2015,12 @@ class Command(BaseCommand):
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        medians = unlimited_run.phospho_medians
+        phospho_medians = unlimited_run.phospho_medians
 
-        if not medians:
-            raise Exception(f"No medians created yet for {unlimited_run}")
+        if not phospho_medians:
+            raise Exception(f"No phospho medians created yet for {unlimited_run}")
 
-        return json.loads(medians)
+        return json.loads(phospho_medians)
 
 
     def _save_data(self, results, file, results_based = True):
