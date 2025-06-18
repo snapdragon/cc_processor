@@ -1,31 +1,12 @@
-### Phospho steps
-
-
-
-
 ### Steps
 
 DONE - Iterate through the rows of data_points, getting uniprot accession for each row
     Sort of done. What about the lines with multiple accessions number?
-DONE AND CHECKED - calculate the medians for each column (why?) - AFFECTED BY ICR BUG
 TODO - Look up the gene names and protein names for that uniprot accession
 TODO - Populate time_course_proteome with some default values for each uniprot accession
 DONE BY DEFAULT - Convert the abundances for the dict for the uniprot accession, which are identified
     by column name, to times instead of column names
-DONE AND CHECKED - Get the means of the abundances, as far as possible - AFFECTED BY ICR BUG
-DONE AND CHECKED - Do first level normalisation, which are by median - AFFECTED BY ICR BUG
-DONE AND CHECKED - Calculate the averages of the normalised abundances - AFFECTED BY ICR BUG
-DONE AND CHECKED - Normalise all abundances to Palbo and calculate log2 of them
-DONE AND CHECKED - Calculate the averages of the palbo log 2 normalised
-DONE AND CHECKED - Subtract log2 mean for each rep, and normalise
-DONE AND CHECKED - Second level normalised data
-DONE AND CHECKED - Calculate min-max for each rep, and normalise
-DONE AND CHECKED - Calculate 0-max for each rep, and normalise
-DONE AND CHECKED - Calculate imputed values
-DONE AND CHECKED - Calculate stats
-DONE AND CHECKED - Calculate ANOVA
 WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
-DONE - create data frame TODO - why?
 LATER - Get protein annotations
 
 
@@ -39,16 +20,9 @@ Don't get Fisher G values yet
 NEXT - write tests for all functions
 
 
-
+min-max and imputed values are calculated differently between protein and phospho
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
-Make mod an object?
-Add a RUNS table, with Results table for proteo and phospho with jsonb field
-Save outputs to protein and phospho objects? As jsonb to start maybe?
-Group together calculations and averages
-Maybe put them in a function? They're similar for proteo and phospho.
-There's no point having column names be by replicate. All replicates have the same
-    column names. Have them be by project instead.
 Change things to defaultdicts?
 ICR ANOVA q-value "q value" 0.6470752162303733, here 0.6492445296947472. Does it matter?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
@@ -56,7 +30,6 @@ In ICR of the imputed protein values are flagged "experimental", none are impute
 Interrogate jsonb in DB for various things, e.g. differences between ICR and SL
 Find out which functions aren't actually needed
 Move functions out of command file
-Write tests for all the functions
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.
 Add uniqueness constraints to models

@@ -15,7 +15,7 @@
 # TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - put kinase prediction back in. Make them a flag?
 # TODO - put PepTools_annotations in
-# TODO - phosphorylation metrics log2_mean anova is wrong
+# TODO - phosphorylation metrics log2_mean anova is wrong. Or maybe proteo is. Investigate.
 # TODO - ICR doesn't have phospho_regression (??)
 # TODO - get rid of 'abundance_average' as an output field name
 # TODO - put peptide_abundances in SL?
@@ -50,6 +50,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# TODO - make this be a list of the most interesting CDK proteins?
 PROTEIN_LIMITS = [
  "Q09666",
  "Q01433",
@@ -64,7 +65,6 @@ PROTEIN_LIMITS = [
 
 # TODO - move constants elsewhere
 FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
-# FOCUS_PROTEIN_ACCESSION_NUMBER = "A0AVT1"
 FOCUS_MOD = "2928"
 
 RAW = "raw"
@@ -202,7 +202,7 @@ class Command(BaseCommand):
         )
 
         if (calculate_protein_medians or calculate_all) and not limit_proteins:
-            protein_medians = self._calculate_proteo_medians(run, replicates, protein_readings, column_names, with_bugs)
+            protein_medians = self._calculate_protein_medians(run, replicates, protein_readings, column_names, with_bugs)
         else:
             protein_medians = self._fetch_protein_medians(run)
 
@@ -214,8 +214,8 @@ class Command(BaseCommand):
         else:
             phospho_medians = self._fetch_phospho_medians(run)
 
-        # if calculate_phosphos or calculate_all:
-        #     phospho_results = self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs)
+        if calculate_phosphos or calculate_all:
+            self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs)
 
         # self._merge_phospho_with_proteo(results, phospho_results)
 
@@ -229,6 +229,9 @@ class Command(BaseCommand):
 
     def _phospho(self, project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs: bool):
         logger.info("Processing phosphoproteome")
+
+        # Remove any earlier phospho_result values for this project
+        RunResult.objects.filter(run=run).update(phospho_result=None)
 
         # TODO - make this work one by one
         raw_readings = self._format_phospho_readings(phospho_readings)
@@ -263,7 +266,6 @@ class Command(BaseCommand):
                 self._calculate_abundances_metrics(
                     result[mod],
                     project,
-                    protein,
                     replicates,
                     readings,
                     column_names,
@@ -281,6 +283,9 @@ class Command(BaseCommand):
             run_result.phospho_result = result
 
             run_result.save()
+
+            if protein.accession_number == FOCUS_PROTEIN_ACCESSION_NUMBER:
+                self._save_data(result, "Q0966_phospho_only.json", False)
 
         # TODO - is this batch or single? I'm guessing batch.
         # self._generate_kinase(raw_readings, results)
@@ -313,6 +318,7 @@ class Command(BaseCommand):
         """
         logger.info("Processing proteome")
 
+        # Remove any earlier protein_result values for this project
         RunResult.objects.filter(run=run).update(protein_result=None)
 
         # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
@@ -326,8 +332,6 @@ class Command(BaseCommand):
         del(protein_readings)
 
         raw_readings = self._qc_protein_readings(readings_by_rep_stage)
-
-        # TODO - delete all protein_results from RunResults for this project
 
         for protein, readings in raw_readings.items():
             # logger.info(f"++ PROTEIN: {protein.accession_number}")
@@ -1978,7 +1982,7 @@ class Command(BaseCommand):
                     mod_result['kinase_prediction']['consenus_motif_match'] = phospho_kinases_class['kinase_motif_match']
 
 
-    def _calculate_proteo_medians(self, run, replicates, protein_readings, column_names, with_bugs):
+    def _calculate_protein_medians(self, run, replicates, protein_readings, column_names, with_bugs):
         # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
@@ -2017,7 +2021,7 @@ class Command(BaseCommand):
 
     def _fetch_phospho_medians(self, run):
         # Load the phospho medians for this project.
-        # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
+        # N.B. THIS LOADS THE MEDIANS FOR ALL PHOSPHOS!
         #   Not for limit_proteins, that has no use.
         unlimited_run = Run.objects.get(
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False

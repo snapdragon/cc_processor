@@ -111,3 +111,12 @@ pre-commit run --all-files
 pytest
 pytest --cov=process
 ```
+
+### Get json result from DB
+```sh
+docker exec -it postgres-db /bin/bash
+\copy (select phospho_result from process_runresult where protein_id = 28468) TO 'Q09666_postgres.json';
+# Exit container
+docker cp postgres-db:/Q09666_postgres.json ./
+# Has 'N' at the beginning of the file for some reason
+```
