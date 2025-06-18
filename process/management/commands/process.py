@@ -42,6 +42,35 @@ from sklearn import linear_model
 from scipy import stats
 
 from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
+from process.constants import (PROTEIN_LIMITS,
+    FOCUS_PROTEIN_ACCESSION_NUMBER,
+    RAW,
+    METRICS,
+    LOG2_MEAN,
+    ZERO_MAX,
+    ANOVA,
+    Q_VALUE,
+    FISHER_G,
+    PROTEIN_ABUNDANCES,
+    ABUNDANCE_AVERAGE,
+    NORMALISED,
+    MEDIAN,
+    MIN_MAX,
+    LOG2_ARREST,
+    IMPUTED,
+    P_VALUE,
+    F_STATISTICS,
+    PROTEIN_OSCILLATION_ABUNDANCES,
+    POSITION_ABUNDANCES,
+    PHOSPHORYLATION_ABUNDANCES,
+    PHOSPHO_REGRESSION,
+    PHOSPHORYLATION_SITE,
+    CURVE_FOLD_CHANGE,
+    PROTEIN_PHOSPHO_CORRELATION,
+    PHOSPHO_PROTEIN_CFC_RATIO,
+    G_STATISTIC,
+    FREQUENCY,
+    TOTAL_PROTEIN_INDEX_FILE)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,55 +79,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# TODO - make this be a list of the most interesting CDK proteins?
-PROTEIN_LIMITS = [
- "Q09666",
- "Q01433",
- "Q01459",
- "Q02241",
- "Q02252",
- "Q02447",
- "Q02535",
- "Q02543",
- "Q02750",
- ]
-
-# TODO - move constants elsewhere
-FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
-FOCUS_MOD = "2928"
-
-RAW = "raw"
-METRICS = "metrics"
-LOG2_MEAN = "log2_mean"
-ZERO_MAX = "0-max"
-ANOVA = "ANOVA"
-Q_VALUE = "q value"
-FISHER_G = "Fisher G"
-PROTEIN_ABUNDANCES = "protein_abundances"
-ABUNDANCE_AVERAGE = "average"
-NORMALISED = "normalised"
-MEDIAN = "median"
-MIN_MAX = "min-max"
-LOG2_ARREST = "log2 arrest"
-IMPUTED = "imputed"
-P_VALUE = "p_value"
-# TODO - should it be F_statistic, singular?
-F_STATISTICS = "F_statistics"
-PROTEIN_OSCILLATION_ABUNDANCES = "protein_oscillation_abundances"
-ABUNDANCE_AVERAGE = "abundance_average"
-
-POSITION_ABUNDANCES = "position_abundances"
-PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"
-PHOSPHO_REGRESSION = "phospho_regression"
-PHOSPHORYLATION_SITE = "phosphorylation_site"
-CURVE_FOLD_CHANGE = "curve_fold_change"
-PROTEIN_PHOSPHO_CORRELATION = "protein-phospho-correlation"
-# TODO - misspelled, but it's difficult to replace it in the fixture json files
-PHOSPHO_PROTEIN_CFC_RATIO = "phosho-protein-cfc_ratio"
-G_STATISTIC = "G_statistic"
-FREQUENCY = "frequency"
-
-TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
 
 # TOOD - what is this file? Where did it come from?
 # TODO - whatever it is, a lot of it could be trimmed, and maybe put in the DB
@@ -160,6 +140,9 @@ class Command(BaseCommand):
         calculate_phospho_medians = options["calculate_phospho_medians"]
         calculate_phosphos = options["calculate_phosphos"]
         calculate_all = options["calculate_all"]
+
+        if not project_name:
+            raise Exception("You must provide a project name.")
 
         if with_bugs and project_name != "ICR":
             raise CommandError("Only an ICR project can run --with-bugs")
@@ -2012,12 +1995,12 @@ class Command(BaseCommand):
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        medians = json.loads(unlimited_run.protein_medians)
+        medians = unlimited_run.protein_medians
 
         if not medians:
             raise Exception(f"No medians created yet for {unlimited_run}")
 
-        return medians
+        return json.loads(medians)
 
     def _fetch_phospho_medians(self, run):
         # Load the phospho medians for this project.
@@ -2027,12 +2010,12 @@ class Command(BaseCommand):
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        medians = json.loads(unlimited_run.phospho_medians)
+        medians = unlimited_run.phospho_medians
 
         if not medians:
             raise Exception(f"No medians created yet for {unlimited_run}")
 
-        return medians
+        return json.loads(medians)
 
 
     def _save_data(self, results, file, results_based = True):

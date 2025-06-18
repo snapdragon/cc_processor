@@ -111,7 +111,7 @@ class Run(models.Model):
     results = models.JSONField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.project.name} {self.limit_proteins}"
+        return f"{self.project.name}, limit-proteins {self.limit_proteins}, with-bugs {self.with_bugs}"
 
 # TODO - duplication here - proteins are per-project, so both run and protein link to protein
 #   Does it matter? Not sure if it's fixable.
