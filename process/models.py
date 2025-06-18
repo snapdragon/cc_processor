@@ -113,6 +113,8 @@ class Run(models.Model):
     def __str__(self):
         return f"{self.project.name} {self.limit_proteins}"
 
+# TODO - duplication here - proteins are per-project, so both run and protein link to protein
+#   Does it matter? Not sure if it's fixable.
 class RunResult(models.Model):
     run = models.ForeignKey(
         Run, on_delete=models.CASCADE, related_name="run_result"

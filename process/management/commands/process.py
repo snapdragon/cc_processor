@@ -46,7 +46,7 @@ from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run
+from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
 
 logging.basicConfig(
     level=logging.INFO,
@@ -136,6 +136,11 @@ class Command(BaseCommand):
             action="store_true"
         )
         parser.add_argument(
+            "--calculate-proteins",
+            help="Calculate and store protein results",
+            action="store_true"
+        )
+        parser.add_argument(
             "--calculate-all",
             help="Calculate and store all values",
             action="store_true"
@@ -146,6 +151,7 @@ class Command(BaseCommand):
         with_bugs = options["with_bugs"]
         limit_proteins = options["limit_proteins"]
         calculate_medians = options["calculate_medians"]
+        calculate_proteins = options["calculate_proteins"]
         calculate_all = options["calculate_all"]
 
         if with_bugs and project_name != "ICR":
@@ -156,6 +162,8 @@ class Command(BaseCommand):
         project = Project.objects.get(name=project_name)
         replicates = Replicate.objects.filter(project=project)
         column_names = ColumnName.objects.filter(replicate__project=project)
+
+        run, _ = Run.objects.get_or_create(project=project, limit_proteins=limit_proteins, with_bugs=with_bugs)
 
         protein_readings = None
         phospho_readings = None
@@ -187,9 +195,10 @@ class Command(BaseCommand):
         if (calculate_medians or calculate_all) and not limit_proteins:
             proteo_medians = self._calculate_proteo_medians(project, replicates, protein_readings, column_names, with_bugs)
         else:
-            proteo_medians = self._fetch_proteo_medians(project, with_bugs)
+            proteo_medians = self._fetch_proteo_medians(run)
 
-        results = self._proteo(project, replicates, protein_readings, proteo_medians, column_names, sample_stages, with_bugs)
+        if calculate_proteins or calculate_all:
+            self._proteo(project, replicates, protein_readings, proteo_medians, column_names, sample_stages, limit_proteins, run, with_bugs)
 
         # phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
 
@@ -199,7 +208,7 @@ class Command(BaseCommand):
 
         # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
-        self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
+        # self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
         # self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
@@ -262,7 +271,7 @@ class Command(BaseCommand):
 
 
     def _proteo(
-        self, project, replicates, protein_readings, medians, column_names, sample_stages, with_bugs: bool
+        self, project, replicates, protein_readings, medians, column_names, sample_stages, limit_proteins, run, with_bugs: bool
     ):
         """
         Does all the required calculations. The steps are:
@@ -285,16 +294,13 @@ class Command(BaseCommand):
         """
         logger.info("Processing proteome")
 
-        # TODO - make this a flag
-        FOCUS_PROTEIN = Protein.objects.get(
-            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
-        )
+        RunResult.objects.filter(run=run).update(protein_result=None)
 
         # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
         #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
         #   is a dict with Protein object keys. The values is a dict of replicate name keys
         #   with a dict of sample stage names and abundances as keys.
-        # TODO - convert this in to a DB query to save having to run it manually?
+        # TODO - get rid of this. Create it on the fly in the proteins loop.
         readings_by_rep_stage = self._format_protein_readings(protein_readings)
 
         # TODO - do other optimisations like this
@@ -302,36 +308,59 @@ class Command(BaseCommand):
 
         raw_readings = self._qc_protein_readings(readings_by_rep_stage)
 
-        relative_log2_readings_by_protein = {}
-        anovas = {}
-        results = {}
+        # TODO - delete all protein_results from RunResults for this project
 
         for protein, readings in raw_readings.items():
             # logger.info(f"++ PROTEIN: {protein.accession_number}")
-            results[protein] = {
+            # results[protein] = {
+            #     PROTEIN_ABUNDANCES: {
+            #         RAW: {},
+            #         NORMALISED: {},
+            #         IMPUTED: {}
+            #     },
+            #     PHOSPHORYLATION_ABUNDANCES: {},
+            #     METRICS: {}
+            # }
+
+            result = {
                 PROTEIN_ABUNDANCES: {
                     RAW: {},
                     NORMALISED: {},
                     IMPUTED: {}
                 },
-                PHOSPHORYLATION_ABUNDANCES: {},
                 METRICS: {}
             }
 
             self._calculate_abundances_metrics(
-                results[protein],
+                result,
                 project,
-                protein,
                 replicates,
                 readings,
                 column_names,
                 sample_stages,
                 medians,
-                anovas,
-                relative_log2_readings_by_protein,
                 PROTEIN_ABUNDANCES,
                 with_bugs
             )
+
+            run_result, _ = RunResult.objects.get_or_create(
+                run=run,
+                protein=protein
+            )
+
+            run_result.protein_result = result
+
+            run_result.save()
+
+
+
+    # TODO - put this in the batch process
+    def _calculate_batch_q_value_fisher():
+        # TODO - this now needs to fetch the anovas from the protein results,
+        #   not from the anovas dict.
+
+        relative_log2_readings_by_protein = {}
+        anovas = {}
 
         # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
 
@@ -352,7 +381,7 @@ class Command(BaseCommand):
         prot_anova_info = prot_anova_info_df.to_dict("index")
 
         for protein in raw_readings:
-            results[protein][METRICS][LOG2_MEAN][ANOVA] = anovas[protein]
+            # results[protein][METRICS][LOG2_MEAN][ANOVA] = anovas[protein]
 
             # ANOVA q values
             q_value = 1
@@ -1535,16 +1564,16 @@ class Command(BaseCommand):
 
     def _calculate_abundances_metrics(
         self,
-        obj,
+        result,
         project,
-        protein,
+        # protein,
         replicates,
         readings,
         column_names,
         sample_stages,
         medians,
-        anovas,
-        relative_log2_readings_by_protein,
+        # anovas,
+        # relative_log2_readings_by_protein,
         location,
         with_bugs
     ):
@@ -1635,32 +1664,33 @@ class Command(BaseCommand):
             sample_stages
         )
 
-        # TODO - move this out, it is for multiple proteins
-        anovas[protein] = self._calculate_ANOVA(log2_readings)
+        # # TODO - move this out, it is for multiple proteins
+        anova = self._calculate_ANOVA(log2_readings)
 
-        relative_log2_readings_by_protein[
-            protein
-        ] = log2_readings
+        # relative_log2_readings_by_protein[
+        #     protein
+        # ] = log2_readings
 
-        # TODO - these calculations and these results can be combined in one function
-        #   with proteo
-        obj[location][RAW] = readings
-        obj[location][RAW][ABUNDANCE_AVERAGE] = raw_averages
+        result[location][RAW] = readings
+        result[location][RAW][ABUNDANCE_AVERAGE] = raw_averages
         # TODO - confirm the output later calculations are as they should be after this
-        obj[location][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
-        obj[location][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
-        obj[location][NORMALISED][MIN_MAX] = min_max_readings
-        obj[location][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
-        obj[location][NORMALISED][MEDIAN] = normalised_readings
-        obj[location][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
-        obj[location][NORMALISED][ZERO_MAX] = zero_max_readings
-        obj[location][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
-        obj[location][NORMALISED][LOG2_ARREST] = arrest_readings
-        obj[location][NORMALISED][LOG2_ARREST][ABUNDANCE_AVERAGE] = arrest_averages
-        obj[location][IMPUTED] = imputed_readings
-        obj[location][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
-        obj[METRICS][LOG2_MEAN] = log2_mean_metrics
-        obj[METRICS][ZERO_MAX] = zero_max_mean_metrics
+        result[location][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
+        result[location][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
+        result[location][NORMALISED][MIN_MAX] = min_max_readings
+        result[location][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
+        result[location][NORMALISED][MEDIAN] = normalised_readings
+        result[location][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
+        result[location][NORMALISED][ZERO_MAX] = zero_max_readings
+        result[location][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
+        result[location][NORMALISED][LOG2_ARREST] = arrest_readings
+        result[location][NORMALISED][LOG2_ARREST][ABUNDANCE_AVERAGE] = arrest_averages
+        result[location][IMPUTED] = imputed_readings
+        result[location][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
+        result[METRICS][LOG2_MEAN] = log2_mean_metrics
+        result[METRICS][LOG2_MEAN][ANOVA] = anova
+        result[METRICS][ZERO_MAX] = zero_max_mean_metrics
+
+
 
     # TODO - tested
     def _generate_phospho_regression_metrics(self, results, replicates, sample_stages, with_bugs):
@@ -1940,15 +1970,18 @@ class Command(BaseCommand):
 
         return medians
 
-    def _fetch_proteo_medians(self, project, with_bugs):
+    def _fetch_proteo_medians(self, run):
         # Load the medians for this project.
         # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
         #   Not for limit_proteins, that has no use.
-        run = Run.objects.get(
-            project=project, with_bugs=with_bugs, limit_proteins=False
+        unlimited_run = Run.objects.get(
+            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
-        medians = json.loads(run.protein_medians)
+        medians = json.loads(unlimited_run.protein_medians)
+
+        if not medians:
+            raise Exception(f"No medians created yet for {unlimited_run}")
 
         return medians
 
