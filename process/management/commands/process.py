@@ -1189,6 +1189,10 @@ class Command(BaseCommand):
         phospho_readings: dict,
         run
     ):
+        # TODO - get rid of _format_phospho_readings
+        #   Correct output:
+        #   {'One': {'Palbo': 83.6, 'Late G1_1': 90.7, 'G1/S': 73.4, 'S': 76.6, 'S/G2': 63.8, 'G2_2': 91.75, 'G2/M_1': 107.0, 'M/Early G1': 181.8}, 'Two': {'Palbo': 103.95, 'Late G1_1': 71.2, 'G1/S': 122.8, 'S': 77.9, 'S/G2': 89.3, 'G2_2': 116.0, 'G2/M_1': 122.9, 'M/Early G1': 122.7}}
+
         readings = self._format_phospho_readings(phospho_readings)
 
         medians = {}
