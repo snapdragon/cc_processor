@@ -1,23 +1,18 @@
 # TODO - q_value is wrong
 #      "ANOVA": {
-#        "p_value": 0.5788203095177293,
-#        "F_statistics": 0.849268808563235,
 #        "q_value": 0.6470752162303733
 #
 #      "ANOVA": {
-#        "p_value": 0.5788203095177293,
-#        "F_statistics": 0.849268808563235,
 #        "q value": 0.5788203095177293
 
 # TODO - move this out of _proteo, it is for multiple proteins
 #   anovas[protein] = self._calculate_ANOVA(log2_readings)
 
 
-# TODO - store protein results in the DB
+# TODO - store phospho results in the DB
 
 
-# TODO - limit number of proteins processed here, not in import. It's more efficient.
-#   Maybe limit to a set of proteins?
+# TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - put kinase prediction back in. Make them a flag?
 # TODO - put PepTools_annotations in
 # TODO - phosphorylation metrics log2_mean anova is wrong
@@ -131,13 +126,23 @@ class Command(BaseCommand):
             action="store_true"
         )
         parser.add_argument(
-            "--calculate-medians",
-            help="Calculate and store medians",
+            "--calculate-protein-medians",
+            help="Calculate and store protein medians",
             action="store_true"
         )
         parser.add_argument(
             "--calculate-proteins",
             help="Calculate and store protein results",
+            action="store_true"
+        )
+        parser.add_argument(
+            "--calculate-phosphos",
+            help="Calculate and store protein results",
+            action="store_true"
+        )
+        parser.add_argument(
+            "--calculate-phospho-medians",
+            help="Calculate and store phospho medians",
             action="store_true"
         )
         parser.add_argument(
@@ -150,14 +155,18 @@ class Command(BaseCommand):
         project_name = options["project"]
         with_bugs = options["with_bugs"]
         limit_proteins = options["limit_proteins"]
-        calculate_medians = options["calculate_medians"]
+        calculate_protein_medians = options["calculate_protein_medians"]
         calculate_proteins = options["calculate_proteins"]
+        calculate_phospho_medians = options["calculate_phospho_medians"]
+        calculate_phosphos = options["calculate_phosphos"]
         calculate_all = options["calculate_all"]
 
         if with_bugs and project_name != "ICR":
             raise CommandError("Only an ICR project can run --with-bugs")
 
         logger.info(f"Processing for project {project_name}, with bugs {with_bugs}")
+
+        # TODO - return if no calculate flags are set
 
         project = Project.objects.get(name=project_name)
         replicates = Replicate.objects.filter(project=project)
@@ -192,15 +201,21 @@ class Command(BaseCommand):
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
-        if (calculate_medians or calculate_all) and not limit_proteins:
-            proteo_medians = self._calculate_proteo_medians(project, replicates, protein_readings, column_names, with_bugs)
+        if (calculate_protein_medians or calculate_all) and not limit_proteins:
+            protein_medians = self._calculate_proteo_medians(run, replicates, protein_readings, column_names, with_bugs)
         else:
-            proteo_medians = self._fetch_proteo_medians(run)
+            protein_medians = self._fetch_protein_medians(run)
 
         if calculate_proteins or calculate_all:
-            self._proteo(project, replicates, protein_readings, proteo_medians, column_names, sample_stages, limit_proteins, run, with_bugs)
+            self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, limit_proteins, run, with_bugs)
 
-        # phospho_results = self._phospho(project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs)
+        if (calculate_phospho_medians or calculate_all) and not limit_proteins:
+            phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
+        else:
+            phospho_medians = self._fetch_phospho_medians(run)
+
+        # if calculate_phosphos or calculate_all:
+        #     phospho_results = self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs)
 
         # self._merge_phospho_with_proteo(results, phospho_results)
 
@@ -212,24 +227,19 @@ class Command(BaseCommand):
         # self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
-    def _phospho(self, project, replicates, phospho_readings, column_names, phosphos, sample_stages, with_bugs: bool):
+    def _phospho(self, project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, with_bugs: bool):
         logger.info("Processing phosphoproteome")
 
-        # TODO - convert this in to a DB query to save having to run it manually?
-        # No QC for phosphoproteome needed so far
+        # TODO - make this work one by one
         raw_readings = self._format_phospho_readings(phospho_readings)
-        phosphosites = self._get_phosphosites(phosphos)
 
-        medians = self._calculate_phospho_medians(raw_readings)
+        # TODO - should this be elsewhere? Or individual queries per loop?
+        phosphosites = self._get_phosphosites(phosphos)
 
         num_proteins = 0
 
-        relative_log2_readings_by_protein = {}
-        anovas = {}
-        results = {}
-
         for protein in raw_readings.keys():
-            results[protein] = {}
+            result = {}
 
             for mod, readings in raw_readings[protein].items():
                 num_proteins += 1
@@ -240,7 +250,7 @@ class Command(BaseCommand):
                     f"Processing for {num_proteins}, {protein.accession_number}",
                 )
 
-                results[protein][mod] = {
+                result[mod] = {
                     PHOSPHORYLATION_SITE: phosphosites[mod],
                     POSITION_ABUNDANCES: {
                         RAW: {},
@@ -251,25 +261,34 @@ class Command(BaseCommand):
                 }
 
                 self._calculate_abundances_metrics(
-                    results[protein][mod],
+                    result[mod],
                     project,
                     protein,
                     replicates,
                     readings,
                     column_names,
                     sample_stages,
-                    medians,
-                    anovas,
-                    relative_log2_readings_by_protein,
+                    phospho_medians,
                     POSITION_ABUNDANCES,
                     with_bugs
                 )
 
+            run_result, _ = RunResult.objects.get_or_create(
+                run=run,
+                protein=protein
+            )
+
+            run_result.phospho_result = result
+
+            run_result.save()
+
+        # TODO - is this batch or single? I'm guessing batch.
         # self._generate_kinase(raw_readings, results)
 
-        return results
+        return result
 
 
+    # TODO - rename to protein_medians
     def _proteo(
         self, project, replicates, protein_readings, medians, column_names, sample_stages, limit_proteins, run, with_bugs: bool
     ):
@@ -1167,8 +1186,11 @@ class Command(BaseCommand):
 
     def _calculate_phospho_medians(
         self,
-        readings: dict,
+        phospho_readings: dict,
+        run
     ):
+        readings = self._format_phospho_readings(phospho_readings)
+
         medians = {}
 
         for protein in readings.keys():
@@ -1194,8 +1216,15 @@ class Command(BaseCommand):
 
                 medians[replicate_name][column_name] = median
 
-        return medians
+        run, _ = Run.objects.get_or_create(
+            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
+        )
 
+        run.phospho_medians = json.dumps(medians)
+
+        run.save()
+
+        return medians
 
 
     def _calculate_replicate_stage_name_medians(
@@ -1566,14 +1595,11 @@ class Command(BaseCommand):
         self,
         result,
         project,
-        # protein,
         replicates,
         readings,
         column_names,
         sample_stages,
         medians,
-        # anovas,
-        # relative_log2_readings_by_protein,
         location,
         with_bugs
     ):
@@ -1948,7 +1974,7 @@ class Command(BaseCommand):
                     mod_result['kinase_prediction']['consenus_motif_match'] = phospho_kinases_class['kinase_motif_match']
 
 
-    def _calculate_proteo_medians(self, project, replicates, protein_readings, column_names, with_bugs):
+    def _calculate_proteo_medians(self, run, replicates, protein_readings, column_names, with_bugs):
         # TODO - rename 'medians' to something more informative?
         # TODO - does this need to be by replicate? Why not just all columns at once?
         # TODO - is _all_replicates really useful?
@@ -1962,16 +1988,16 @@ class Command(BaseCommand):
         if with_bugs:
             medians["One"] = medians["Two"]
 
-        run, create = Run.objects.get_or_create(
-            project=project, with_bugs=with_bugs, limit_proteins=False
+        run, _ = Run.objects.get_or_create(
+            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
 
         run.protein_medians = json.dumps(medians)
 
         return medians
 
-    def _fetch_proteo_medians(self, run):
-        # Load the medians for this project.
+    def _fetch_protein_medians(self, run):
+        # Load the proteo medians for this project.
         # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
         #   Not for limit_proteins, that has no use.
         unlimited_run = Run.objects.get(
@@ -1979,6 +2005,21 @@ class Command(BaseCommand):
         )
 
         medians = json.loads(unlimited_run.protein_medians)
+
+        if not medians:
+            raise Exception(f"No medians created yet for {unlimited_run}")
+
+        return medians
+
+    def _fetch_phospho_medians(self, run):
+        # Load the phospho medians for this project.
+        # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
+        #   Not for limit_proteins, that has no use.
+        unlimited_run = Run.objects.get(
+            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
+        )
+
+        medians = json.loads(unlimited_run.phospho_medians)
 
         if not medians:
             raise Exception(f"No medians created yet for {unlimited_run}")
