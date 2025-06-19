@@ -20,6 +20,7 @@ Don't get Fisher G values yet
 NEXT - write tests for all functions
 
 
+Fix all the _calculate_metrics errors
 Protein has a foreign key to Project, with no regard for whether it's with-bugs or limit-protein.
     That means runs will overwrite each other's list of proteins. What to do?
     Maybe integrate Run with Protein so with-bugs and limit-proteins are in there too?
@@ -27,12 +28,11 @@ min-max and imputed values are calculated differently between protein and phosph
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
 Change things to defaultdicts?
-ICR ANOVA q-value "q value" 0.6470752162303733, here 0.6492445296947472. Does it matter?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
-Interrogate jsonb in DB for various things, e.g. differences between ICR and SL
+Interrogate json in DB for various things, e.g. differences between ICR and SL
 Find out which functions aren't actually needed
-Move functions out of command file
+Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.
 Add uniqueness constraints to models

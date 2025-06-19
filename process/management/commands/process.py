@@ -206,7 +206,7 @@ class Command(BaseCommand):
             protein_medians = self._fetch_protein_medians(run)
 
         if calculate_proteins or calculate_all:
-            self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, limit_proteins, run, with_bugs)
+            self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, limit_proteins, run, proteins, with_bugs)
 
         if (calculate_phospho_medians or calculate_all):
             if limit_proteins:
@@ -307,45 +307,20 @@ class Command(BaseCommand):
 
     # TODO - rename to protein_medians
     def _proteo(
-        self, project, replicates, protein_readings, medians, column_names, sample_stages, limit_proteins, run, with_bugs: bool
+        self, project, replicates, protein_readings, medians, column_names, sample_stages, limit_proteins, run, proteins, with_bugs: bool
     ):
-        """
-        Does all the required calculations. The steps are:
-
-        TODO - put the descriptions below in the function comments, not here, along with
-            data structures.
-
-        1) Calculate the median for each replicate for each stage.
-            In other words, get all the values for each column and find the median.
-
-        2) Calculate the mean for each protein for each stage across replicates.
-            So for proteins 'ABCD', 'EFGH' with replicates 'One', 'Two' and stages '1h', '2h',
-            it will get the abundances for 'ABCD 1h' for each of the replicates, then take
-            the mean.
-
-        3) Normalise all abundances. This is done by dividing each abundance by the median
-            for its column, then averaging them across replicates.
-
-        TODO - finish this list
-        """
-        logger.info("Processing proteome")
+        logger.info("Processing proteins")
 
         # Remove any earlier protein_result values for this project
         RunResult.objects.filter(run=run).update(protein_result=None)
 
-        # N.B. protein_readings_by_rep_stage is not the same structure as protein_readings.
-        #   protein_readings is just a list of ProteinReading objects. normalised_protein_readings
-        #   is a dict with Protein object keys. The values is a dict of replicate name keys
-        #   with a dict of sample stage names and abundances as keys.
-        # TODO - get rid of this. Create it on the fly in the proteins loop.
-        readings_by_rep_stage = self._format_protein_readings(protein_readings)
+        for pr in proteins:
+            filtered_protein_readings = protein_readings.filter(protein=pr)
 
-        # TODO - do other optimisations like this
-        del(protein_readings)
+            reading = self._format_protein_readings(filtered_protein_readings)
 
-        raw_readings = self._qc_protein_readings(readings_by_rep_stage)
+            reading_minus_none_replicates = self._qc_protein_reading(reading)
 
-        for protein, readings in raw_readings.items():
             result = {
                 PROTEIN_ABUNDANCES: {
                     RAW: {},
@@ -355,26 +330,34 @@ class Command(BaseCommand):
                 METRICS: {}
             }
 
-            self._calculate_abundances_metrics(
-                result,
-                project,
-                replicates,
-                readings,
-                column_names,
-                sample_stages,
-                medians,
-                PROTEIN_ABUNDANCES,
-                with_bugs
-            )
+            # Not all proteins have protein_readings, due to being created during
+            #   import_phospho - that is, proteins that are mentioned in the phospho
+            #   file but not in the protein file.
+            if reading_minus_none_replicates:
+                self._calculate_abundances_metrics(
+                    result,
+                    project,
+                    replicates,
+                    reading_minus_none_replicates,
+                    column_names,
+                    sample_stages,
+                    medians,
+                    PROTEIN_ABUNDANCES,
+                    with_bugs
+                )
 
             run_result, _ = RunResult.objects.get_or_create(
                 run=run,
-                protein=protein
+                protein=pr
             )
 
             run_result.protein_result = result
 
             run_result.save()
+
+        # TODO - do other optimisations like this
+        # TODO - does this actually work? Is the QuerySet a generator or a list?
+        del(protein_readings)
 
 
 
@@ -619,33 +602,36 @@ class Command(BaseCommand):
         p_value = 1
         f_statistic = 1
 
-        # TODO - why is it the first replicate?
-        first_replicate_name = list(readings.keys())[0]
+        if readings:
+            # TODO - why is the first replicated used?
+            #   Sometimes the first replicate might not even be 'One' or equaivalent,
+            #   as replicates are sometimes excluded by qc for being all None.
+            first_replicate_name = list(readings.keys())[0]
 
-        # TODO - change to stage_names
-        stage_names = []
+            # TODO - change to stage_names
+            stage_names = []
 
-        try:
-            # TODO - change this to use sample_stages?
-            for stage_name in readings[first_replicate_name]:
-                stage_names.append(self._tp(stage_name, readings))
+            try:
+                # TODO - change this to use sample_stages?
+                for stage_name in readings[first_replicate_name]:
+                    stage_names.append(self._tp(stage_name, readings))
 
-            # Each entry must have at least two points for f_oneway to work    
-            timepoints = [x for x in stage_names if x != [] and len(x) > 1]
+                # Each entry must have at least two points for f_oneway to work    
+                timepoints = [x for x in stage_names if x != [] and len(x) > 1]
 
-            if len(timepoints) > 1:
-                # TODO - study f_oneway
-                one_way_anova = f_oneway(*timepoints)
+                if len(timepoints) > 1:
+                    # TODO - study f_oneway
+                    one_way_anova = f_oneway(*timepoints)
 
-                f_statistic = one_way_anova[0].item()
-                p_value = one_way_anova[1].item()
+                    f_statistic = one_way_anova[0].item()
+                    p_value = one_way_anova[1].item()
 
-                if np.isnan(p_value):
-                    p_value = 1
+                    if np.isnan(p_value):
+                        p_value = 1
 
-        except Exception as e:
-            print("ERROR CALCULATING ANOVA")
-            print(e)
+            except Exception as e:
+                print("ERROR CALCULATING ANOVA")
+                print(e)
 
         return {
             P_VALUE: p_value,
@@ -675,12 +661,15 @@ class Command(BaseCommand):
 
         for replicate in replicates:
             for sample_stage in sample_stages:
-                if abundance := readings[replicate.name].get(sample_stage.name):
-                    # TODO - sometimes the sample_stage.name isn't set. Why?
-                    #   Is there something wrong with the populate script?
-                    # TODO - why does this add all reps for standard deviation calculation?
-                    #   Why isn't it on a per-replicate basis?
-                    abundances.append(abundance)
+                # Not all replicates are populated. The qc process removes any replicates
+                #   with sample stage values that are all None.
+                if readings.get(replicate.name):
+                    if abundance := readings[replicate.name].get(sample_stage.name):
+                        # TODO - sometimes the sample_stage.name isn't set. Why?
+                        #   Is there something wrong with the populate script?
+                        # TODO - why does this add all reps for standard deviation calculation?
+                        #   Why isn't it on a per-replicate basis?
+                        abundances.append(abundance)
 
         std = None
 
@@ -1014,54 +1003,37 @@ class Command(BaseCommand):
         return log2_normalised_readings
 
     # TODO - why does ICR not need to do QC?
-    def _qc_protein_readings(self, all_readings: dict):
-        logger.info("Remove any invalid proteins")
-
+    def _qc_protein_reading(self, all_readings: dict):
         qc_proteins: dict = {}
 
-        for protein in all_readings.keys():
-            qc_proteins[protein] = {}
+        for replicate_name in all_readings:
+            qc_proteins[replicate_name] = {}
 
-            for replicate_name in all_readings[protein]:
-                qc_proteins[protein][replicate_name] = {}
+            abundances = all_readings[replicate_name]
 
-                abundances = all_readings[protein][replicate_name]
-
-                if any(x is not None for x in abundances.values()):
-                    qc_proteins[protein][replicate_name] = abundances
+            # TODO - what was this for again? It seems to remove any replicate
+            #   that is solely None values. Why? Why here?
+            if any(x is not None for x in abundances.values()):
+                qc_proteins[replicate_name] = abundances
 
         return qc_proteins
 
     def _format_protein_readings(self, protein_readings: QuerySet[ProteinReading]):
-        readings_by_rep_stage: dict = {}
-
-        protein_no = 0
+        readings_by_stage: dict = {}
 
         for protein_reading in protein_readings:
-            protein_no += 1
-            self._count_logger(
-                protein_no,
-                10000,
-                f"Formatting protein for {protein_no}, {protein_reading.protein.accession_number}",
-            )
-
             # TODO - what about Nones? Will there be any here? Check the import script.
             reading = protein_reading.reading
-
-            protein = protein_reading.protein
 
             replicate_name = protein_reading.column_name.replicate.name
             stage_name = protein_reading.column_name.sample_stage.name
 
-            if not readings_by_rep_stage.get(protein):
-                readings_by_rep_stage[protein] = {}
+            if not readings_by_stage.get(replicate_name):
+                readings_by_stage[replicate_name] = {}
 
-            if not readings_by_rep_stage[protein].get(replicate_name):
-                readings_by_rep_stage[protein][replicate_name] = {}
+            readings_by_stage[replicate_name][stage_name] = reading
 
-            readings_by_rep_stage[protein][replicate_name][stage_name] = reading
-
-        return readings_by_rep_stage
+        return readings_by_stage
 
     def _format_phospho_readings_full(self, phospho_readings: QuerySet[PhosphoReading]):
         logger.info(
@@ -1692,9 +1664,9 @@ class Command(BaseCommand):
             sample_stages
         )
 
-        # # TODO - move this out, it is for multiple proteins
         anova = self._calculate_ANOVA(log2_readings)
 
+        # TODO - this is needed in batch processing
         # relative_log2_readings_by_protein[
         #     protein
         # ] = log2_readings
