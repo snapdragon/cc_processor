@@ -1,14 +1,3 @@
-# TODO - q_value is wrong
-#      "ANOVA": {
-#        "q_value": 0.6470752162303733
-#
-#      "ANOVA": {
-#        "q value": 0.5788203095177293
-
-# TODO - move this out of _proteo, it is for multiple proteins
-#   anovas[protein] = self._calculate_ANOVA(log2_readings)
-
-
 # TODO - store phospho results in the DB
 
 # TODO - make _proteo iterate by protein and not prebuild the dict
@@ -125,6 +114,11 @@ class Command(BaseCommand):
             action="store_true"
         )
         parser.add_argument(
+            "--merge-protein-phospho",
+            help="Merge the protein and phospho results",
+            action="store_true"
+        )
+        parser.add_argument(
             "--calculate-all",
             help="Calculate and store all values",
             action="store_true"
@@ -138,6 +132,7 @@ class Command(BaseCommand):
         calculate_proteins = options["calculate_proteins"]
         calculate_phospho_medians = options["calculate_phospho_medians"]
         calculate_phosphos = options["calculate_phosphos"]
+        merge_protein_phospho = options["merge_protein_phospho"]
         calculate_all = options["calculate_all"]
 
         if not project_name:
@@ -220,11 +215,14 @@ class Command(BaseCommand):
         if calculate_phosphos or calculate_all:
             self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
-        # TODO - add flag?
-        self._merge_phospho_with_proteo(proteins, run)
+        if merge_protein_phospho or calculate_proteins or calculate_phosphos or calculate_all:
+            # Merging has to be redone on new protein or phospho calculations
+            self._merge_phospho_with_proteo(proteins, run)
 
-        print("+++ MERGED")
-        exit()
+        # Batch processing from now on, so all RunResults are needed
+        run_results = RunResult.objects.filter(run=run)
+
+        self._calculate_batch_q_value_fisher(run, run_results)
 
         # self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
 
@@ -361,24 +359,21 @@ class Command(BaseCommand):
 
 
 
-    # TODO - put this in the batch process
-    def _calculate_batch_q_value_fisher():
-        # TODO - this now needs to fetch the anovas from the protein results,
-        #   not from the anovas dict.
+    def _calculate_batch_q_value_fisher(self, run, run_results):
+        logger.info("Calculating batch q and fisher G values.")
 
-        relative_log2_readings_by_protein = {}
-        anovas = {}
+        # TODO - blank all q_values in DB?
+
+        run_results_with_log2_mean = run_results.filter(protein_phospho_result__metrics__has_key = "log2_mean")
 
         # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
 
-        # TODO - should this be outside _proteo?
-
         # TODO - rename this
         prot_anova_info: dict = {}
-        for protein in anovas.keys():
-            prot_anova_info[protein] = {}
 
-            prot_anova_info[protein][P_VALUE] = anovas[protein][P_VALUE]
+        for rr in run_results_with_log2_mean:
+            prot_anova_info[rr.protein] = {}
+            prot_anova_info[rr.protein][P_VALUE] = rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
 
         # TODO - converting to a dataframe seems excessive. Find an alternative.
         # TODO - is this the same as _generate_df?
@@ -387,16 +382,10 @@ class Command(BaseCommand):
 
         prot_anova_info = prot_anova_info_df.to_dict("index")
 
-        for protein in raw_readings:
-            # results[protein][METRICS][LOG2_MEAN][ANOVA] = anovas[protein]
+        for rr in run_results_with_log2_mean:
+            rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
 
-            # ANOVA q values
-            q_value = 1
-
-            if protein in prot_anova_info:
-                q_value = prot_anova_info[protein][Q_VALUE]
-
-            results[protein][METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = q_value
+            rr.save()
 
             # # Fisher
             # fisher = {G_STATISTIC: 1, P_VALUE: 1, FREQUENCY: 1, Q_VALUE: 1}
@@ -406,7 +395,6 @@ class Command(BaseCommand):
 
             # results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
-        return results
 
     def _calculate_fisher(
         self,
@@ -1860,8 +1848,17 @@ class Command(BaseCommand):
     def _merge_phospho_with_proteo(self, proteins, run):
         logger.info("Combining protein and phospho results.")
 
+        # TODO - check all other functions that need to blank DB
+        RunResult.objects.filter(run=run).update(protein_phospho_result=None)
+
+        num_proteins = 0
+
         for pr in proteins:
-            print(f"Protein {pr.id} {pr.accession_number}")
+            self._count_logger(
+                num_proteins,
+                1000,
+                f"Merging protein {pr.id} {pr.accession_number}",
+            )
 
             run_result = RunResult.objects.get(run=run, protein=pr)
 
@@ -1881,6 +1878,9 @@ class Command(BaseCommand):
                 #     ]
                 # else:
                 #     gene_name, protein_name = getProteinInfo(protein.accession_number)
+
+    def _add_q_values(self, run):
+        pass
 
     def _build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key):
         # TODO - tidy this

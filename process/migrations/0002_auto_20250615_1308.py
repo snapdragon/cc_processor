@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     def add_initial_data(apps, schema_editor):
         Project = apps.get_model("process", "Project")
         proj = Project.objects.create(
-            name="Soliman Labs",
+            name="SL",
             proteome_file="Soliman/results-request-2023MK001-proteome.xlsx",
             phosphoproteome_file="Soliman/results-request-2023MK004-phosphoproteome.xlsx",
             proteome_file_accession_number_column_name="Protein.Group",

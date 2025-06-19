@@ -11,13 +11,13 @@ docker compose up
 docker exec -it cc_processor /bin/bash
 # poetry install        ?
 eval $(poetry env activate)
-python manage.py import_proteo --project "Soliman Labs"
-python manage.py import_phospho --project "Soliman Labs"
-python manage.py process --project "Soliman Labs"
+python manage.py import_proteo --project "SL"
+python manage.py import_phospho --project "SL"
+python manage.py process --project "SL" --calculate-all
 
 python manage.py import_proteo --project "ICR"
 python manage.py import_phospho --project "ICR"
-python manage.py process --project "ICR" --with-bugs
+python manage.py process --project "ICR" --with-bugs --calculate-all
 ```
 
 ### To run with IRC
@@ -112,11 +112,16 @@ pytest
 pytest --cov=process
 ```
 
-### Get json result from DB
+### Get json result from DB (example)
 ```sh
 docker exec -it postgres-db /bin/bash
-\copy (select phospho_result from process_runresult where protein_id = 28468) TO 'Q09666_postgres.json';
+\copy (select protein_result from process_runresult where protein_id = 28468 and run_id = 1) TO 'Q09666_postgres.json';
 # Exit container
 docker cp postgres-db:/Q09666_postgres.json ./
 # Has 'N' at the beginning of the file for some reason
+```
+
+### Output the results for a protein to the /output dir
+```sh
+
 ```

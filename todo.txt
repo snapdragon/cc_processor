@@ -1,16 +1,10 @@
 ### Steps
 
-DONE - Iterate through the rows of data_points, getting uniprot accession for each row
-    Sort of done. What about the lines with multiple accessions number?
 TODO - Look up the gene names and protein names for that uniprot accession
-TODO - Populate time_course_proteome with some default values for each uniprot accession
-DONE BY DEFAULT - Convert the abundances for the dict for the uniprot accession, which are identified
-    by column name, to times instead of column names
 WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
 LATER - Get protein annotations
 
 
-Get ANOVA q values
 The fisher G values are wildly different. Find out why.
 Don't get Fisher G values yet
     TODO does the python version have a bug?
@@ -43,9 +37,8 @@ Round the various stats
 
 ### Later
 
+q value similar but not quite the same
 Validate all the various statistical calculations
-    median, mean
 Change dockerfile to not have to run the env after start
 The docker config for the cc_processor keeps the shell alive, but it then does nothing.
     How to improve this?
-Update python version?

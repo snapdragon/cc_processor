@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
         num = 0
 
-        if project_name == "Soliman Labs":
+        if project_name == "SL":
             for cn in column_names:
                 cn_short = re.search(r'IITI_\d{3}_', cn.name)
 
