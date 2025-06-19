@@ -20,6 +20,9 @@ Don't get Fisher G values yet
 NEXT - write tests for all functions
 
 
+Protein has a foreign key to Project, with no regard for whether it's with-bugs or limit-protein.
+    That means runs will overwrite each other's list of proteins. What to do?
+    Maybe integrate Run with Protein so with-bugs and limit-proteins are in there too?
 min-max and imputed values are calculated differently between protein and phospho
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points

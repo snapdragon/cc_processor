@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-from process.models import ColumnName, Project, Protein, ProteinReading, Phospho, PhosphoReading
+from process.models import ColumnName, Project, Protein, ProteinReading, Phospho, PhosphoReading, RunResult
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,7 +44,8 @@ class Command(BaseCommand):
         for cn in column_names:
             cns_by_name[cn.name] = cn
 
-        # TODO - take this out, or modify it to the project, when adding more projects
+        RunResult.objects.filter(protein__project=project).delete()
+        # TODO - update Run to not have results?
         ProteinReading.objects.filter(protein__project=project).delete()
         Protein.objects.filter(project=project).delete()
         PhosphoReading.objects.filter(phospho__protein__project=project).delete()

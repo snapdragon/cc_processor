@@ -151,19 +151,20 @@ class Command(BaseCommand):
         # TODO - return if no calculate flags are set?
 
         project = Project.objects.get(name=project_name)
-        proteins = Protein.objects.filter(project=project)
         replicates = Replicate.objects.filter(project=project)
         column_names = ColumnName.objects.filter(replicate__project=project)
+        sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
-        run, _ = Run.objects.get_or_create(project=project, limit_proteins=limit_proteins, with_bugs=with_bugs)
-
+        proteins = None
         protein_readings = None
         phospho_readings = None
         phosphos = None
-        sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
         if limit_proteins:
             logger.info("Limiting proteins.")
+
+            proteins = Protein.objects.filter(project=project, accession_number__in = PROTEIN_LIMITS)
+
             protein_readings = ProteinReading.objects.filter(
                 column_name__replicate__project=project, protein__accession_number__in = PROTEIN_LIMITS
             )
@@ -174,17 +175,32 @@ class Command(BaseCommand):
                 protein__project=project, protein__accession_number__in = PROTEIN_LIMITS
             )
         else:
+            proteins = Protein.objects.filter(project=project, is_contaminant=False)
+
             protein_readings = ProteinReading.objects.filter(
-                column_name__replicate__project=project
+                column_name__replicate__project=project,
+                protein__is_contaminant = False
             )
-            phospho_readings = PhosphoReading.objects.filter(phospho__protein__project=project)
-            phosphos = Phospho.objects.filter(protein__project=project)
+            phospho_readings = PhosphoReading.objects.filter(
+                phospho__protein__project=project,
+                phospho__protein__is_contaminant = False
+            )
+            phosphos = Phospho.objects.filter(
+                protein__project=project,
+                protein__is_contaminant = False
+            )
+
+        run, _ = Run.objects.get_or_create(project=project, limit_proteins=limit_proteins, with_bugs=with_bugs)
 
         FOCUS_PROTEIN = Protein.objects.get(
             accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
         )
 
         if (calculate_protein_medians or calculate_all):
+            if limit_proteins:
+                logger.info("You are not allowed to calculate protein medians for a limit-protein run.")
+                exit()
+    
             protein_medians = self._calculate_protein_medians(run, replicates, protein_readings, column_names, with_bugs)
         else:
             protein_medians = self._fetch_protein_medians(run)
@@ -193,6 +209,10 @@ class Command(BaseCommand):
             self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, limit_proteins, run, with_bugs)
 
         if (calculate_phospho_medians or calculate_all):
+            if limit_proteins:
+                logger.info("You are not allowed to calculate phospho medians for a limit-protein run.")
+                exit()
+
             phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
         else:
             phospho_medians = self._fetch_phospho_medians(run)
@@ -200,7 +220,11 @@ class Command(BaseCommand):
         if calculate_phosphos or calculate_all:
             self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
-        # self._merge_phospho_with_proteo(results, phospho_results)
+        # TODO - add flag?
+        self._merge_phospho_with_proteo(proteins, run)
+
+        print("+++ MERGED")
+        exit()
 
         # self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
 
@@ -662,9 +686,6 @@ class Command(BaseCommand):
 
         if len(abundances) > 1:
             std = statistics.stdev(abundances)
-        # else:
-        #     print("NO ABUNDANCES FOR STANDARD DEVIATION")
-        #     print(readings)
 
         # TODO - is this the right thing to do? Go through all of this function
         #   to check the behaviour of its various parts.
@@ -1008,16 +1029,10 @@ class Command(BaseCommand):
 
                 if any(x is not None for x in abundances.values()):
                     qc_proteins[protein][replicate_name] = abundances
-                # else:
-                #     print(f"+++++ DELETING EMPTY PROTEIN {protein.accession_number}")
 
         return qc_proteins
 
     def _format_protein_readings(self, protein_readings: QuerySet[ProteinReading]):
-        logger.info(
-            "Converting protein_readings QuerySet into dict by protein, replicate and stage name"
-        )
-
         readings_by_rep_stage: dict = {}
 
         protein_no = 0
@@ -1034,6 +1049,7 @@ class Command(BaseCommand):
             reading = protein_reading.reading
 
             protein = protein_reading.protein
+
             replicate_name = protein_reading.column_name.replicate.name
             stage_name = protein_reading.column_name.sample_stage.name
 
@@ -1086,10 +1102,6 @@ class Command(BaseCommand):
         return readings_by_rep_stage
 
     def _format_phospho_readings(self, phospho_readings: QuerySet[PhosphoReading]):
-        logger.info(
-            "Converting phospho_readings QuerySet into dict by mod, replicate and stage name"
-        )
-
         readings_by_rep_stage: dict = {}
 
         for phospho_reading in phospho_readings:
@@ -1872,16 +1884,23 @@ class Command(BaseCommand):
 
         return results
 
-    def _merge_phospho_with_proteo(self, results, phospho_results):
-        # Not all phospho proteins are in the protein results, add them if required
-        for protein in phospho_results:
-            # TODO - this can be tidied, has duplication
-            # TODO - lots of code should be put in functions and tested
-            if protein in results:
-                results[protein][
-                    PHOSPHORYLATION_ABUNDANCES
-                ] = phospho_results[protein]
-            else:
+    # TODO - is this necessary at all?
+    def _merge_phospho_with_proteo(self, proteins, run):
+        logger.info("Combining protein and phospho results.")
+
+        for pr in proteins:
+            print(f"Protein {pr.id} {pr.accession_number}")
+
+            run_result = RunResult.objects.get(run=run, protein=pr)
+
+            combined_result = run_result.protein_result
+
+            combined_result[PHOSPHORYLATION_ABUNDANCES] = run_result.phospho_result
+
+            run_result.protein_phospho_result = combined_result
+
+            run_result.save()
+
                 # TODO - put these in as needed
                 # if protein in index_protein_names:
                 #     gene_name = index_protein_names[protein.accession_number]["gene_name"]
@@ -1890,15 +1909,6 @@ class Command(BaseCommand):
                 #     ]
                 # else:
                 #     gene_name, protein_name = getProteinInfo(protein.accession_number)
-
-                results[protein] = {
-                    PROTEIN_ABUNDANCES: {RAW: {}, NORMALISED: {}, IMPUTED: {}},
-                    PHOSPHORYLATION_ABUNDANCES: phospho_results[protein],
-                }
-                # "gene_name": gene_name,
-                # "protein_name": protein_name,
-
-        return results
 
     def _build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key):
         # TODO - tidy this
@@ -1994,11 +2004,6 @@ class Command(BaseCommand):
         unlimited_run = Run.objects.get(
             project=run.project, with_bugs=run.with_bugs, limit_proteins=False
         )
-
-        # print("Unlimited run")
-        # print(unlimited_run)
-        # print(unlimited_run.protein_medians)
-        # exit()
 
         protein_medians = unlimited_run.protein_medians
 
