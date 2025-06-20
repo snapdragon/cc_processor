@@ -1,5 +1,4 @@
-# TODO - store phospho results in the DB
-
+# TODO - get rid of limit_protein stuff
 # TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - put kinase prediction back in. Make them a flag?
 # TODO - put PepTools_annotations in
@@ -31,7 +30,6 @@ from scipy import stats
 
 from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
 from process.constants import (PROTEIN_LIMITS,
-    FOCUS_PROTEIN_ACCESSION_NUMBER,
     RAW,
     METRICS,
     LOG2_MEAN,
@@ -105,7 +103,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--calculate-phosphos",
-            help="Calculate and store protein results",
+            help="Calculate and store phospho results",
             action="store_true"
         )
         parser.add_argument(
@@ -187,10 +185,6 @@ class Command(BaseCommand):
 
         run, _ = Run.objects.get_or_create(project=project, limit_proteins=limit_proteins, with_bugs=with_bugs)
 
-        FOCUS_PROTEIN = Protein.objects.get(
-            accession_number=FOCUS_PROTEIN_ACCESSION_NUMBER, project__name=project.name
-        )
-
         if (calculate_protein_medians or calculate_all):
             if limit_proteins:
                 logger.info("You are not allowed to calculate protein medians for a limit-protein run.")
@@ -215,21 +209,19 @@ class Command(BaseCommand):
         if calculate_phosphos or calculate_all:
             self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
-        if merge_protein_phospho or calculate_proteins or calculate_phosphos or calculate_all:
+        if merge_protein_phospho or calculate_phosphos or calculate_all:
             # Merging has to be redone on new protein or phospho calculations
             self._merge_phospho_with_proteo(proteins, run)
 
+        # By this point there should be a run result for every protein
+
         # Batch processing from now on, so all RunResults are needed
-        run_results = RunResult.objects.filter(run=run)
+        # self._calculate_batch_q_value_fisher(run)
 
-        self._calculate_batch_q_value_fisher(run, run_results)
-
-        # self._add_protein_oscillations(results, replicates, sample_stages, with_bugs)
+        self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
         # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
-        # self._save_data(results[FOCUS_PROTEIN], f"{FOCUS_PROTEIN_ACCESSION_NUMBER}.json", False)
-        # self._save_data(results, f"{project.name}_limit_protein_{limit_proteins}.json", True)
 
 
     def _phospho(self, project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs: bool):
@@ -294,23 +286,16 @@ class Command(BaseCommand):
 
             run_result.save()
 
-            # if pr.accession_number == FOCUS_PROTEIN_ACCESSION_NUMBER:
-            #     self._save_data(result, "Q0966_phospho_only.json", False)
-
         # TODO - is this batch or single? I'm guessing batch.
         # self._generate_kinase(raw_readings, results)
 
         return result
 
 
-    # TODO - rename to protein_medians
     def _proteo(
         self, project, replicates, protein_readings, medians, column_names, sample_stages, limit_proteins, run, proteins, with_bugs: bool
     ):
         logger.info("Processing proteins")
-
-        # Remove any earlier protein_result values for this project
-        RunResult.objects.filter(run=run).update(protein_result=None)
 
         for pr in proteins:
             filtered_protein_readings = protein_readings.filter(protein=pr)
@@ -359,12 +344,12 @@ class Command(BaseCommand):
 
 
 
-    def _calculate_batch_q_value_fisher(self, run, run_results):
+    def _calculate_batch_q_value_fisher(self, run):
         logger.info("Calculating batch q and fisher G values.")
 
         # TODO - blank all q_values in DB?
 
-        run_results_with_log2_mean = run_results.filter(protein_phospho_result__metrics__has_key = "log2_mean")
+        run_results_with_log2_mean = RunResult.objects.filter(run=run, protein_phospho_result__metrics__has_key = "log2_mean")
 
         # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
 
@@ -1389,62 +1374,62 @@ class Command(BaseCommand):
 
     # TODO - lifted from ICR
     # addProteinOscillations
-    def _add_protein_oscillations(self, results, replicates, sample_stages, with_bugs):
+    def _add_protein_oscillations(self, run, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
 
-        self._generate_protein_metrics(results, replicates, sample_stages, with_bugs)
+        self._generate_protein_oscillation_metrics(run, replicates, sample_stages, with_bugs)
 
-        # Fisher G Statistic - Phospho
-        # TODO - figure out how to get this working for protein oscillations
-        # time_course_fisher_dict = self._calculate_fisher(results, phospho = True, phospho_ab = True)
+        # # Fisher G Statistic - Phospho
+        # # TODO - figure out how to get this working for protein oscillations
+        # # time_course_fisher_dict = self._calculate_fisher(results, phospho = True, phospho_ab = True)
 
-        # return
+        # # return
 
-        # Corrected q values - Phospho
-        # 1) Create a dataframe with the desired Protein-Phospho info
-        prot_phospho_info = {}
-        for protein in results:
-            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0:
-                for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
-                    if 'protein_oscillation_abundances' in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
-                        phospho_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
-                        if phospho_key not in prot_phospho_info:
-                            prot_phospho_info[phospho_key] = {}
-                        prot_phospho_info[phospho_key]['p_value'] = results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+        # # Corrected q values - Phospho
+        # # 1) Create a dataframe with the desired Protein-Phospho info
+        # prot_phospho_info = {}
+        # for protein in results:
+        #     if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0:
+        #         for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
+        #             if 'protein_oscillation_abundances' in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
+        #                 phospho_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
+        #                 if phospho_key not in prot_phospho_info:
+        #                     prot_phospho_info[phospho_key] = {}
+        #                 prot_phospho_info[phospho_key]['p_value'] = results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
 
-        if not prot_phospho_info:
-            # TODO - make this an exception? Shouldn't happen for large data sets
-            print("++++ NO PROT_PHOSPHO_INFO")
-            exit()
-            return results
+        # if not prot_phospho_info:
+        #     # TODO - make this an exception? Shouldn't happen for large data sets
+        #     print("++++ NO PROT_PHOSPHO_INFO")
+        #     exit()
+        #     return results
 
-        prot_phospho_info = self._generate_df(prot_phospho_info)
+        # prot_phospho_info = self._generate_df(prot_phospho_info)
 
-        # 4) Add Protein-Phospho info in combined_time_course_info dictionary
-        # TODO - tidy up, two loops not necessary?
-        for protein in results:
-            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
-                for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
-                    if PROTEIN_OSCILLATION_ABUNDANCES in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
-                        site_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
+        # # 4) Add Protein-Phospho info in combined_time_course_info dictionary
+        # # TODO - tidy up, two loops not necessary?
+        # for protein in results:
+        #     if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
+        #         for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
+        #             if PROTEIN_OSCILLATION_ABUNDANCES in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
+        #                 site_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
 
-                        # ANOVA q values
-                        q_value = 1
+        #                 # ANOVA q values
+        #                 q_value = 1
 
-                        if site_key in prot_phospho_info:
-                            q_value = prot_phospho_info[site_key]['q_value']
+        #                 if site_key in prot_phospho_info:
+        #                     q_value = prot_phospho_info[site_key]['q_value']
                         
-                        results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
+        #                 results[protein][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
-                        # # Fisher
-                        # TODO - tidy this and others like it
-                        # if site_key in time_course_fisher_dict:
-                        #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
-                        # else:
-                        #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
+        #                 # # Fisher
+        #                 # TODO - tidy this and others like it
+        #                 # if site_key in time_course_fisher_dict:
+        #                 #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
+        #                 # else:
+        #                 #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, 'p_value': 1, 'frequency': 1, 'q_value': 1}
 
-        return results
+        # return results
 
 
 
@@ -1797,12 +1782,24 @@ class Command(BaseCommand):
         return results
 
     # TODO - tested
-    def _generate_protein_metrics(self, results, replicates, sample_stages, with_bugs):
-        for protein in results:
-            # If we have info both in protein and in phospho level
-            prpa = results[protein][PHOSPHORYLATION_ABUNDANCES]
+    def _generate_protein_oscillation_metrics(self, run, replicates, sample_stages, with_bugs):
+        run_results = RunResult.objects.filter(run=run)
 
-            if len(prpa) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
+        for rr in run_results:
+            # If we have info both in protein and in phospho level
+            # TODO - change name
+            prpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            print(rr.protein.accession_number)
+            print(prpa)
+
+            try:
+                print(len(prpa))
+            except:
+                return
+            return
+
+            # TODO - invert and just return here
+            if len(prpa) != 0 and len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]) != 0:
                 for mod in prpa:
                     prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {ZERO_MAX:{}, LOG2_MEAN:{}}
                     prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
@@ -1812,7 +1809,7 @@ class Command(BaseCommand):
 
                         # TODO - should this be passing phosphosite, not mod?
                         phospho_oscillations = self._calculate_protein_oscillation(
-                            results[protein], norm_method, mod, replicates
+                            rr.protein_phospho_result, norm_method, mod, replicates
                         )
 
                         for rep in replicates:
@@ -1842,7 +1839,7 @@ class Command(BaseCommand):
 
                         prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
 
-        return results
+            rr.save()
 
     # TODO - is this necessary at all?
     def _merge_phospho_with_proteo(self, proteins, run):
@@ -1863,6 +1860,10 @@ class Command(BaseCommand):
             run_result = RunResult.objects.get(run=run, protein=pr)
 
             combined_result = run_result.protein_result
+
+            # if run_result.protein.id == 35368:
+            #     print(run_result.phospho_result)
+            #     exit()
 
             combined_result[PHOSPHORYLATION_ABUNDANCES] = run_result.phospho_result
 
@@ -1998,27 +1999,6 @@ class Command(BaseCommand):
             raise Exception(f"No phospho medians created yet for {unlimited_run}")
 
         return json.loads(phospho_medians)
-
-
-    def _save_data(self, results, file, results_based = True):
-        def convert_np(obj):
-            if isinstance(obj, np.generic):
-                return obj.item()
-            if isinstance(obj, float) and math.isnan(obj):
-                return None
-
-            return str(obj)
-        
-        stripped = {}
-
-        if results_based:
-            for protein in results:
-                stripped[protein.accession_number] = results[protein]
-        else:
-            stripped = results
-
-        with open(f"output/{file}", "w") as outfile:
-            json.dump(stripped, outfile, default=convert_np)
 
     def _dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))

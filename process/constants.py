@@ -11,9 +11,6 @@ PROTEIN_LIMITS = [
  "Q02750",
  ]
 
-# TODO - move constants elsewhere
-FOCUS_PROTEIN_ACCESSION_NUMBER = "Q09666"
-
 RAW = "raw"
 METRICS = "metrics"
 LOG2_MEAN = "log2_mean"

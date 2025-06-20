@@ -54,7 +54,7 @@ class Command(BaseCommand):
         project = Project.objects.get(name=project_name)
         protein = Protein.objects.get(accession_number=accession_number, project=project)
 
-        logger.info(f"Outputting protein {protein} for {project_name}")
+        logger.info(f"Outputting protein {protein} for {project_name} id {protein.id}")
 
         run_result = RunResult.objects.get(protein=protein, run__project=project, run__with_bugs=with_bugs, run__limit_proteins=limit_proteins)
 
