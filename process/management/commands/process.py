@@ -87,11 +87,6 @@ class Command(BaseCommand):
             action="store_true",
         )
         parser.add_argument(
-            "--limit-proteins",
-            help="Limit processing to a subset of proteins",
-            action="store_true"
-        )
-        parser.add_argument(
             "--calculate-protein-medians",
             help="Calculate and store protein medians",
             action="store_true"
@@ -125,7 +120,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project_name = options["project"]
         with_bugs = options["with_bugs"]
-        limit_proteins = options["limit_proteins"]
         calculate_protein_medians = options["calculate_protein_medians"]
         calculate_proteins = options["calculate_proteins"]
         calculate_phospho_medians = options["calculate_phospho_medians"]
@@ -153,55 +147,32 @@ class Command(BaseCommand):
         phospho_readings = None
         phosphos = None
 
-        if limit_proteins:
-            logger.info("Limiting proteins.")
+        proteins = Protein.objects.filter(project=project, is_contaminant=False)
 
-            proteins = Protein.objects.filter(project=project, accession_number__in = PROTEIN_LIMITS)
+        protein_readings = ProteinReading.objects.filter(
+            column_name__replicate__project=project,
+            protein__is_contaminant = False
+        )
+        phospho_readings = PhosphoReading.objects.filter(
+            phospho__protein__project=project,
+            phospho__protein__is_contaminant = False
+        )
+        phosphos = Phospho.objects.filter(
+            protein__project=project,
+            protein__is_contaminant = False
+        )
 
-            protein_readings = ProteinReading.objects.filter(
-                column_name__replicate__project=project, protein__accession_number__in = PROTEIN_LIMITS
-            )
-            phospho_readings = PhosphoReading.objects.filter(
-                phospho__protein__project=project, phospho__protein__accession_number__in = PROTEIN_LIMITS
-            )
-            phosphos = Phospho.objects.filter(
-                protein__project=project, protein__accession_number__in = PROTEIN_LIMITS
-            )
-        else:
-            proteins = Protein.objects.filter(project=project, is_contaminant=False)
-
-            protein_readings = ProteinReading.objects.filter(
-                column_name__replicate__project=project,
-                protein__is_contaminant = False
-            )
-            phospho_readings = PhosphoReading.objects.filter(
-                phospho__protein__project=project,
-                phospho__protein__is_contaminant = False
-            )
-            phosphos = Phospho.objects.filter(
-                protein__project=project,
-                protein__is_contaminant = False
-            )
-
-        run, _ = Run.objects.get_or_create(project=project, limit_proteins=limit_proteins, with_bugs=with_bugs)
+        run, _ = Run.objects.get_or_create(project=project, with_bugs=with_bugs)
 
         if (calculate_protein_medians or calculate_all):
-            if limit_proteins:
-                logger.info("You are not allowed to calculate protein medians for a limit-protein run.")
-                exit()
-    
             protein_medians = self._calculate_protein_medians(run, replicates, protein_readings, column_names, with_bugs)
         else:
             protein_medians = self._fetch_protein_medians(run)
 
         if calculate_proteins or calculate_all:
-            self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, limit_proteins, run, proteins, with_bugs)
+            self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
 
         if (calculate_phospho_medians or calculate_all):
-            if limit_proteins:
-                logger.info("You are not allowed to calculate phospho medians for a limit-protein run.")
-                exit()
-
             phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
         else:
             phospho_medians = self._fetch_phospho_medians(run)
@@ -293,7 +264,7 @@ class Command(BaseCommand):
 
 
     def _proteo(
-        self, project, replicates, protein_readings, medians, column_names, sample_stages, limit_proteins, run, proteins, with_bugs: bool
+        self, project, replicates, protein_readings, medians, column_names, sample_stages, run, proteins, with_bugs: bool
     ):
         logger.info("Processing proteins")
 
@@ -1164,7 +1135,7 @@ class Command(BaseCommand):
                 phospho_medians[replicate_name][column_name] = median
 
         run, _ = Run.objects.get_or_create(
-            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
+            project=run.project, with_bugs=run.with_bugs
         )
 
         run.phospho_medians = json.dumps(phospho_medians)
@@ -1961,7 +1932,7 @@ class Command(BaseCommand):
             protein_medians["One"] = protein_medians["Two"]
 
         run, _ = Run.objects.get_or_create(
-            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
+            project=run.project, with_bugs=run.with_bugs
         )
 
         run.protein_medians = json.dumps(protein_medians)
@@ -1971,11 +1942,8 @@ class Command(BaseCommand):
         return protein_medians
 
     def _fetch_protein_medians(self, run):
-        # Load the proteo medians for this project.
-        # N.B. THIS LOADS THE MEDIANS FOR ALL PROTEINS!
-        #   Not for limit_proteins, that has no use.
         unlimited_run = Run.objects.get(
-            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
+            project=run.project, with_bugs=run.with_bugs
         )
 
         protein_medians = unlimited_run.protein_medians
@@ -1986,11 +1954,8 @@ class Command(BaseCommand):
         return json.loads(protein_medians)
 
     def _fetch_phospho_medians(self, run):
-        # Load the phospho medians for this project.
-        # N.B. THIS LOADS THE MEDIANS FOR ALL PHOSPHOS!
-        #   Not for limit_proteins, that has no use.
         unlimited_run = Run.objects.get(
-            project=run.project, with_bugs=run.with_bugs, limit_proteins=False
+            project=run.project, with_bugs=run.with_bugs
         )
 
         phospho_medians = unlimited_run.phospho_medians

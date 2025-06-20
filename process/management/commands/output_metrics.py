@@ -33,17 +33,11 @@ class Command(BaseCommand):
             help="Run with the original ICR bugs",
             action="store_true",
         )
-        parser.add_argument(
-            "--limit-proteins",
-            help="Limit processing to a subset of proteins",
-            action="store_true"
-        )
 
     def handle(self, *args, **options):
         project_name = options["project"]
         accession_number = options["accession_number"]
         with_bugs = options["with_bugs"]
-        limit_proteins = options["limit_proteins"]
 
         if not project_name:
             raise Exception("Please provide a project name")
@@ -56,9 +50,9 @@ class Command(BaseCommand):
 
         logger.info(f"Outputting protein {protein} for {project_name}")
 
-        run_result = RunResult.objects.get(protein=protein, run__project=project, run__with_bugs=with_bugs, run__limit_proteins=limit_proteins)
+        run_result = RunResult.objects.get(protein=protein, run__project=project, run__with_bugs=with_bugs)
 
-        file_path = f"output/{project_name}_{protein}_with_bugs_{with_bugs}_limit_proteins_{limit_proteins}_metrics.json"
+        file_path = f"output/{project_name}_{protein}_with_bugs_{with_bugs}_metrics.json"
 
         with open(file_path, "w") as outfile:
             json.dump(run_result.protein_phospho_result['metrics'], outfile, indent=4)

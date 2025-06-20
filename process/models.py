@@ -104,14 +104,13 @@ class Run(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="run"
     )
-    limit_proteins = models.BooleanField(default=False)
     with_bugs = models.BooleanField(default=False)
     protein_medians = models.JSONField(blank=True, null=True)
     phospho_medians = models.JSONField(blank=True, null=True)
     results = models.JSONField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.project.name}, limit-proteins {self.limit_proteins}, with-bugs {self.with_bugs}"
+        return f"{self.project.name}, with-bugs {self.with_bugs}"
 
 # TODO - duplication here - proteins are per-project, so both run and protein link to protein
 #   Does it matter? Not sure if it's fixable.

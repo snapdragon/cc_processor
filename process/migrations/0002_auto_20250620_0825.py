@@ -13,6 +13,12 @@ class Migration(migrations.Migration):
             proteome_file_accession_number_column_name="Protein.Group",
         )
 
+        Run = apps.get_model("process", "Run")
+        Run.objects.create(
+            project=proj,
+            with_bugs=False
+        )
+
         Replicate = apps.get_model("process", "Replicate")
         replicate_1 = Replicate.objects.create(name="One", rank=1, project=proj)
         replicate_2 = Replicate.objects.create(name="Two", rank=2, project=proj)
@@ -210,6 +216,15 @@ class Migration(migrations.Migration):
             proteome_file="ICR/CR07_TMT16plex_FullProt_Proteins.xlsx",
             phosphoproteome_file="ICR/20210610_CR07_IMAC_PeptideGroups.tdt",
             proteome_file_accession_number_column_name="Accession",
+        )
+
+        Run.objects.create(
+            project=project_ICR,
+            with_bugs=True
+        )
+        Run.objects.create(
+            project=project_ICR,
+            with_bugs=False
         )
 
         replicate_ICR_1 = Replicate.objects.create(
