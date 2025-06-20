@@ -32,7 +32,7 @@ class Command(BaseCommand):
         project_name = options["project"]
 
         if not project_name:
-            raise Exception("Please provide a project name")
+            raise Exception(f"Invalid project name {project_name}")
 
         logger.info(f"Importing phospho spreadsheet for {project_name}")
 
@@ -78,14 +78,13 @@ class Command(BaseCommand):
 
                 accession_number = row[project.proteome_file_accession_number_column_name]
 
-                print(f"Adding phospho row {row_no} {accession_number}")
+                logger.info(f"Adding phospho row {row_no} {accession_number}")
 
                 if not proteins.get(accession_number):
                     new_protein = Protein.objects.create(
                         project=project, accession_number=accession_number, is_contaminant=False
                     )
                     proteins[accession_number] = new_protein
-
 
                 protein, created = Protein.objects.get_or_create(
                     project=project, accession_number=accession_number, is_contaminant=False
@@ -107,7 +106,7 @@ class Command(BaseCommand):
                             if reading != reading:
                                 reading = None
 
-                            print(f"Adding {phospho} {cn} {reading}")
+                            logger.info(f"Adding {phospho} {cn} {reading}")
 
                             PhosphoReading.objects.create(
                                 phospho = phospho, column_name=cn, reading=reading,
@@ -139,7 +138,7 @@ class Command(BaseCommand):
                 )
                 proteins[uniprot_accession] = new_protein
 
-            logger.info(f"Processing protein: {uniprot_accession}")
+            # logger.info(f"Importing phosphos for protein: {uniprot_accession}")
 
             if uniprot_accession not in time_course_phospho_full:
                 time_course_phospho_full[uniprot_accession] = {"phosphorylation_abundances": {}}
@@ -291,9 +290,9 @@ def findModificationPositionRep1(data_point):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(modification)
-            print(exc_type, fname, exc_tb.tb_lineno)
-            print(e)
+            logger.info(modification)
+            logger.info(exc_type, fname, exc_tb.tb_lineno)
+            logger.info(e)
 
     return modification_info
 
@@ -335,7 +334,7 @@ def findSite(sites):
                 temp_site_dic[pp_site] = {}
                 # [S575]
                 if pp_site.find("-") == -1 and pp_site.find("/") == -1:
-                    # print("-----> [Sx]")
+                    # logger.info("-----> [Sx]")
                     pp_site_full = pp_site.split("(")
                     pp_site = pp_site_full[0]
                     if len(pp_site_full) > 1:
@@ -354,7 +353,7 @@ def findSite(sites):
                     }
                 # [S/Y]
                 elif pp_site.find("/") != -1:
-                    # print("-----> [S/Y]")
+                    # logger.info("-----> [S/Y]")
                     aa = pp_site
                     position = pp_site
                     uniprot_position = {"start": "-", "end": "-"}
@@ -367,7 +366,7 @@ def findSite(sites):
                     }
                 # [1452-1473]
                 elif pp_site.find("-") != -1:
-                    # print("-----> [x-x]")
+                    # logger.info("-----> [x-x]")
                     aa = "-"
                     position = pp_site
                     site_range = pp_site.split("-")
@@ -424,13 +423,17 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
             continue
         try:
             modification_info = findModificationPositionRep1(data_point_2)
+
+            # print("+++++ MODIFICATION INFO")
+            # print(modification_info)
+
             for uniprot_accession_key in modification_info:
                 if (
                     uniprot_accession_key == ""
                     or uniprot_accession_key in contaminants
                 ):
-                    print("+++++ CONTAMINANT FOUND")
-                    print(uniprot_accession_key)
+                    logger.info("+++++ CONTAMINANT FOUND")
+                    logger.info(uniprot_accession_key)
                     continue
 
                 abundance_rep_1 = findPhosphoAbundance(
@@ -545,7 +548,7 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
                         }
 
         except Exception as e:
-            print("this is a problem")
-            print(e)
+            logger.info("this is a problem")
+            logger.info(e)
 
     return phospho_rep

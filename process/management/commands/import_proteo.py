@@ -26,8 +26,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project_name = options["project"]
 
+        # Change script name
+
+        # TODO - output available project names
         if not project_name:
-            raise Exception("Please provide a project name")
+            raise Exception(f"Invalud project name {project_name}")
 
         logger.info(f"Importing spreadsheet for {project_name}")
 

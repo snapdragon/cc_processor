@@ -241,7 +241,6 @@ def test_calculate_curve_fold_change():
 
 
 # TODO - write a deliberate, miniature version of this
-# TODO - do one for SL as well
 @pytest.mark.django_db
 def test_calculate_protein_oscillation(load_json):
     command = Command()
@@ -256,11 +255,21 @@ def test_calculate_protein_oscillation(load_json):
     replicate1 = ReplicateFactory(name="abundance_rep_1", project=project)
     replicate2 = ReplicateFactory(name="abundance_rep_2", project=project)
 
+    sample_stage1 = SampleStageFactory(name='Palbo', rank=1, project=project)
+    sample_stage2 = SampleStageFactory(name='Late G1_1', rank=2, project=project)
+    sample_stage3 = SampleStageFactory(name='G1/S', rank=3, project=project)
+    sample_stage4 = SampleStageFactory(name='S', rank=4, project=project)
+    sample_stage5 = SampleStageFactory(name='S/G2', rank=5, project=project)
+    sample_stage6 = SampleStageFactory(name='G2_2', rank=6, project=project)
+    sample_stage7 = SampleStageFactory(name='G2/M_1', rank=7, project=project)
+    sample_stage8 = SampleStageFactory(name='M/Early G1', rank=8, project=project)
+
     result = command._calculate_protein_oscillation(
         results_single,
         norm_method,
         phosphosite,
-        [replicate1, replicate2]
+        [replicate1, replicate2],
+        [sample_stage1, sample_stage2, sample_stage3, sample_stage4, sample_stage5, sample_stage6, sample_stage7, sample_stage8]
     )
 
     assert results_single["gene_name"] == "AHNAK"
@@ -528,7 +537,7 @@ def test_generate_phospho_regression_metrics(load_json):
 # TODO - write a deliberate, miniature version of this
 # TODO - do one for SL as well
 @pytest.mark.django_db
-def test_generate_protein_metrics(load_json):
+def test_generate_protein_oscillation_metrics(load_json):
     command = Command()
 
     project = ProjectFactory()
@@ -548,7 +557,7 @@ def test_generate_protein_metrics(load_json):
     pre_generate_protein_metrics = load_json("pre_generate_protein_metrics.json")
     post_generate_protein_metrics = load_json("post_generate_protein_metrics.json")
 
-    output = command._generate_protein_metrics(
+    output = command._generate_protein_oscillation_metrics(
         pre_generate_protein_metrics,
         [replicate1, replicate2],
         [sample_stage1, sample_stage2, sample_stage3, sample_stage4, sample_stage5, sample_stage6, sample_stage7, sample_stage8],

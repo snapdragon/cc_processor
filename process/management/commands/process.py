@@ -1,4 +1,8 @@
-# TODO - get rid of limit_protein stuff
+# TODO - protein_oscillation_abundances residuals average is wrong. 
+#   Also R_squared_average, curve_fold_change and others.
+#   It's because calculate_metrics isn't working. It requires a lot of study.
+
+# TODO - rename protein_phospho_result to combined_result or somesuch
 # TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - put kinase prediction back in. Make them a flag?
 # TODO - put PepTools_annotations in
@@ -112,6 +116,11 @@ class Command(BaseCommand):
             action="store_true"
         )
         parser.add_argument(
+            "--calculate-batch",
+            help="Calculate and store batch values",
+            action="store_true"
+        )
+        parser.add_argument(
             "--calculate-all",
             help="Calculate and store all values",
             action="store_true"
@@ -125,6 +134,7 @@ class Command(BaseCommand):
         calculate_phospho_medians = options["calculate_phospho_medians"]
         calculate_phosphos = options["calculate_phosphos"]
         merge_protein_phospho = options["merge_protein_phospho"]
+        calculate_batch = options["calculate_batch"]
         calculate_all = options["calculate_all"]
 
         if not project_name:
@@ -164,7 +174,7 @@ class Command(BaseCommand):
 
         run, _ = Run.objects.get_or_create(project=project, with_bugs=with_bugs)
 
-        if (calculate_protein_medians or calculate_all):
+        if calculate_protein_medians or calculate_all:
             protein_medians = self._calculate_protein_medians(run, replicates, protein_readings, column_names, with_bugs)
         else:
             protein_medians = self._fetch_protein_medians(run)
@@ -172,26 +182,30 @@ class Command(BaseCommand):
         if calculate_proteins or calculate_all:
             self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
 
-        if (calculate_phospho_medians or calculate_all):
+        if calculate_phospho_medians or calculate_all:
             phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
         else:
+            # TODO - if the script is run with only --process-protein-medians this will
+            #   raise an exception. How to make it not necessarily run? Check flags for
+            #   absence of flags that would require it?
             phospho_medians = self._fetch_phospho_medians(run)
 
         if calculate_phosphos or calculate_all:
             self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
-        if merge_protein_phospho or calculate_phosphos or calculate_all:
+        if merge_protein_phospho:
             # Merging has to be redone on new protein or phospho calculations
             self._merge_phospho_with_proteo(proteins, run)
 
         # By this point there should be a run result for every protein
 
         # Batch processing from now on, so all RunResults are needed
-        # self._calculate_batch_q_value_fisher(run)
+        if calculate_batch:
+            self._calculate_batch_q_value_fisher(run)
 
-        self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-        # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
+            # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
 
 
 
@@ -201,30 +215,36 @@ class Command(BaseCommand):
         # Remove any earlier phospho_result values for this project
         RunResult.objects.filter(run=run).update(phospho_result=None)
 
+        num_processed = 0
+
         for pr in proteins:
             result = {}
-            # TODO - bad name, num_mods maybe?
-            num_readings = 0
+            num_mods = 0
 
             phospho_readings_filtered = phospho_readings.filter(phospho__protein = pr)
 
             if not phospho_readings_filtered:
-                print(f"Not processing for protein {pr}")
+                print(f"No phospho readings for protein {pr}, not processing")
+
+                self._update_phospho_result(run, pr, {})
+
                 continue
 
             readings = self._format_phospho_readings(phospho_readings_filtered)
 
             for mod, readings in readings.items():
-                num_readings += 1
+                num_mods += 1
 
                 self._count_logger(
-                    num_readings,
+                    num_mods,
                     10,
-                    f"Processing for {num_readings}, {pr.accession_number}",
+                    f"Processing phosphos for {pr.accession_number}, {num_mods}",
                 )
 
-                # TODO - this seems daft, isn't there a neater way?
-                phosphosite = phospho_readings_filtered[0].phospho.phosphosite
+                # TODO - is there a more efficient way of doing this?
+                #   Maybe prepopulate a dict of phosphos
+                phospho = Phospho.objects.get(protein = pr, mod = mod)
+                phosphosite = phospho.phosphosite
 
                 result[mod] = {
                     PHOSPHORYLATION_SITE: phosphosite,
@@ -257,12 +277,26 @@ class Command(BaseCommand):
 
             run_result.save()
 
+            num_processed += 1
+
+        logger.info(f"Number of proteins with phospho readings: {num_processed}")
+
         # TODO - is this batch or single? I'm guessing batch.
         # self._generate_kinase(raw_readings, results)
 
         return result
 
 
+    def _update_phospho_result(self, run, protein, result):
+        run_result, _ = RunResult.objects.get_or_create(
+            run=run,
+            protein=protein
+        )
+
+        run_result.phospho_result = result
+
+        run_result.save()
+    
     def _proteo(
         self, project, replicates, protein_readings, medians, column_names, sample_stages, run, proteins, with_bugs: bool
     ):
@@ -1355,8 +1389,6 @@ class Command(BaseCommand):
         # # TODO - figure out how to get this working for protein oscillations
         # # time_course_fisher_dict = self._calculate_fisher(results, phospho = True, phospho_ab = True)
 
-        # # return
-
         # # Corrected q values - Phospho
         # # 1) Create a dataframe with the desired Protein-Phospho info
         # prot_phospho_info = {}
@@ -1474,39 +1506,51 @@ class Command(BaseCommand):
 
     # calculateProteinOscillationAbundances
     # TODO - tested
-    def _calculate_protein_oscillation(self, results_single, norm_method, phosphosite, replicates):
+    def _calculate_protein_oscillation(self, result, norm_method, phosphosite, replicates, sample_stages):
+        '''
+        Iterates through the replicates and stages for
+            results_single[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
+            result[PHOSPHORYLATION_ABUNDANCES][
+                        phosphosite][POSITION_ABUNDANCES][NORMALISED][norm_method]
+
+            subtracts one from the other, puts them in a dict by replicate and
+            sample stage and returns it.
+
+            It's basically how much protein and phospho values differ for each normalised
+            sample stage.
+        '''
+
         phospho_oscillations = {}
 
-        rspannm = results_single[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
-        rspappann = results_single[PHOSPHORYLATION_ABUNDANCES][
+        rspannm = result[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
+        rspappann = result[PHOSPHORYLATION_ABUNDANCES][
                         phosphosite][POSITION_ABUNDANCES][NORMALISED][norm_method]
 
         for replicate in replicates:
-            if replicate.name in rspannm:
-                if (replicate.name in rspappann):
-                    protein_oscillation_abundances = {}
-                    protein_normed = rspannm[replicate.name]
+            if replicate.name in rspannm and replicate.name in rspappann:
+                protein_oscillation_abundances = {}
 
-                    phospho_normed = rspappann[replicate.name]
+                protein_normed = rspannm[replicate.name]
+                phospho_normed = rspappann[replicate.name]
 
-                    try:
-                        for stage_name in protein_normed:
-                            if not protein_normed[stage_name] or not phospho_normed.get(stage_name):
-                                continue
+                try:
+                    for sample_stage in sample_stages:
+                        if not protein_normed.get(sample_stage.name) or not phospho_normed.get(sample_stage.name):
+                            continue
 
-                            protein_oscillation_abundances[stage_name] = (
-                                phospho_normed[stage_name]
-                                - protein_normed[stage_name]
-                            )
-                    except Exception as e:
-                        print("+++++ _calculate_protein_oscillation error")
-                        print(protein_normed)
-                        print(phospho_normed)
-                        print(e)
-                        exit()
+                        protein_oscillation_abundances[sample_stage.name] = (
+                            phospho_normed[sample_stage.name]
+                            - protein_normed[sample_stage.name]
+                        )
+                except Exception as e:
+                    logger.error("_calculate_protein_oscillation error")
+                    logger.error(protein_normed)
+                    logger.error(phospho_normed)
+                    logger.error(e)
+                    exit()
 
-                    phospho_oscillations[replicate.name] = protein_oscillation_abundances
-    
+                phospho_oscillations[replicate.name] = protein_oscillation_abundances
+
         return phospho_oscillations
 
     def _calculate_abundances_metrics(
@@ -1757,58 +1801,44 @@ class Command(BaseCommand):
         run_results = RunResult.objects.filter(run=run)
 
         for rr in run_results:
-            # If we have info both in protein and in phospho level
-            # TODO - change name
             prpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
-            print(rr.protein.accession_number)
-            print(prpa)
 
-            try:
-                print(len(prpa))
-            except:
-                return
-            return
+            # Not all samples have both protein and phosphorylation abundances
+            if not len(prpa) or not len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]):
+                continue
 
-            # TODO - invert and just return here
-            if len(prpa) != 0 and len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]) != 0:
-                for mod in prpa:
-                    prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {ZERO_MAX:{}, LOG2_MEAN:{}}
-                    prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
+            for mod in prpa:
+                prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {}
+                prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
 
+                for norm_method in [ZERO_MAX, LOG2_MEAN]:
+                    # TODO - should this be passing phosphosite, not mod?
+                    #   In the original the two seem to be interchangeable to an extent.
+                    phospho_oscillations = self._calculate_protein_oscillation(
+                        rr.protein_phospho_result, norm_method, mod, replicates, sample_stages
+                    )
+
+                    prpampoa[norm_method] = phospho_oscillations
+
+                    # TODO - split this out into its own variable? That's done with other average
+                    prpampoa[norm_method][ABUNDANCE_AVERAGE] = self._calculate_means(
+                        prpampoa[norm_method], imputed = False, with_bugs = with_bugs
+                    )
+
+                # TODO - check all comments to make sure they're non-ICR
+                # TODO - why only the check for LOG2_MEAN? Why not for both?
+                if len(prpampoa[LOG2_MEAN]) > 1:
                     for norm_method in [ZERO_MAX, LOG2_MEAN]:
-                        protein_oscillation_abundances = prpampoa[norm_method]
-
-                        # TODO - should this be passing phosphosite, not mod?
-                        phospho_oscillations = self._calculate_protein_oscillation(
-                            rr.protein_phospho_result, norm_method, mod, replicates
+                        prpampoa[norm_method][METRICS] = self._calculate_metrics(
+                            prpampoa[norm_method],
+                            prpampoa[norm_method][ABUNDANCE_AVERAGE],
+                            replicates,
+                            sample_stages
                         )
 
-                        for rep in replicates:
-                            if rep.name in phospho_oscillations:
-                                protein_oscillation_abundances[rep.name] = phospho_oscillations[rep.name]
+                    anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN])
 
-                        # TODO - split this out into its own variable? That's done with other average
-                        protein_oscillation_abundances[ABUNDANCE_AVERAGE] = self._calculate_means(
-                            protein_oscillation_abundances, imputed = False, with_bugs = with_bugs
-                        )
-
-                    # if we have info in Protein Oscillation Normalised Abundances
-                    # TODO - check all comments to make sure they're non-ICR
-                    if len(prpampoa[LOG2_MEAN]) > 1:
-                        for norm_method in [ZERO_MAX, LOG2_MEAN]:
-                            protein_oscillation_abundances = prpampoa[norm_method]
-
-                            # Metrics
-                            prpampoa[norm_method][METRICS] = self._calculate_metrics(
-                                protein_oscillation_abundances,
-                                protein_oscillation_abundances[ABUNDANCE_AVERAGE],
-                                replicates,
-                                sample_stages
-                            )
-
-                        anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN])
-
-                        prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
+                    prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
 
             rr.save()
 
@@ -1825,8 +1855,10 @@ class Command(BaseCommand):
             self._count_logger(
                 num_proteins,
                 1000,
-                f"Merging protein {pr.id} {pr.accession_number}",
+                f"Merging protein {num_proteins} {pr.accession_number}",
             )
+
+            num_proteins += 1
 
             run_result = RunResult.objects.get(run=run, protein=pr)
 

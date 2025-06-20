@@ -18,6 +18,14 @@ python manage.py process --project "SL" --calculate-all
 python manage.py import_proteo --project "ICR"
 python manage.py import_phospho --project "ICR"
 python manage.py process --project "ICR" --with-bugs --calculate-all
+
+# Or the long route
+python manage.py process --project "ICR" --with-bugs --calculate-protein-medians --calculate-phospho-medians
+python manage.py process --project "ICR" --with-bugs --calculate-proteins
+python manage.py process --project "ICR" --with-bugs --calculate-phosphos
+python manage.py process --project "ICR" --with-bugs --merge-protein-phospho
+python manage.py process --project "ICR" --with-bugs --calculate-batch
+
 ```
 
 ### To run with IRC
@@ -124,6 +132,7 @@ docker cp postgres-db:/Q09666_postgres.json ./
 ```
 
 ### Output the results for a protein to the /output dir
-```sh
 
+```sh
+python manage.py output_protein --project "ICR" --with-bugs --accession-number Q09666
 ```
