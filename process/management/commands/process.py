@@ -200,6 +200,8 @@ class Command(BaseCommand):
         # By this point there should be a run result for every protein
 
         # Batch processing from now on, so all RunResults are needed
+        # TODO - some of the parts of the batch processing, e.g. protein oscillation
+        #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
             self._calculate_batch_q_value_fisher(run)
 
@@ -1384,10 +1386,10 @@ class Command(BaseCommand):
 
         self._generate_protein_oscillation_metrics(run, replicates, sample_stages, with_bugs)
 
+        # TODO - put back in
         # time_course_fisher_dict = self._calculate_fisher(results, phospho = True, phospho_ab = True)
 
-        # TODO - change name
-        prot_phospho_info = {}
+        ps_and_qs = {}
 
         run_results = RunResult.objects.filter(run=run)
 
@@ -1398,13 +1400,13 @@ class Command(BaseCommand):
                 if pprpa[site].get(PROTEIN_OSCILLATION_ABUNDANCES):
                     phospho_key = f"{rr.protein.accession_number}_{pprpa[site][PHOSPHORYLATION_SITE]}"
 
-                    if phospho_key not in prot_phospho_info:
-                        prot_phospho_info[phospho_key] = {}
+                    if phospho_key not in ps_and_qs:
+                        ps_and_qs[phospho_key] = {}
 
-                    prot_phospho_info[phospho_key][P_VALUE] = pprpa[site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+                    ps_and_qs[phospho_key][P_VALUE] = pprpa[site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
 
         # TODO - what's this for?
-        prot_phospho_info = self._generate_df(prot_phospho_info)
+        ps_and_qs = self._generate_df(ps_and_qs)
 
         # TODO - tidy up, two loops not necessary?
         for rr in run_results:
@@ -1422,8 +1424,8 @@ class Command(BaseCommand):
 
                 q_value = 1
 
-                if site_key in prot_phospho_info:
-                    q_value = prot_phospho_info[site_key][Q_VALUE]
+                if site_key in ps_and_qs:
+                    q_value = ps_and_qs[site_key][Q_VALUE]
 
                 pprpa[site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
@@ -1889,13 +1891,6 @@ class Command(BaseCommand):
 
     def _build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key):
         # TODO - tidy this
-        print("+++++ BUILD")
-        print(abundance_table)
-        print(replicates)
-        print(protein_abundances)
-        print(mod_key)
-
-
         for rep in replicates:
             # TODO - is the "abundance_" bit really needed?
             abundance_rep = f"abundance_{rep.name}"
@@ -1913,6 +1908,7 @@ class Command(BaseCommand):
                 rep_timepoint = rep + "_" + timepoint
                 abundance_table[mod_key][rep_timepoint] = protein_abundances[abundance_rep][timepoint]
 
+        # TODO - how is this never called?
         print("+++++ BUILD")
         print(abundance_table)
         exit()
@@ -1929,7 +1925,6 @@ class Command(BaseCommand):
         return info_df.to_dict('index')
 
     def _generate_kinase(self, raw_readings, results):
-        # Kinase Consensus Prediction
         # TODO - lifted, change
         for protein in raw_readings:
             for mod in raw_readings[protein]:
