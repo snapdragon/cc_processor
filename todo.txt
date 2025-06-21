@@ -14,6 +14,8 @@ Don't get Fisher G values yet
 NEXT - write tests for all functions
 
 
+Move r code to a separate script and communicate with it?
+Create a JSON schema for the results
 Fix all the _calculate_metrics errors
 min-max and imputed values are calculated differently between protein and phospho
 Add 'peptide_abundances' to phospho output?
@@ -21,7 +23,6 @@ Count number of imputed data points
 Change things to defaultdicts?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
-Interrogate json in DB for various things, e.g. differences between ICR and SL
 Find out which functions aren't actually needed
 Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]

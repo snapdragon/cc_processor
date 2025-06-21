@@ -125,10 +125,9 @@ pytest --cov=process
 ### Get json result from DB (example)
 ```sh
 docker exec -it postgres-db /bin/bash
-\copy (select protein_result from process_runresult where protein_id = 28468 and run_id = 1) TO 'Q09666_postgres.json';
-# Exit container
+\copy (select protein_result from process_runresult, process_protein where protein_id = process_protein.id and accession_number = 'Q09666' and run_id = 2) TO 'Q09666_postgres.json';
+# Now exit container and copy file to local using the command below
 docker cp postgres-db:/Q09666_postgres.json ./
-# Has 'N' at the beginning of the file for some reason
 ```
 
 ### Output the results for a protein to the /output dir
@@ -136,3 +135,13 @@ docker cp postgres-db:/Q09666_postgres.json ./
 ```sh
 python manage.py output_protein --project "ICR" --with-bugs --accession-number Q09666
 ```
+
+### Various DB queries
+```sh
+# Display the length of non-empty phospho results in order
+SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM process_runresult where phospho_result != '{}' order by json_text_length asc;
+```
+
+## How the results are structured
+
+See the JSON schema

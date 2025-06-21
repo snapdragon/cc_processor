@@ -12,3 +12,6 @@ _getPeptideAligned
 _getPeptideSequence
 _getProteinSeq
 _impute
+_generate_kinase
+_getConsensusKinasePred
+_getPeptideAligned

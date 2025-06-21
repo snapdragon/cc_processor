@@ -1,16 +1,3 @@
-# TODO - make this be a list of the most interesting CDK proteins?
-PROTEIN_LIMITS = [
- "Q09666",
- "Q01433",
- "Q01459",
- "Q02241",
- "Q02252",
- "Q02447",
- "Q02535",
- "Q02543",
- "Q02750",
- ]
-
 RAW = "raw"
 METRICS = "metrics"
 LOG2_MEAN = "log2_mean"
@@ -41,5 +28,14 @@ PROTEIN_PHOSPHO_CORRELATION = "protein-phospho-correlation"
 PHOSPHO_PROTEIN_CFC_RATIO = "phosho-protein-cfc_ratio"
 G_STATISTIC = "G_statistic"
 FREQUENCY = "frequency"
+KINASE_PREDICTION = "kinase_prediction"
+PEPTIDE_SEQ = "peptide_seq"
+# TODO - is this a good name? A bit vague.
+PHOSPHO = "phospho"
+# These are capitalised as they're fields found in the index_protein_names json file
+PEPTIDE = 'Peptide'
+PEPTOOLS_ANNOTATIONS = "PepTools_annotations"
+CONSENSUS_MOTIF_MATCH = "consenus_motif_match"
+KINASE_MOTIF_MATCH = "kinase_motif_match"
 
 TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"

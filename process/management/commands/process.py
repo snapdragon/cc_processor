@@ -33,7 +33,7 @@ from sklearn import linear_model
 from scipy import stats
 
 from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
-from process.constants import (PROTEIN_LIMITS,
+from process.constants import (
     RAW,
     METRICS,
     LOG2_MEAN,
@@ -60,7 +60,15 @@ from process.constants import (PROTEIN_LIMITS,
     PHOSPHO_PROTEIN_CFC_RATIO,
     G_STATISTIC,
     FREQUENCY,
-    TOTAL_PROTEIN_INDEX_FILE)
+    TOTAL_PROTEIN_INDEX_FILE,
+    KINASE_PREDICTION,
+    PEPTIDE_SEQ,
+    PHOSPHO,
+    PEPTIDE,
+    PEPTOOLS_ANNOTATIONS,
+    CONSENSUS_MOTIF_MATCH,
+    KINASE_MOTIF_MATCH,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,7 +76,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
 
 # TOOD - what is this file? Where did it come from?
 # TODO - whatever it is, a lot of it could be trimmed, and maybe put in the DB
@@ -193,21 +200,23 @@ class Command(BaseCommand):
         if calculate_phosphos or calculate_all:
             self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
-        if merge_protein_phospho:
+        if merge_protein_phospho or calculate_proteins or calculate_phosphos or calculate_all:
             # Merging has to be redone on new protein or phospho calculations
             self._merge_phospho_with_proteo(proteins, run)
 
-        # By this point there should be a run result for every protein
+        # By this point there should be a combined result for every protein
 
-        # Batch processing from now on, so all RunResults are needed
+        # Largely batch processing from now on
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
+            self._generate_kinase_predictions(run)
+
             self._calculate_batch_q_value_fisher(run)
 
             self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            # results = self._add_phospho_regression(results, replicates, sample_stages, with_bugs)
+            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -283,9 +292,6 @@ class Command(BaseCommand):
 
         logger.info(f"Number of proteins with phospho readings: {num_processed}")
 
-        # TODO - is this batch or single? I'm guessing batch.
-        # self._generate_kinase(raw_readings, results)
-
         return result
 
 
@@ -351,14 +357,14 @@ class Command(BaseCommand):
 
 
 
-    def _calculate_batch_q_value_fisher(self, run):
+    def _calculate_batch_q_value_fisher(self, run, replicates, sample_stages):
         logger.info("Calculating batch q and fisher G values.")
 
         # TODO - blank all q_values in DB?
 
         run_results_with_log2_mean = RunResult.objects.filter(run=run, protein_phospho_result__metrics__has_key = "log2_mean")
 
-        # fisher_stats = self._calculate_fisher(relative_log2_readings_by_protein, replicates)
+        # fisher_stats = self._calculate_fisher(run, replicates, sample_stages)
 
         # TODO - rename this
         prot_anova_info: dict = {}
@@ -390,8 +396,9 @@ class Command(BaseCommand):
 
     def _calculate_fisher(
         self,
-        results,
+        run,
         replicates,
+        sample_stages,
         phospho=False,
         phospho_ab=False,
         phospho_reg=False,
@@ -401,7 +408,7 @@ class Command(BaseCommand):
         # norm_method = LOG2_MEAN
         # raw = False
 
-        time_course_fisher = self._create_results_dataframe(results, phospho, phospho_ab, phospho_reg, replicates)
+        time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
 
         time_course_fisher = time_course_fisher.dropna()
 
@@ -459,9 +466,12 @@ class Command(BaseCommand):
     # TODO - lifted from ICR, rewrite
     # TODO - try to get rid of dataframes if possible
     # TODO - needs a test if to be used, is only used by fisher
-    def _create_results_dataframe(self, results, phospho, phospho_ab, phospho_reg, replicates):
+    def _create_results_dataframe(self, run, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
         # TODO - raw is always False, ignore all raw code
         # TODO - norm_method is always log2_mean, ignore all norm_method code
+
+        run_results = self._fetch_run_results(run)
+
         abundance_table = {}
         final_protein = None
 
@@ -470,15 +480,11 @@ class Command(BaseCommand):
         #   for protein, p_readings in readings.items():
         #       for replicate_name, rn_readings = p_readings.items():
         #           etc.
-        for protein in results:
-            prs = results[protein]
-
-            # TODO - just needed for getting replicates I think, could be disposed of
-            final_protein = protein
+        for rr in run_results:
+            prs = rr.protein
 
             # TODO - put this 'if' outside the loop? It may be more efficient
             if phospho:
-
                 for mod in prs[PHOSPHORYLATION_ABUNDANCES]:
                     protein_abundances_all = prs[PHOSPHORYLATION_ABUNDANCES][mod][POSITION_ABUNDANCES]
 
@@ -515,30 +521,19 @@ class Command(BaseCommand):
 
         new_cols = []
 
-        # if phospho:
-        #     print("++++++ FOO")
-        #     print(results[final_protein][PHOSPHORYLATION_ABUNDANCES].keys())
-
-        #     replicate_names = list(results[final_protein][final_mod].keys())
-
-        #     for stage_name in results[final_protein][final_mod][replicate_names[0]]:
-        #         for rn in replicate_names:
-        #             new_cols.append(f"{rn}_{stage_name}")
-        # else:
-        replicate_names = list(results[final_protein].keys())
-
-        for stage_name in results[final_protein][replicate_names[0]]:
-            for rn in replicate_names:
-                new_cols.append(f"{rn}_{stage_name}")
+        # TODO - get stage names properly
+        for sample_stage in sample_stages:
+            for replicate in replicates:
+                new_cols.append(f"{replicate.name}_{sample_stage.name}")
 
         # Rearrange the column order so replicates are near eatch other
         try:
             time_course_abundance_df = time_course_abundance_df[new_cols]
         except Exception as e:
-            print("++++ DF FAILED")
-            print(phospho)
-            print(time_course_abundance_df)
-            print(e)
+            logger.error("++++ DF FAILED")
+            logger.error(phospho)
+            logger.error(time_course_abundance_df)
+            logger.error(e)
             exit()
 
         return time_course_abundance_df
@@ -610,8 +605,8 @@ class Command(BaseCommand):
                         p_value = 1
 
             except Exception as e:
-                print("ERROR CALCULATING ANOVA")
-                print(e)
+                logger.error("Error in _calculate_anova")
+                logger.error(e)
 
         return {
             P_VALUE: p_value,
@@ -721,8 +716,8 @@ class Command(BaseCommand):
                 }
 
         except Exception as e:
-            print("Error in _calculate_metrics")
-            print(e)
+            logger.error("Error in _calculate_metrics")
+            logger.error(e)
 
         return metrics
 
@@ -1240,13 +1235,13 @@ class Command(BaseCommand):
         return x, y, stage_names_map
     
     # TODO - lifted from ICR, change
-    def _getConsensusKinasePred(self, uniprot_accession, phosphosite):
+    def _get_consensus_kinase_pred(self, uniprot_accession, phosphosite):
         """
         Predicts the kinase most likely to phosphorylate a phosphorylation site 
         based on the consensus approach.
         """
         phospho_kinases_class = {}
-        peptide_seq = self._getPeptideAligned(uniprot_accession, phosphosite)
+        peptide_seq = self._get_peptide_aligned(uniprot_accession, phosphosite)
 
         motifs = [
             {"motif": "plk", "pattern": ".{3}[DNE].[ST][FGAVLIMW][GAVLIPFMW].{3}"},
@@ -1268,6 +1263,7 @@ class Command(BaseCommand):
             if res:
                 matches+=1
                 motif_matches.append(motif)
+            # TODO - rename to accession_number?
             phospho_kinases_class = {"accession":uniprot_accession,"site":phosphosite, "peptide_seq": peptide_seq, "kinase_motif_match": motif_matches}
         if matches == 0:
             total_not_matched+=1
@@ -1276,7 +1272,7 @@ class Command(BaseCommand):
         return phospho_kinases_class
 
     # TODO - lifted from ICR
-    def _getPeptideAligned(self, uniprot_accession, phosphosite):
+    def _get_peptide_aligned(self, uniprot_accession, phosphosite):
         """
         Checks if the phosphosite is centered in the peptide sequence and it aligns it if not.
         """
@@ -1284,29 +1280,30 @@ class Command(BaseCommand):
         position = int(phosphosite[1::]) -1
         site =  str(position+1)
 
-        if 'phospho' in index_protein_names[uniprot_accession]:
-            if site in index_protein_names[uniprot_accession]['phospho']:
-                if 'peptide_seq' in index_protein_names[uniprot_accession]['phospho'][site]:
-                    peptide_seq = index_protein_names[uniprot_accession]['phospho'][site]['peptide_seq']
+        if PHOSPHO in index_protein_names[uniprot_accession]:
+            if site in index_protein_names[uniprot_accession][PHOSPHO]:
+                if PEPTIDE_SEQ in index_protein_names[uniprot_accession][PHOSPHO][site]:
+                    peptide_seq = index_protein_names[uniprot_accession][PHOSPHO][site][PEPTIDE_SEQ]
                 else:
-                    peptide_seq = self._getPeptideSequence(uniprot_accession, phosphosite)
+                    peptide_seq = self._get_peptide_sequence(uniprot_accession, phosphosite)
 
         phospho_alignment = ""
 
         #Discard invalid inputs
-        if len(peptide_seq) == 0:           
-            peptide_seq = index_protein_names[uniprot_accession]['phospho'][site]['Peptide']
+        if not len(peptide_seq):
+            peptide_seq = index_protein_names[uniprot_accession][PHOSPHO][site][PEPTIDE]
             phospho_alignment = peptide_seq[5:16]
+
         # Middle of the protein sequence
         elif len(peptide_seq) == 11:
             if aa == peptide_seq[5]:
                 phospho_alignment = peptide_seq
             else:
                 # Site not in the middle of seq
-                peptide_seq_new = index_protein_names[uniprot_accession]['phospho'][site]['Peptide']
+                peptide_seq_new = index_protein_names[uniprot_accession][PHOSPHO][site][PEPTIDE]
                 phospho_alignment = peptide_seq_new[5:16]
                 if  uniprot_accession == "P62861" and phosphosite == 'S5':
-                    phospho_alignment = "-KVHGSLARAG"                
+                    phospho_alignment = "-KVHGSLARAG"
 
         # Missing Positions
         elif len(peptide_seq) < 11:
@@ -1326,13 +1323,13 @@ class Command(BaseCommand):
         return phospho_alignment
 
     # TODO - lifted from ICR
-    def _getPeptideSequence(self, uniprot_accession, phosphosite):
+    def _get_peptide_sequence(self, uniprot_accession, phosphosite):
         """
         Creates a peptide sequence which is a substring of the original protein sequence.
         +5/-5
         amino acids from the phosphorylation site.
         """
-        sequence = self._getProteinSeq(uniprot_accession)
+        sequence = self._get_protein_seq(uniprot_accession)
 
         # Start counting from 1
         position = int(phosphosite[1::]) -1
@@ -1359,7 +1356,7 @@ class Command(BaseCommand):
         return peptide_sequence
 
     # TODO - lifted from ICR
-    def _getProteinSeq(self, uniprot_accession):
+    def _get_protein_sequence(self, uniprot_accession):
         """
         Fetches the protein sequence for the given UniProt accession by querying UniProt directly.
         """
@@ -1387,23 +1384,23 @@ class Command(BaseCommand):
         self._generate_protein_oscillation_metrics(run, replicates, sample_stages, with_bugs)
 
         # TODO - put back in
-        # time_course_fisher_dict = self._calculate_fisher(results, phospho = True, phospho_ab = True)
+        # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
-        run_results = RunResult.objects.filter(run=run)
+        run_results = self._fetch_run_results(run)
 
         for rr in run_results:
             pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
 
-            for site in pprpa:
-                if pprpa[site].get(PROTEIN_OSCILLATION_ABUNDANCES):
-                    phospho_key = f"{rr.protein.accession_number}_{pprpa[site][PHOSPHORYLATION_SITE]}"
+            for mod in pprpa:
+                if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES):
+                    phospho_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
 
                     if phospho_key not in ps_and_qs:
                         ps_and_qs[phospho_key] = {}
 
-                    ps_and_qs[phospho_key][P_VALUE] = pprpa[site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+                    ps_and_qs[phospho_key][P_VALUE] = pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
 
         # TODO - what's this for?
         ps_and_qs = self._generate_df(ps_and_qs)
@@ -1416,23 +1413,23 @@ class Command(BaseCommand):
             if not len(pprpa) or not len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]):
                 continue
 
-            for site in pprpa:
-                if not pprpa[site].get(PROTEIN_OSCILLATION_ABUNDANCES):
+            for mod in pprpa:
+                if not pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES):
                     continue
 
-                site_key = f"{rr.protein.accession_number}_{pprpa[site][PHOSPHORYLATION_SITE]}"
+                mod_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
 
                 q_value = 1
 
-                if site_key in ps_and_qs:
-                    q_value = ps_and_qs[site_key][Q_VALUE]
+                if mod_key in ps_and_qs:
+                    q_value = ps_and_qs[mod_key][Q_VALUE]
 
-                pprpa[site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
+                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
                 # # Fisher
                 # TODO - tidy this and others like it
-                # if site_key in time_course_fisher_dict:
-                #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
+                # if mod_key in time_course_fisher_dict:
+                #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[mod_key]
                 # else:
                 #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
 
@@ -1442,9 +1439,8 @@ class Command(BaseCommand):
 
     # TODO - lifted from ICR
     # addPhosphoRegression
-    def _add_phospho_regression(self, results, replicates, sample_stages, with_bugs):
+    def _add_phospho_regression(self, run, replicates, sample_stages, with_bugs):
         # TODO - check and revise all comments
-        # Add the Regressed Phospho Normalised Abundances
         """
         Normalise the phospho abundance on the protein abundance
         Calculates and adds all the Regressed Phospho Abundance and their metrics for each phosphosite.
@@ -1455,57 +1451,64 @@ class Command(BaseCommand):
         """
         logger.info("Adding Phospho Normalised on Protein Abundances - Regression")
 
-        self._generate_phospho_regression_metrics(results, replicates, sample_stages, with_bugs)
+        self._generate_phospho_regression_metrics(run, replicates, sample_stages, with_bugs)
 
         # # Fisher G Statistic - Phospho
-        # time_course_fisher_dict = self._calculate_fisher(combined_time_course_info, phospho = True, phospho_ab = False, phospho_reg = True)
+        # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
-        # Corrected q values - Phospho
-        # 1) Create a dataframe with the desired regression info
         regression_info = {}
 
-        # TODO - looks very close to the code in protein oscillation. Make a function.
-        for protein in results:
-            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0:
-                for site in results[protein][PHOSPHORYLATION_ABUNDANCES]:
-                    if 'phospho_regression' in results[protein][PHOSPHORYLATION_ABUNDANCES][site]:
-                        # TODO - a hack
-                        phospho_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][site][PHOSPHORYLATION_SITE]
-                        if phospho_key not in regression_info:
-                            regression_info[phospho_key] = {}
+        run_results = self._fetch_run_results(run)
 
-                        if results[protein][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'].get(METRICS):
-                            # TODO - why would it not have metrics? Lack of data maybe?
-                            regression_info[phospho_key][P_VALUE] = results[protein][PHOSPHORYLATION_ABUNDANCES][site]['phospho_regression']['log2_mean'][METRICS]['ANOVA'][P_VALUE]
+        # TODO - looks very close to the code in protein oscillation. Make a function?
+        for rr in run_results:
+            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+
+            if not len(pprpa):
+                continue
+
+            for mod in pprpa:
+                if PHOSPHO_REGRESSION in pprpa[mod]:
+                    # TODO - a hack
+                    phospho_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
+
+                    if phospho_key not in regression_info:
+                        regression_info[phospho_key] = {}
+
+                    if pprpa[mod][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
+                        regression_info[phospho_key][P_VALUE] = pprpa[mod][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
 
         regression_info = self._generate_df(regression_info)
 
-        # 4) Add Regression info in combined_time_course_info dictionary
-        for protein in results:
-            if len(results[protein][PHOSPHORYLATION_ABUNDANCES]) != 0 and len(results[protein][PROTEIN_ABUNDANCES][RAW]) != 0:
-                for phosphosite in results[protein][PHOSPHORYLATION_ABUNDANCES]:
-                    if PHOSPHO_REGRESSION in results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite]:
-                        site_key = protein.accession_number + "_" + results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHORYLATION_SITE]
+        for rr in run_results:
+            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
 
-                        # ANOVA q values
-                        q_value = 1
+            if not len(pprpa) or not len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]):
+                continue
+                
+            # TODO - again, why called phosphosite and not mod?
+            for phosphosite in pprpa:
+                if PHOSPHO_REGRESSION in pprpa[phosphosite]:
+                    mod_key = f"{rr.protein.accession_number}_{pprpa[phosphosite][PHOSPHORYLATION_SITE]}"
 
-                        if site_key in regression_info:
-                            q_value = regression_info[site_key][Q_VALUE]
+                    q_value = 1
 
-                        if results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
-                            # TODO - why no metrics? Not generated due to lack of data?
-                            results[protein][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
+                    if mod_key in regression_info:
+                        q_value = regression_info[mod_key][Q_VALUE]
 
-                        # # Fisher
-                        # phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
-                        # if site_key in time_course_fisher_dict:
-                        #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[site_key]
-                        # else:
-                        #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                        #                 phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
+                    if pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
+                        # TODO - why no metrics? Not generated due to lack of data?
+                        pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
-        return results
+                    # # Fisher
+                    # phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
+                    # if mod_key in time_course_fisher_dict:
+                    #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[mod_key]
+                    # else:
+                    #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
+                    #                 phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
+
+            rr.save()
 
     # calculateProteinOscillationAbundances
     # TODO - tested
@@ -1684,17 +1687,20 @@ class Command(BaseCommand):
 
 
     # TODO - tested
-    def _generate_phospho_regression_metrics(self, results, replicates, sample_stages, with_bugs):
+    def _generate_phospho_regression_metrics(self, run, replicates, sample_stages, with_bugs):
+        run_results = self._fetch_run_results(run)
+
         stages = [s.name for s in sample_stages]
 
-        for protein in results:
-            phosphoryl_abundances = results[protein][PHOSPHORYLATION_ABUNDANCES]
-            protein_abundances = results[protein][PROTEIN_ABUNDANCES]
+        for rr in run_results:
+            # TODO - these names are inconsistent with elsewhere
+            phosphoryl_abundances = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            protein_abundances = rr.protein_phospho_result[PROTEIN_ABUNDANCES]
+
+            if not len(phosphoryl_abundances) or not len(protein_abundances[RAW]):
+                continue
 
             try:
-                if len(phosphoryl_abundances) == 0 or len(protein_abundances[RAW]) == 0:
-                    continue
-
                 for phosphosite in phosphoryl_abundances:
                     # TODO - not in the original
                     pappan = phosphoryl_abundances[
@@ -1733,25 +1739,22 @@ class Command(BaseCommand):
                     prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
                     phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
 
+                    # TODO - a try within a try?
                     try:
-                        # Fit the linear model
                         if None in prot_x or None in phospho_y:
                             continue
 
                         model = linear_model.LinearRegression().fit(prot_x, phospho_y)
                     except Exception as e:
-                        print("++++++ LINEAR REGRESSION")
-                        print(prot_x)
-                        print(phospho_y)
-                        print(e)
+                        logger.error("_generate_phospho_regression_metrics error")
+                        logger.error(prot_x)
+                        logger.error(phospho_y)
+                        logger.error(e)
 
-                    # Predict new Phospho Values
                     y_pred = model.predict(prot_x)
 
-                    # Calculate Residuals
                     residuals = (phospho_y - y_pred)
 
-                    # Create new regressed phospho abundances dictionaries
                     # TODO - change this variable name
                     res_dic = {}
 
@@ -1777,8 +1780,6 @@ class Command(BaseCommand):
                         with_bugs=with_bugs
                     )
 
-                    # Add metrics
-
                     # Calculate the protein - phospho vector correlation
                     phospho_regression[ZERO_MAX][METRICS] = {}
 
@@ -1786,22 +1787,22 @@ class Command(BaseCommand):
                     phospho_regression[ZERO_MAX][METRICS][PROTEIN_PHOSPHO_CORRELATION] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
 
                     # curve fold change phosphorylation/curve fold change protein for 0-max
-                    phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = results[protein][PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / results[protein][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
+                    phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][
+                        phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / rr.protein_phospho_result[METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
 
                     # ANOVA
                     phospho_regression[LOG2_MEAN][METRICS] = {}
                     phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
             except Exception as e:
-                print("+++++ ERROR")
-                print(e)
-                exit()
+                logger.error("+++++ ERROR")
+                logger.error(e)
+                logger.error()
 
-        return results
+            rr.save()
 
     # TODO - tested
     def _generate_protein_oscillation_metrics(self, run, replicates, sample_stages, with_bugs):
-        run_results = RunResult.objects.filter(run=run)
+        run_results = self._fetch_run_results(run)
 
         for rr in run_results:
             prpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
@@ -1924,25 +1925,34 @@ class Command(BaseCommand):
 
         return info_df.to_dict('index')
 
-    def _generate_kinase(self, raw_readings, results):
-        # TODO - lifted, change
-        for protein in raw_readings:
-            for mod in raw_readings[protein]:
+    def _generate_kinase_predictions(self, run):
+        logger.info("Generating kinase predictions.")
+
+        run_results = self._fetch_run_results(run)
+
+        for rr in run_results:
+            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+
+            for mod in pprpa:
                 # only for certain phosphorylation sites
                 # TODO - why? What does the lack of dash mean?
+
                 if mod.find("-") == -1:
                     # Add PepTools Phospho annotations
-                    mod_result = results[protein][mod]
+                    mod_result = pprpa[mod]
+                    accession_number = rr.protein.accession_number
 
-                    if 'phospho' in index_protein_names[protein.accession_number] and mod in index_protein_names[protein.accession_number]['phospho']:
-                        mod_result['PepTools_annotations'] = index_protein_names[protein.accession_number]['phospho'][mod]
+                    if PHOSPHO in index_protein_names[accession_number] and mod in index_protein_names[accession_number][PHOSPHO]:
+                        mod_result[PEPTOOLS_ANNOTATIONS] = index_protein_names[accession_number][PHOSPHO][mod]
 
-                    mod_result['kinase_prediction'] = {}
+                    mod_result[KINASE_PREDICTION] = {}
 
-                    phospho_kinases_class = self._getConsensusKinasePred(protein.accession_number, mod_result)
-                    mod_result['kinase_prediction']['peptide_seq'] = phospho_kinases_class['peptide_seq']
-                    mod_result['kinase_prediction']['consenus_motif_match'] = phospho_kinases_class['kinase_motif_match']
+                    phospho_kinases_class = self._get_consensus_kinase_pred(accession_number, pprpa[mod][PHOSPHORYLATION_SITE])
 
+                    mod_result[KINASE_PREDICTION][PEPTIDE_SEQ] = phospho_kinases_class[PEPTIDE_SEQ]
+                    mod_result[KINASE_PREDICTION][CONSENSUS_MOTIF_MATCH] = phospho_kinases_class[KINASE_MOTIF_MATCH]
+
+            rr.save()
 
     def _calculate_protein_medians(self, run, replicates, protein_readings, column_names, with_bugs):
         # TODO - does this need to be by replicate? Why not just all columns at once?
@@ -1990,6 +2000,9 @@ class Command(BaseCommand):
             raise Exception(f"No phospho medians created yet for {unlimited_run}")
 
         return json.loads(phospho_medians)
+
+    def _fetch_run_results(self, run):
+        return RunResult.objects.filter(run=run)
 
     def _dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))
