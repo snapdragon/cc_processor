@@ -82,6 +82,7 @@ logger = logging.getLogger(__name__)
 with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
     index_protein_names = json.load(outfile)
 
+CALCULATE_FISHER_G = False
 
 class Command(BaseCommand):
     help = "Processes all proteins and phosphoproteins for a given project"
@@ -210,13 +211,13 @@ class Command(BaseCommand):
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
-            self._generate_kinase_predictions(run)
+            # self._generate_kinase_predictions(run)
 
-            self._calculate_batch_q_value_fisher(run)
+            # self._calculate_batch_q_value_fisher(run)
 
             self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -365,7 +366,8 @@ class Command(BaseCommand):
         run_results_with_log2_mean = RunResult.objects.filter(run=run, protein_phospho_result__metrics__has_key = "log2_mean")
 
         # fisher_stats = self._calculate_fisher(run, replicates, sample_stages)
-
+        fisher_stats = self.calcFisherG(run, replicates, sample_stages)
+        
         # TODO - rename this
         prot_anova_info: dict = {}
 
@@ -394,60 +396,6 @@ class Command(BaseCommand):
             # results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
 
 
-    def _calculate_fisher(
-        self,
-        run,
-        replicates,
-        sample_stages,
-        phospho=False,
-        phospho_ab=False,
-        phospho_reg=False,
-    ):
-        # TODO - remove this comment
-        # These calls are always the same in ICR
-        # norm_method = LOG2_MEAN
-        # raw = False
-
-        time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
-
-        time_course_fisher = time_course_fisher.dropna()
-
-        g_stats = []
-        p_values = []
-        frequencies = []
-
-        for _, row in time_course_fisher.iterrows():
-            values = row.values.astype(float)
-
-            # Estimate power spectrum
-            freqs, power = periodogram(values)
-
-            if len(power) == 0 or np.all(power == 0):
-                g_stat = 0
-                p_value = 1.0
-                dominant_freq = 0
-            else:
-                g_stat = np.max(power) / np.sum(power)
-                dominant_freq = freqs[np.argmax(power)]
-                p_value = 1 - g_stat  # crude approximation
-
-            g_stats.append(g_stat)
-            p_values.append(p_value)
-            frequencies.append(dominant_freq)
-
-        time_course_fisher[G_STATISTIC] = g_stats
-        time_course_fisher[P_VALUE] = p_values
-        time_course_fisher[FREQUENCY] = frequencies
-
-        time_course_fisher[Q_VALUE] = self.p_adjust_bh(time_course_fisher[P_VALUE])
-
-        # Return only the Fisher columns
-        fisher_cols = [G_STATISTIC, P_VALUE, FREQUENCY, Q_VALUE]
-        time_course_fisher = time_course_fisher[fisher_cols]
-
-        return time_course_fisher.to_dict("index")
-
-
 
     # TODO - lifted from ICR, rewrite
     # TODO - does it really need to be a dataframe? Write tests and change if possible.
@@ -466,6 +414,7 @@ class Command(BaseCommand):
     # TODO - lifted from ICR, rewrite
     # TODO - try to get rid of dataframes if possible
     # TODO - needs a test if to be used, is only used by fisher
+    # createAbundanceDf
     def _create_results_dataframe(self, run, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
         # TODO - raw is always False, ignore all raw code
         # TODO - norm_method is always log2_mean, ignore all norm_method code
@@ -473,48 +422,47 @@ class Command(BaseCommand):
         run_results = self._fetch_run_results(run)
 
         abundance_table = {}
-        final_protein = None
 
-        # TODO - maybe this and other similar loops could be changed to use items()?
-        #   That way the value variable could be used in each successive loop, e.g.
-        #   for protein, p_readings in readings.items():
-        #       for replicate_name, rn_readings = p_readings.items():
-        #           etc.
         for rr in run_results:
-            prs = rr.protein
+            pr = rr.protein
+            pan = rr.protein.accession_number
 
-            # TODO - put this 'if' outside the loop? It may be more efficient
             if phospho:
-                for mod in prs[PHOSPHORYLATION_ABUNDANCES]:
-                    protein_abundances_all = prs[PHOSPHORYLATION_ABUNDANCES][mod][POSITION_ABUNDANCES]
+                for mod in rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]:
+                    ppam = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][mod]
 
-                    mod_key = protein.accession_number + "_" + prs[PHOSPHORYLATION_ABUNDANCES][mod][PHOSPHORYLATION_SITE]
+                    mod_key = f"{pan}_{ppam[PHOSPHORYLATION_SITE]}"
 
-                    if len(protein_abundances_all) != 0:
-                        # TODO - tidy this
-                        protein_abundances = protein_abundances_all[NORMALISED][LOG2_MEAN]
+                    if not len(ppam[POSITION_ABUNDANCES]):
+                        continue
 
-                        if phospho_ab:
-                            if PROTEIN_OSCILLATION_ABUNDANCES in prs[PHOSPHORYLATION_ABUNDANCES][mod]:
-                                protein_abundances = prs[PHOSPHORYLATION_ABUNDANCES][mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
-                            else:
-                                continue
-                        if phospho_reg:
-                            if PHOSPHO_REGRESSION in prs[PHOSPHORYLATION_ABUNDANCES][mod]:
-                                protein_abundances = prs[PHOSPHORYLATION_ABUNDANCES][mod][PHOSPHO_REGRESSION][LOG2_MEAN]
-                            else:
-                                continue
+                    protein_abundances = ppam[POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]
 
-                        self._build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key)
+                    if phospho_ab:
+                        if PROTEIN_OSCILLATION_ABUNDANCES not in ppam:
+                            continue
+
+                        protein_abundances = ppam[PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
+
+                    if phospho_reg:
+                        if PHOSPHO_REGRESSION not in ppam:
+                            continue
+
+                    protein_abundances = ppam[PHOSPHO_REGRESSION][LOG2_MEAN]
+
+                    self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
             else:
-                abundance_table[protein] = {}
+                pprpanlm = rr.protein_phospho_result[PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]
 
-                for replicate_name in results[protein]:
-                    for stage_name in results[protein][replicate_name].keys():
-                        rep_stage_name = f"{replicate_name}_{stage_name}"
-                        abundance_table[protein][rep_stage_name] = results[protein][
-                            replicate_name
-                        ][stage_name]
+                abundance_table[pan] = {}
+
+                for replicate in replicates:
+                    for sample_stage in sample_stages:
+                        rep_stage_name = f"{replicate.name}_{sample_stage.name}"
+
+                        abundance_table[pan][rep_stage_name] = pprpanlm[
+                            replicate.name
+                        ][sample_stage.name]
 
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
@@ -555,15 +503,15 @@ class Command(BaseCommand):
 
         return results
 
-    def _tp(self, stage_name, readings):
+    def _tp(self, stage_name, readings, replicates):
         """
         Creates a list of each abundance of a stage name across replicates
         """
         res = []
 
-        for replicate_name in readings:
-            if stage_name in readings[replicate_name]:
-                reading = readings[replicate_name][stage_name]
+        for replicate in replicates:
+            if stage_name in readings[replicate.name]:
+                reading = readings[replicate.name][stage_name]
 
                 if reading is not None:
                     res.append(float(reading))
@@ -571,25 +519,21 @@ class Command(BaseCommand):
         return res
     
     # TODO - straight up lifted from ICR, simplify ideally using a library
-    def _calculate_ANOVA(self, readings: dict):
+    def _calculate_ANOVA(self, readings: dict, replicates, sample_stages):
         # Defaults if not enough replicate
         # TODO - why these values?
         p_value = 1
         f_statistic = 1
 
         if readings:
-            # TODO - why is the first replicated used?
             #   Sometimes the first replicate might not even be 'One' or equaivalent,
             #   as replicates are sometimes excluded by qc for being all None.
-            first_replicate_name = list(readings.keys())[0]
 
-            # TODO - change to stage_names
             stage_names = []
 
             try:
-                # TODO - change this to use sample_stages?
-                for stage_name in readings[first_replicate_name]:
-                    stage_names.append(self._tp(stage_name, readings))
+                for stage in sample_stages:
+                    stage_names.append(self._tp(stage.name, readings, replicates))
 
                 # Each entry must have at least two points for f_oneway to work    
                 timepoints = [x for x in stage_names if x != [] and len(x) > 1]
@@ -597,6 +541,9 @@ class Command(BaseCommand):
                 if len(timepoints) > 1:
                     # TODO - study f_oneway
                     one_way_anova = f_oneway(*timepoints)
+
+                    print("+++ one way anova")
+                    print(one_way_anova)
 
                     f_statistic = one_way_anova[0].item()
                     p_value = one_way_anova[1].item()
@@ -1383,8 +1330,9 @@ class Command(BaseCommand):
 
         self._generate_protein_oscillation_metrics(run, replicates, sample_stages, with_bugs)
 
-        # TODO - put back in
+        # TODO - have this put the values directly into RR?
         # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = True)
+        time_course_fisher_dict = self.calcFisherG(run, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
@@ -1426,12 +1374,14 @@ class Command(BaseCommand):
 
                 pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
-                # # Fisher
+                # Fisher
                 # TODO - tidy this and others like it
-                # if mod_key in time_course_fisher_dict:
-                #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[mod_key]
-                # else:
-                #     results[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][site][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
+                fisher_G_stats = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
+
+                if mod_key in time_course_fisher_dict:
+                    fisher_G_stats = time_course_fisher_dict[mod_key]
+
+                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_G_stats
 
             rr.save()
 
@@ -1455,6 +1405,7 @@ class Command(BaseCommand):
 
         # # Fisher G Statistic - Phospho
         # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        time_course_fisher_dict = self.calcFisherG(run, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
 
@@ -1658,7 +1609,7 @@ class Command(BaseCommand):
             sample_stages
         )
 
-        anova = self._calculate_ANOVA(log2_readings)
+        anova = self._calculate_ANOVA(log2_readings, replicates, sample_stages)
 
         # TODO - this is needed in batch processing
         # relative_log2_readings_by_protein[
@@ -1792,7 +1743,7 @@ class Command(BaseCommand):
 
                     # ANOVA
                     phospho_regression[LOG2_MEAN][METRICS] = {}
-                    phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN])
+                    phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN], replicates, sample_stages)
             except Exception as e:
                 logger.error("+++++ ERROR")
                 logger.error(e)
@@ -1840,7 +1791,7 @@ class Command(BaseCommand):
                             sample_stages
                         )
 
-                    anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN])
+                    anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN], replicates, sample_stages)
 
                     prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
 
@@ -1890,29 +1841,20 @@ class Command(BaseCommand):
     def _add_q_values(self, run):
         pass
 
-    def _build_phospho_abundance_table(abundance_table, replicates, protein_abundances, mod_key):
-        # TODO - tidy this
-        for rep in replicates:
-            # TODO - is the "abundance_" bit really needed?
-            abundance_rep = f"abundance_{rep.name}"
-            if mod_key not in abundance_table:
+    # TODO - is this worth being a function at all?
+    def _build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key):
+        for replicate in replicates:
+            if not abundance_table.get(mod_key):
                 abundance_table[mod_key] = {}
 
             # TODO - not in original, why here?
-            if not protein_abundances.get(abundance_rep):
+            if not protein_abundances.get(replicate.name):
                 continue
 
-            # TODO - change timepoint to stage_name
-            # TODO - use sample_stages
-            for timepoint in protein_abundances[abundance_rep]:
-                rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
-                rep_timepoint = rep + "_" + timepoint
-                abundance_table[mod_key][rep_timepoint] = protein_abundances[abundance_rep][timepoint]
-
-        # TODO - how is this never called?
-        print("+++++ BUILD")
-        print(abundance_table)
-        exit()
+            for sample_stage in sample_stages:
+                # rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
+                rep_timepoint = f"{replicate.name}_{sample_stage.name}"
+                abundance_table[mod_key][rep_timepoint] = protein_abundances[replicate.name][sample_stage.name]
 
         return abundance_table
 
@@ -2000,6 +1942,90 @@ class Command(BaseCommand):
             raise Exception(f"No phospho medians created yet for {unlimited_run}")
 
         return json.loads(phospho_medians)
+
+
+    def calcFisherG(self, run, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
+        """
+        Performs a periodicity test using the 'Fisher' method.
+        it takes a vector containing just numeric abundance values as input
+        where each vector is a different protein and each value corresponds to a different timepoint, ordered from low to high
+        the output is a dictionary containing the fisher g-statistic, pvalues and periodic frequencies for each protein.
+        """
+        if not CALCULATE_FISHER_G:
+            return {}
+
+        raw = False
+        norm_method = LOG2_MEAN
+
+        # # R part for Fisher G-Statistic
+        # import rpy2.robjects as ro
+        # from rpy2.robjects.packages import importr
+        # import rpy2.robjects.packages as rpackages
+        # # R vector of strings
+        # from rpy2.robjects.vectors import StrVector
+
+        # logger.info("Calculate Fisher G Statistics")
+        # # import R's utility package
+        # utils = rpackages.importr('utils')
+        # # select a mirror for R packages
+        # utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+        # utils.install_packages("pak")
+        # ro.r('library(pak)')
+        # ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
+        # packnames = ('perARMA', 'quantreg')
+        # # Selectively install what needs to be install.
+        # names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+        # if len(names_to_install) > 0:
+        #     utils.install_packages(StrVector(names_to_install))
+
+        # not_in_cran = ("ptest")
+        # not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
+        # if len(not_in_crac_names_to_install) > 0:
+        #     ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+
+        # time_course_fisher = createAbundanceDf(combined_time_course_info, norm_method, raw, phospho, phospho_ab, phospho_reg)
+        time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
+
+        time_course_fisher = time_course_fisher.dropna()
+
+        for index,row in time_course_fisher.iterrows():
+            row_z = row.tolist()
+            row_z = [str(i) for i in row_z]
+            ro.r('''
+                library(ptest)
+                z <- c(''' + ','.join(row_z) + ''')
+                # p_value <- ptestg(z,method="Fisher")$pvalue
+                # # freq <- ptestg(z,method="Fisher")$freq
+                # # g_stat <- ptestg(z,method="Fisher")$$obsStat
+                ptestg_res <- ptestg(z,method="Fisher")
+            '''
+            )
+            ptestg_res = ro.globalenv['ptestg_res']
+            g_stat = ptestg_res[0]
+            p_value = ptestg_res[1]
+            freq = ptestg_res[2]
+
+            time_course_fisher.loc[[index],['G_statistic']] = g_stat
+            time_course_fisher.loc[[index],['p_value']] = p_value
+            time_course_fisher.loc[[index],['frequency']] = freq
+
+        # Add q-value columns 
+        q_value = self.p_adjust_bh(time_course_fisher['p_value'])
+
+        time_course_fisher['q_value'] = q_value
+    
+        # Turn df into a dictionary
+        cols = time_course_fisher.columns
+        fisher_cols = ['G_statistic','p_value', 'frequency', 'q_value']
+        ab_col = [x for x in cols if x not in fisher_cols]
+        time_course_fisher = time_course_fisher.drop(columns=ab_col)
+        time_course_fisher_dict = time_course_fisher.to_dict('index')
+
+        return time_course_fisher_dict
+
+
+
+
 
     def _fetch_run_results(self, run):
         return RunResult.objects.filter(run=run)
