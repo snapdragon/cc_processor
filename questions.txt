@@ -15,7 +15,7 @@ Is the approximate fisher G calculation acceptable? Installing R is horrible.
 The ICR data has various values for 'confidence'. What about us?
 
 
-min-max and impute values are calculated differently in proteo and phosho.
+min-max and impute values are calculated differently in proteo and phosho. And position_abundances?
     Which is correct?
     Proteo uses calclog2RelativeAbundance
     Phospho uses firstLevelNormalisationPhospho

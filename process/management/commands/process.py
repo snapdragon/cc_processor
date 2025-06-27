@@ -1,7 +1,13 @@
 # TODO - protein_oscillation_abundances residuals average is wrong. 
 #   Also R_squared_average, curve_fold_change and others.
 #   It's because calculate_metrics isn't working. It requires a lot of study.
+# TODO - is the above still true? They're OK for Q93075
 
+# TODO - phospho_regression sample stage value are wrong, but ANOVA values are right (???)
+
+# TODO - position_abundances imputed values are slightly too high.
+#   Due to empty values perhaps?
+# TODO - create a tool to compare output to ICR
 # TODO - rename protein_phospho_result to combined_result or somesuch
 # TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - put kinase prediction back in. Make them a flag?
@@ -211,13 +217,15 @@ class Command(BaseCommand):
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
-            # self._generate_kinase_predictions(run)
+            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
-            # self._calculate_batch_q_value_fisher(run)
+            self._generate_kinase_predictions(run)
+
+            self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
             self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -358,6 +366,51 @@ class Command(BaseCommand):
 
 
 
+    # TODO - similar to other functionality, consolidate
+    def _calculate_phosphorylation_abundances_q_values(self, run, replicates, sample_stages):
+        logger.info("Calculating batch q values for phosphorylation_abundances.")
+
+        # TODO - blank all q_values in DB?
+
+        run_results = RunResult.objects.filter(run=run)
+
+        # TODO - rename this
+        prot_anova_info: dict = {}
+
+        for rr in run_results:
+            for mod in rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]:
+                pprpam = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][mod]
+
+                phospho_key = f"{rr.protein.accession_number}_{pprpam['phosphorylation_site']}"
+
+                prot_anova_info[phospho_key] = {
+                    P_VALUE: pprpam[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
+                }
+
+        # TODO - is there an alternative to converting this to a dataframe?
+        # TODO - is this the same as _generate_df?
+        prot_anova_info_df = pd.DataFrame(prot_anova_info).T
+        prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
+
+        prot_anova_info = prot_anova_info_df.to_dict("index")
+
+        for rr in run_results:
+            for mod in rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]:
+                pprpam = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][mod]
+
+                phospho_key = f"{rr.protein.accession_number}_{pprpam['phosphorylation_site']}"
+
+                q_value = 1
+
+                if prot_anova_info.get(phospho_key):
+                    q_value = prot_anova_info[phospho_key][Q_VALUE]
+
+                pprpam[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = q_value
+
+            rr.save()
+
+
+
     def _calculate_batch_q_value_fisher(self, run, replicates, sample_stages):
         logger.info("Calculating batch q and fisher G values.")
 
@@ -384,6 +437,11 @@ class Command(BaseCommand):
 
         for rr in run_results_with_log2_mean:
             rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
+
+            # if rr.protein.accession_number == 'Q93075':
+            #     print("+++++ Q_VALUE")
+            #     print(prot_anova_info[rr.protein][Q_VALUE])
+            #     exit
 
             rr.save()
 
@@ -541,9 +599,6 @@ class Command(BaseCommand):
                 if len(timepoints) > 1:
                     # TODO - study f_oneway
                     one_way_anova = f_oneway(*timepoints)
-
-                    print("+++ one way anova")
-                    print(one_way_anova)
 
                     f_statistic = one_way_anova[0].item()
                     p_value = one_way_anova[1].item()
@@ -1405,7 +1460,7 @@ class Command(BaseCommand):
 
         # # Fisher G Statistic - Phospho
         # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
-        time_course_fisher_dict = self.calcFisherG(run, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        time_course_fisher_dict = self.calcFisherG(run, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
 
@@ -1818,10 +1873,6 @@ class Command(BaseCommand):
             run_result = RunResult.objects.get(run=run, protein=pr)
 
             combined_result = run_result.protein_result
-
-            # if run_result.protein.id == 35368:
-            #     print(run_result.phospho_result)
-            #     exit()
 
             combined_result[PHOSPHORYLATION_ABUNDANCES] = run_result.phospho_result
 

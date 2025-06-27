@@ -228,10 +228,10 @@ class Migration(migrations.Migration):
         )
 
         replicate_ICR_1 = Replicate.objects.create(
-            name="One", rank=1, project=project_ICR
+            name="abundance_rep_1", rank=1, project=project_ICR
         )
         replicate_ICR_2 = Replicate.objects.create(
-            name="Two", rank=2, project=project_ICR
+            name="abundance_rep_2", rank=2, project=project_ICR
         )
 
         sample_stage_ICR_1 = SampleStage.objects.create(

@@ -20,6 +20,7 @@ Fix all the _calculate_metrics errors
 min-max and imputed values are calculated differently between protein and phospho
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
+What about protein_info? It looks important.
 Change things to defaultdicts?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
@@ -31,6 +32,9 @@ Add uniqueness constraints to models
 Add Final to various variables
 Write tests for with_bugs?
 Round the various stats
+I have no idea what PepTools_annotations is about
+    or protein-phospho-correlation
+    or phosho-protein-cfc_ratio
 
 
 ### Later

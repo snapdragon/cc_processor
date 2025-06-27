@@ -176,3 +176,4 @@ cython_debug/
 # Exclude data files
 /data
 /output
+/output_ICR
