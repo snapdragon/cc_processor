@@ -3,17 +3,12 @@
 #   It's because calculate_metrics isn't working. It requires a lot of study.
 # TODO - is the above still true? They're OK for Q93075
 
-# TODO - phospho_regression sample stage value are wrong, but ANOVA values are right (???)
-
 # TODO - position_abundances imputed values are slightly too high.
 #   Due to empty values perhaps?
 # TODO - create a tool to compare output to ICR
 # TODO - rename protein_phospho_result to combined_result or somesuch
 # TODO - make _proteo iterate by protein and not prebuild the dict
-# TODO - put kinase prediction back in. Make them a flag?
-# TODO - put PepTools_annotations in
-# TODO - phosphorylation metrics log2_mean anova is wrong. Or maybe proteo is. Investigate.
-# TODO - ICR doesn't have phospho_regression (??)
+# TODO - ICR doesn't have phospho_regression (??). It's there for Q93075 though...
 # TODO - get rid of 'abundance_average' as an output field name
 # TODO - put peptide_abundances in SL?
 # TODO - most of the warnings are from _calculate_metrics
@@ -217,13 +212,13 @@ class Command(BaseCommand):
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
-            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            # self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
-            self._generate_kinase_predictions(run)
+            # self._generate_kinase_predictions(run)
 
-            self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
+            # self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            # self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
             self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
@@ -233,7 +228,7 @@ class Command(BaseCommand):
         logger.info("Processing phosphoproteome")
 
         # Remove any earlier phospho_result values for this project
-        RunResult.objects.filter(run=run).update(phospho_result=None)
+        self._fetch_run_results(run).update(phospho_result=None)
 
         num_processed = 0
 
@@ -372,7 +367,7 @@ class Command(BaseCommand):
 
         # TODO - blank all q_values in DB?
 
-        run_results = RunResult.objects.filter(run=run)
+        run_results = self._fetch_run_results(run)
 
         # TODO - rename this
         prot_anova_info: dict = {}
@@ -1452,7 +1447,7 @@ class Command(BaseCommand):
         Phospho = Dependent = Y
         Protein = Independent = X
         Linear Model => y = ax + b
-        Residuals = Y - Y_predict 
+        Residuals = Y - Y_predict
         """
         logger.info("Adding Phospho Normalised on Protein Abundances - Regression")
 
@@ -1696,6 +1691,8 @@ class Command(BaseCommand):
     def _generate_phospho_regression_metrics(self, run, replicates, sample_stages, with_bugs):
         run_results = self._fetch_run_results(run)
 
+        # TODO - this is the reason the fields are in the wrong order. They're not
+        #   in the same order when returned from the DB I suspect.
         stages = [s.name for s in sample_stages]
 
         for rr in run_results:
@@ -1719,11 +1716,19 @@ class Command(BaseCommand):
                         if not pappan[LOG2_MEAN].get(replicate.name):
                             continue
 
-                        rep_proteo = protein_abundances[NORMALISED][LOG2_MEAN][replicate.name]
-                        rep_phospho = pappan[LOG2_MEAN][replicate.name]
+                        rep_proteo = {}
+                        rep_phospho = {}
 
-                        if len(rep_proteo) != len(sample_stages) or len(rep_phospho) != len(sample_stages):
+                        unordered_rep_proteo = protein_abundances[NORMALISED][LOG2_MEAN][replicate.name]
+                        unordered_rep_phospho = pappan[LOG2_MEAN][replicate.name]
+
+                        if len(unordered_rep_proteo) != len(sample_stages) or len(unordered_rep_phospho) != len(sample_stages):
                             continue
+
+                        # Reorder the stages, they come out of the DB in the wrong order
+                        for stage in sample_stages:
+                            rep_proteo[stage.name] = unordered_rep_proteo[stage.name]
+                            rep_phospho[stage.name] = unordered_rep_phospho[stage.name]
 
                         rep_phosphos.append(rep_phospho)
                         rep_proteos.append(rep_proteo)
@@ -1738,6 +1743,7 @@ class Command(BaseCommand):
 
                     # converting dictionary values to list for both replicates
                     # TODO - study this
+                    # TODO - Can this function can be simplified?
                     phospho_Y_list = [val for r_phos in rep_phosphos for val in r_phos.values()]
                     protein_X_list = [val for r_prot in rep_proteos for val in r_prot.values()]
 
@@ -1857,7 +1863,7 @@ class Command(BaseCommand):
         logger.info("Combining protein and phospho results.")
 
         # TODO - check all other functions that need to blank DB
-        RunResult.objects.filter(run=run).update(protein_phospho_result=None)
+        self._fetch_run_results(run).update(protein_phospho_result=None)
 
         num_proteins = 0
 
@@ -1919,7 +1925,7 @@ class Command(BaseCommand):
         return info_df.to_dict('index')
 
     def _generate_kinase_predictions(self, run):
-        logger.info("Generating kinase predictions.")
+        logger.info("Generating kinase predictions")
 
         run_results = self._fetch_run_results(run)
 

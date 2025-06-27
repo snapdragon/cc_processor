@@ -15,6 +15,7 @@ NEXT - write tests for all functions
 
 
 Move r code to a separate script and communicate with it?
+Make batch populate a new field, so it can be run independently
 Create a JSON schema for the results
 Fix all the _calculate_metrics errors
 min-max and imputed values are calculated differently between protein and phospho
