@@ -214,13 +214,13 @@ class Command(BaseCommand):
         if calculate_batch:
             self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
-            # self._generate_kinase_predictions(run)
+            self._generate_kinase_predictions(run)
 
-            # self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
+            self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
             self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -433,11 +433,6 @@ class Command(BaseCommand):
         for rr in run_results_with_log2_mean:
             rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
 
-            # if rr.protein.accession_number == 'Q93075':
-            #     print("+++++ Q_VALUE")
-            #     print(prot_anova_info[rr.protein][Q_VALUE])
-            #     exit
-
             rr.save()
 
             # # Fisher
@@ -477,7 +472,6 @@ class Command(BaseCommand):
         abundance_table = {}
 
         for rr in run_results:
-            pr = rr.protein
             pan = rr.protein.accession_number
 
             if phospho:
@@ -496,12 +490,11 @@ class Command(BaseCommand):
                             continue
 
                         protein_abundances = ppam[PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
-
-                    if phospho_reg:
+                    elif phospho_reg:
                         if PHOSPHO_REGRESSION not in ppam:
                             continue
 
-                    protein_abundances = ppam[PHOSPHO_REGRESSION][LOG2_MEAN]
+                        protein_abundances = ppam[PHOSPHO_REGRESSION][LOG2_MEAN]
 
                     self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
             else:
@@ -1905,7 +1898,7 @@ class Command(BaseCommand):
         pass
 
     # TODO - is this worth being a function at all?
-    def _build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key):
+    def _build_phospho_abundance_table(self, abundance_table, replicates, sample_stages, protein_abundances, mod_key):
         for replicate in replicates:
             if not abundance_table.get(mod_key):
                 abundance_table[mod_key] = {}
@@ -1914,12 +1907,14 @@ class Command(BaseCommand):
             if not protein_abundances.get(replicate.name):
                 continue
 
+            # TODO - check all these loops have the same variable name
             for sample_stage in sample_stages:
                 # rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
+                if not protein_abundances[replicate.name].get(sample_stage.name):
+                    continue
+
                 rep_timepoint = f"{replicate.name}_{sample_stage.name}"
                 abundance_table[mod_key][rep_timepoint] = protein_abundances[replicate.name][sample_stage.name]
-
-        return abundance_table
 
     # TODO - tested
     def _generate_df(self, info):
@@ -2017,47 +2012,47 @@ class Command(BaseCommand):
         raw = False
         norm_method = LOG2_MEAN
 
-        # # R part for Fisher G-Statistic
-        # import rpy2.robjects as ro
-        # from rpy2.robjects.packages import importr
-        # import rpy2.robjects.packages as rpackages
-        # # R vector of strings
-        # from rpy2.robjects.vectors import StrVector
+        # R part for Fisher G-Statistic
+        import rpy2.robjects as ro
+        from rpy2.robjects.packages import importr
+        import rpy2.robjects.packages as rpackages
+        # R vector of strings
+        from rpy2.robjects.vectors import StrVector
 
-        # logger.info("Calculate Fisher G Statistics")
-        # # import R's utility package
-        # utils = rpackages.importr('utils')
-        # # select a mirror for R packages
-        # utils.chooseCRANmirror(ind=1) # select the first mirror in the list
-        # utils.install_packages("pak")
-        # ro.r('library(pak)')
-        # ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
-        # packnames = ('perARMA', 'quantreg')
-        # # Selectively install what needs to be install.
-        # names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-        # if len(names_to_install) > 0:
-        #     utils.install_packages(StrVector(names_to_install))
+        logger.info("Calculate Fisher G Statistics")
+        # import R's utility package
+        utils = rpackages.importr('utils')
+        # select a mirror for R packages
+        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+        utils.install_packages("pak")
+        ro.r('library(pak)')
+        ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
+        packnames = ('perARMA', 'quantreg')
+        # Selectively install what needs to be install.
+        names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+        if len(names_to_install) > 0:
+            utils.install_packages(StrVector(names_to_install))
 
-        # not_in_cran = ("ptest")
-        # not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
-        # if len(not_in_crac_names_to_install) > 0:
-        #     ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+        not_in_cran = ("ptest")
+        not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
+        if len(not_in_crac_names_to_install) > 0:
+            ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
 
         # time_course_fisher = createAbundanceDf(combined_time_course_info, norm_method, raw, phospho, phospho_ab, phospho_reg)
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
 
         time_course_fisher = time_course_fisher.dropna()
 
-        if phospho:
-            print("++++ TIME COURSE FISHER")
-            pd.set_option('display.max_rows', None)
-            pd.set_option('display.max_columns', None)
-            pd.set_option('display.width', None)
-            pd.set_option('display.max_colwidth', None)
-            print(time_course_fisher)
-            exit()
+        # if phospho and not phospho_ab and phospho_reg:
+        #     print(f"++++ TIME COURSE FISHER PHOSPHO {phospho}, {phospho_ab}, {phospho_reg}")
+        #     pd.set_option('display.max_rows', None)
+        #     pd.set_option('display.max_columns', None)
+        #     pd.set_option('display.width', None)
+        #     pd.set_option('display.max_colwidth', None)
+        #     print(time_course_fisher)
+        #     exit()
 
-        return {}
+        # return {}
 
         for index,row in time_course_fisher.iterrows():
             row_z = row.tolist()
