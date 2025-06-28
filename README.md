@@ -90,11 +90,6 @@ psql -U myuser -d mydatabase
 ```sh
 delete from django_migrations where app = 'process';
 ```
-
-
-
-
-
 ### Run venv
 ```sh
 eval $(poetry env activate)

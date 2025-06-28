@@ -39,3 +39,5 @@ CONSENSUS_MOTIF_MATCH = "consenus_motif_match"
 KINASE_MOTIF_MATCH = "kinase_motif_match"
 
 TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
+
+DEFAULT_FISHER_STATS = {G_STATISTIC: 1, P_VALUE: 1, FREQUENCY: 1, Q_VALUE: 1}

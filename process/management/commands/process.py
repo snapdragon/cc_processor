@@ -69,6 +69,7 @@ from process.constants import (
     PEPTOOLS_ANNOTATIONS,
     CONSENSUS_MOTIF_MATCH,
     KINASE_MOTIF_MATCH,
+    DEFAULT_FISHER_STATS,
 )
 
 logging.basicConfig(
@@ -84,6 +85,9 @@ with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
     index_protein_names = json.load(outfile)
 
 CALCULATE_FISHER_G = True
+
+# TODO - find a better way of doing this
+r_installed = False
 
 class Command(BaseCommand):
     help = "Processes all proteins and phosphoproteins for a given project"
@@ -413,7 +417,6 @@ class Command(BaseCommand):
 
         run_results_with_log2_mean = RunResult.objects.filter(run=run, protein_phospho_result__metrics__has_key = "log2_mean")
 
-        # fisher_stats = self._calculate_fisher(run, replicates, sample_stages)
         fisher_stats = self.calcFisherG(run, replicates, sample_stages)
         
         # TODO - rename this
@@ -433,16 +436,14 @@ class Command(BaseCommand):
         for rr in run_results_with_log2_mean:
             rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
 
+            fisher_stats = DEFAULT_FISHER_STATS
+
+            if rr.protein in fisher_stats:
+                fisher_stats = fisher_stats[rr.protein]
+
+            rr.protein_phospho_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_stats
+
             rr.save()
-
-            # # Fisher
-            # fisher = {G_STATISTIC: 1, P_VALUE: 1, FREQUENCY: 1, Q_VALUE: 1}
-
-            # if protein in fisher_stats:
-            #     fisher = fisher_stats[protein]
-
-            # results[protein][METRICS][LOG2_MEAN][FISHER_G] = fisher
-
 
 
     # TODO - lifted from ICR, rewrite
@@ -1380,7 +1381,6 @@ class Command(BaseCommand):
         self._generate_protein_oscillation_metrics(run, replicates, sample_stages, with_bugs)
 
         # TODO - have this put the values directly into RR?
-        # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = True)
         time_course_fisher_dict = self.calcFisherG(run, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
@@ -1425,12 +1425,12 @@ class Command(BaseCommand):
 
                 # Fisher
                 # TODO - tidy this and others like it
-                fisher_G_stats = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
+                fisher_stats = DEFAULT_FISHER_STATS
 
                 if mod_key in time_course_fisher_dict:
-                    fisher_G_stats = time_course_fisher_dict[mod_key]
+                    fisher_stats = time_course_fisher_dict[mod_key]
 
-                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_G_stats
+                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_stats
 
             rr.save()
 
@@ -1452,8 +1452,7 @@ class Command(BaseCommand):
 
         self._generate_phospho_regression_metrics(run, replicates, sample_stages, with_bugs)
 
-        # # Fisher G Statistic - Phospho
-        # time_course_fisher_dict = self._calculate_fisher(run, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        # Fisher G Statistic - Phospho
         time_course_fisher_dict = self.calcFisherG(run, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
@@ -1497,16 +1496,15 @@ class Command(BaseCommand):
                         q_value = regression_info[mod_key][Q_VALUE]
 
                     if pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
-                        # TODO - why no metrics? Not generated due to lack of data?
+                        # TODO - why potentially no metrics? Not generated due to lack of data?
                         pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
-                    # # Fisher
-                    # phospho_regression[LOG2_MEAN][METRICS]["Fisher_G"] = {}
-                    # if mod_key in time_course_fisher_dict:
-                    #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = time_course_fisher_dict[mod_key]
-                    # else:
-                    #     combined_time_course_info[uniprot_accession][PHOSPHORYLATION_ABUNDANCES][
-                    #                 phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = {'G_statistic': 1, P_VALUE: 1, 'frequency': 1, Q_VALUE: 1}
+                    fisher_stats = DEFAULT_FISHER_STATS
+
+                    if mod_key in time_course_fisher_dict:
+                        fisher_stats = time_course_fisher_dict[mod_key]
+
+                    pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_stats
 
             rr.save()
 
@@ -2009,50 +2007,42 @@ class Command(BaseCommand):
         where each vector is a different protein and each value corresponds to a different timepoint, ordered from low to high
         the output is a dictionary containing the fisher g-statistic, pvalues and periodic frequencies for each protein.
         """
-        raw = False
-        norm_method = LOG2_MEAN
+        if not CALCULATE_FISHER_G:
+            return {}
 
-        # R part for Fisher G-Statistic
-        import rpy2.robjects as ro
-        from rpy2.robjects.packages import importr
-        import rpy2.robjects.packages as rpackages
-        # R vector of strings
-        from rpy2.robjects.vectors import StrVector
+        if not r_installed:
+            # R part for Fisher G-Statistic
+            import rpy2.robjects as ro
+            from rpy2.robjects.packages import importr
+            import rpy2.robjects.packages as rpackages
+            # R vector of strings
+            from rpy2.robjects.vectors import StrVector
 
-        logger.info("Calculate Fisher G Statistics")
-        # import R's utility package
-        utils = rpackages.importr('utils')
-        # select a mirror for R packages
-        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
-        utils.install_packages("pak")
-        ro.r('library(pak)')
-        ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
-        packnames = ('perARMA', 'quantreg')
-        # Selectively install what needs to be install.
-        names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-        if len(names_to_install) > 0:
-            utils.install_packages(StrVector(names_to_install))
+            logger.info("Calculate Fisher G Statistics")
+            # import R's utility package
+            utils = rpackages.importr('utils')
+            # select a mirror for R packages
+            utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+            utils.install_packages("pak")
+            ro.r('library(pak)')
+            ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
+            packnames = ('perARMA', 'quantreg')
+            # Selectively install what needs to be install.
+            names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+            if len(names_to_install) > 0:
+                utils.install_packages(StrVector(names_to_install))
 
-        not_in_cran = ("ptest")
-        not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
-        if len(not_in_crac_names_to_install) > 0:
-            ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+            not_in_cran = ("ptest")
+            not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
+            if len(not_in_crac_names_to_install) > 0:
+                ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+
+            r_installed = True
 
         # time_course_fisher = createAbundanceDf(combined_time_course_info, norm_method, raw, phospho, phospho_ab, phospho_reg)
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
 
         time_course_fisher = time_course_fisher.dropna()
-
-        # if phospho and not phospho_ab and phospho_reg:
-        #     print(f"++++ TIME COURSE FISHER PHOSPHO {phospho}, {phospho_ab}, {phospho_reg}")
-        #     pd.set_option('display.max_rows', None)
-        #     pd.set_option('display.max_columns', None)
-        #     pd.set_option('display.width', None)
-        #     pd.set_option('display.max_colwidth', None)
-        #     print(time_course_fisher)
-        #     exit()
-
-        # return {}
 
         for index,row in time_course_fisher.iterrows():
             row_z = row.tolist()

@@ -1,36 +1,33 @@
 FROM python:3.12-slim
 
-# Don't write .pyc files
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-ENV POETRY_VERSION=2.0.1
+# Environment settings
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    POETRY_VERSION=2.0.1 \
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
-# Set environment variables to avoid prompts and caching issues
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# Install system dependencies
+# Install system dependencies, including R and R headers
 RUN apt-get update && apt-get install -y --no-install-recommends \
-curl build-essential libpq-dev && \
-pip install "poetry==$POETRY_VERSION" && \
-apt-get clean && rm -rf /var/lib/apt/lists/*
+    curl build-essential gcc gfortran \
+    libpq-dev libreadline-dev \
+    libcurl4-openssl-dev libssl-dev libxml2-dev \
+    libbz2-dev zlib1g-dev liblzma-dev \
+    r-base r-base-dev \
+    ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip to the latest version
-RUN python -m ensurepip && \
-    pip install --upgrade pip
+# Install Poetry
+RUN pip install "poetry==$POETRY_VERSION"
 
-# Copy only dependency files first
+# Copy and install Python dependencies
 COPY pyproject.toml poetry.lock ./
-
-# Install dependencies into a virtual environment in /opt/venv
 RUN poetry config virtualenvs.in-project true && \
     poetry install --only main --no-root
 
-# Copy application code
+# Copy application source code
 COPY . .
 
-# Default command
+# Set the default command
 CMD ["/bin/bash"]
