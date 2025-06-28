@@ -32,6 +32,8 @@ min-max and imputed values are calculated differently between protein and phosph
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
 Change things to defaultdicts?
+When looking up gene names, try all the uniprot accessions for the protein.
+    They all refer to the same protein.
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
 Find out which functions aren't actually needed

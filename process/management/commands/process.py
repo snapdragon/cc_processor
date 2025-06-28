@@ -59,6 +59,9 @@ from process.constants import (
     KINASE_MOTIF_MATCH,
     PROTEIN_INFO,
     DEFAULT_FISHER_STATS,
+    PROTEIN_INFO_FIELDS,
+    GENE_NAME,
+    PROTEIN_NAME,
 )
 
 logging.basicConfig(
@@ -204,7 +207,7 @@ class Command(BaseCommand):
         # Largely batch processing from now on
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
-        if calculate_batch:
+        if calculate_batch or calculate_all:
             # TODO - not a batch call, shouldn't be here.
             self._add_protein_annotations(run)
 
@@ -235,8 +238,6 @@ class Command(BaseCommand):
             phospho_readings_filtered = phospho_readings.filter(phospho__protein = pr)
 
             if not phospho_readings_filtered:
-                print(f"No phospho readings for protein {pr}, not processing")
-
                 self._update_phospho_result(run, pr, {})
 
                 continue
@@ -1379,8 +1380,18 @@ class Command(BaseCommand):
 
         run_results = self._fetch_run_results(run)
 
+        num_proteins = 0
+
         for rr in run_results:
             pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+
+            self._count_logger(
+                num_proteins,
+                1000,
+                f"Calculating protein oscillation {num_proteins} {rr.protein.accession_number}",
+            )
+
+            num_proteins += 1
 
             for mod in pprpa:
                 if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES):
@@ -2046,9 +2057,9 @@ class Command(BaseCommand):
             p_value = ptestg_res[1]
             freq = ptestg_res[2]
 
-            time_course_fisher.loc[[index],['G_statistic']] = g_stat
+            time_course_fisher.loc[[index],[G_STATISTIC]] = g_stat
             time_course_fisher.loc[[index],['p_value']] = p_value
-            time_course_fisher.loc[[index],['frequency']] = freq
+            time_course_fisher.loc[[index],[FREQUENCY]] = freq
 
         # Add q-value columns 
         q_value = self.p_adjust_bh(time_course_fisher['p_value'])
@@ -2057,7 +2068,7 @@ class Command(BaseCommand):
     
         # Turn df into a dictionary
         cols = time_course_fisher.columns
-        fisher_cols = ['G_statistic','p_value', 'frequency', 'q_value']
+        fisher_cols = [G_STATISTIC,'p_value', FREQUENCY, 'q_value']
         ab_col = [x for x in cols if x not in fisher_cols]
         time_course_fisher = time_course_fisher.drop(columns=ab_col)
         time_course_fisher_dict = time_course_fisher.to_dict('index')
@@ -2090,35 +2101,17 @@ class Command(BaseCommand):
             }
 
             if "halflife_mean" in ipnan:
-                protein_info["halflife_mean"] = ipnan["halflife_mean"]     
-                protein_info['halflife_std'] = ipnan["halflife_std"]      
-                protein_info['halflife_min'] = ipnan["halflife_min"]      
-                protein_info['halflife_count'] = ipnan["halflife_count"]     
-                protein_info['relative_abundance_8h_count'] = ipnan["relative_abundance_8h_count"]     
-                protein_info['relative_abundance_8h_mean'] = ipnan["relative_abundance_8h_mean"]     
-                protein_info['relative_abundance_8h_std'] = ipnan["relative_abundance_8h_std"]      
-                protein_info['mean_gene_effect'] = ipnan["mean_gene_effect"]      
-                protein_info['in_DRIVE_cancer_proteins'] = ipnan["in_DRIVE_cancer_proteins"]      
-                protein_info['in_CGC_cancer_proteins'] = ipnan["in_CGC_cancer_proteins"]      
-                protein_info['role_in_cancer'] = ipnan["role_in_cancer"]
-                protein_info['tier'] = ipnan[ "tier"]      
-                protein_info['cell_cycle'] = ipnan["cell_cycle"]      
-                protein_info['mitotic_cell_cycle'] = ipnan["mitotic_cell_cycle"]      
-                protein_info['kinetochore'] = ipnan[ "kinetochore"]      
-                protein_info['spindle'] = ipnan["spindle"]      
-                protein_info['centriole'] = ipnan["centriole"]      
-                protein_info['replication_fork'] = ipnan[ "replication fork"]      
-                protein_info['G0_to_G1_transition'] = ipnan["G0_to_G1_transition"]      	
-                protein_info['G1/S_transition'] = ipnan["G1/S_transition"]      
-                protein_info['G2/M_transition'] = ipnan["G2/M_transition"]      	
-                protein_info['S_phase'] = ipnan["S_phase"]      
-                protein_info['transcription_factor'] = ipnan["transcription_factor"]     
-                protein_info['kinase_domain_containing'] = ipnan["kinase_domain_containing"]     
-                protein_info["is_E3"] = ipnan["is_E3"]
-                protein_info["APC_complex"] = ipnan["APC_complex"]
-                protein_info["dna_replication_machinery"] = ipnan["dna_replication_machinery"]
+                for field in PROTEIN_INFO_FIELDS:
+                    protein_info[field] = ipnan[field]     
 
             rr.protein_phospho_result[PROTEIN_INFO] = protein_info
+
+            rr.protein_phospho_result[GENE_NAME] = ipnan[GENE_NAME]
+            rr.protein_phospho_result[PROTEIN_NAME] = ipnan[PROTEIN_NAME]
+
+            # TODO - put in later
+            # else:
+            #     gene_name, protein_name = getProteinInfo(pan)
 
             rr.save()        
 

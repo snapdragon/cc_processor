@@ -40,12 +40,12 @@ class Command(BaseCommand):
 
         logger.info(f"Outputting all proteins for {project_name} with bugs {with_bugs}")
 
-        run_results = RunResult.objects.get(run__project=project, run__with_bugs=with_bugs)
+        run_results = RunResult.objects.filter(run__project=project, run__with_bugs=with_bugs)
 
         all_results = {}
 
         for rr in run_results:
-            all_results[rr.protein.accession_number] = rr.protein_phospho_results
+            all_results[rr.protein.accession_number] = rr.protein_phospho_result
 
         file_path = f"output/{project_name}_with_bugs_{with_bugs}_all.json"
 

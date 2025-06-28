@@ -1,19 +1,9 @@
-Why do some rows have more than one uniprot accession?
-    Should they be split into more than one row, or left as one?
-    How does that impact calculation of column medians and other stats?
-
-Speaking of column medians, what do we do if a cell is empty?
-    Consider it to be zero, or absent?
-
 Is palbo normalisation the same as Nocodozole normalisation?
     Actually presumably it should be normalised by the first stage, as that's what Palbo is.
 
 Is the method of imputing data what we want? Linear imputation between nearest timepoints I believe.
 
-Is the approximate fisher G calculation acceptable? Installing R is horrible.
-
 The ICR data has various values for 'confidence'. What about us?
-
 
 min-max and impute values are calculated differently in proteo and phosho. And position_abundances?
     Which is correct?
