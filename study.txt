@@ -15,3 +15,4 @@ _impute
 _generate_kinase
 _getConsensusKinasePred
 _getPeptideAligned
+_add_protein_info

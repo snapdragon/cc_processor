@@ -3,21 +3,34 @@ WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
 LATER - Get protein annotations
 
 
-Don't get Fisher G values yet
-    TODO does the python version have a bug?
-    https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
+TODO does the python version have a bug?
+https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
 
 
 NEXT - write tests for all functions
 
 
-Move r code to a separate script and communicate with it?
+# TODO - protein_oscillation_abundances residuals average is wrong. 
+#   Also R_squared_average, curve_fold_change and others.
+#   It's because calculate_metrics isn't working. It requires a lot of study.
+# TODO - is the above still true? They're OK for Q93075
+
+# TODO - position_abundances imputed values are slightly too high.
+#   Due to empty values perhaps?
+
+# TODO - rename protein_phospho_result to combined_result or somesuch
+# TODO - make _proteo iterate by protein and not prebuild the dict
+# TODO - ICR doesn't have phospho_regression (??). It's there for Q93075 though...
+# TODO - get rid of 'abundance_average' as an output field name
+# TODO - most of the warnings are from _calculate_metrics
+
+
+Move all fisher calculations to one function, to save having multiple installs?
 Make batch populate a new field, so it can be run independently?
 Create a JSON schema for the results
 min-max and imputed values are calculated differently between protein and phospho
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
-What about protein_info? It looks important.
 Change things to defaultdicts?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?

@@ -17,6 +17,7 @@ P_VALUE = "p_value"
 F_STATISTICS = "F_statistics"
 PROTEIN_OSCILLATION_ABUNDANCES = "protein_oscillation_abundances"
 ABUNDANCE_AVERAGE = "abundance_average"
+PROTEIN_INFO = "protein_info"
 
 POSITION_ABUNDANCES = "position_abundances"
 PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"

@@ -1,20 +1,3 @@
-# TODO - protein_oscillation_abundances residuals average is wrong. 
-#   Also R_squared_average, curve_fold_change and others.
-#   It's because calculate_metrics isn't working. It requires a lot of study.
-# TODO - is the above still true? They're OK for Q93075
-
-# TODO - position_abundances imputed values are slightly too high.
-#   Due to empty values perhaps?
-# TODO - create a tool to compare output to ICR
-# TODO - rename protein_phospho_result to combined_result or somesuch
-# TODO - make _proteo iterate by protein and not prebuild the dict
-# TODO - ICR doesn't have phospho_regression (??). It's there for Q93075 though...
-# TODO - get rid of 'abundance_average' as an output field name
-# TODO - put peptide_abundances in SL?
-# TODO - most of the warnings are from _calculate_metrics
-
-
-
 import re
 import json
 import logging
@@ -32,6 +15,11 @@ from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
+
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+import rpy2.robjects.packages as rpackages
+from rpy2.robjects.vectors import StrVector
 
 from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
 from process.constants import (
@@ -69,6 +57,7 @@ from process.constants import (
     PEPTOOLS_ANNOTATIONS,
     CONSENSUS_MOTIF_MATCH,
     KINASE_MOTIF_MATCH,
+    PROTEIN_INFO,
     DEFAULT_FISHER_STATS,
 )
 
@@ -87,7 +76,7 @@ with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
 CALCULATE_FISHER_G = True
 
 # TODO - find a better way of doing this
-r_installed = False
+R_INSTALLED = False
 
 class Command(BaseCommand):
     help = "Processes all proteins and phosphoproteins for a given project"
@@ -216,6 +205,9 @@ class Command(BaseCommand):
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
+            # TODO - not a batch call, shouldn't be here.
+            self._add_protein_annotations(run)
+
             self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
             self._generate_kinase_predictions(run)
@@ -367,7 +359,7 @@ class Command(BaseCommand):
 
     # TODO - similar to other functionality, consolidate
     def _calculate_phosphorylation_abundances_q_values(self, run, replicates, sample_stages):
-        logger.info("Calculating batch q values for phosphorylation_abundances.")
+        logger.info("Calculating q values for phosphorylation_abundances.")
 
         # TODO - blank all q_values in DB?
 
@@ -411,14 +403,14 @@ class Command(BaseCommand):
 
 
     def _calculate_batch_q_value_fisher(self, run, replicates, sample_stages):
-        logger.info("Calculating batch q and fisher G values.")
+        logger.info("Calculating q and fisher G values for proteins.")
 
         # TODO - blank all q_values in DB?
 
         run_results_with_log2_mean = RunResult.objects.filter(run=run, protein_phospho_result__metrics__has_key = "log2_mean")
 
         fisher_stats = self.calcFisherG(run, replicates, sample_stages)
-        
+
         # TODO - rename this
         prot_anova_info: dict = {}
 
@@ -436,12 +428,12 @@ class Command(BaseCommand):
         for rr in run_results_with_log2_mean:
             rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
 
-            fisher_stats = DEFAULT_FISHER_STATS
+            fisher_output = DEFAULT_FISHER_STATS
 
-            if rr.protein in fisher_stats:
-                fisher_stats = fisher_stats[rr.protein]
+            if rr.protein.accession_number in fisher_stats:
+                fisher_output = fisher_stats[rr.protein.accession_number]
 
-            rr.protein_phospho_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_stats
+            rr.protein_phospho_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_output
 
             rr.save()
 
@@ -1425,12 +1417,12 @@ class Command(BaseCommand):
 
                 # Fisher
                 # TODO - tidy this and others like it
-                fisher_stats = DEFAULT_FISHER_STATS
+                fisher_output = DEFAULT_FISHER_STATS
 
                 if mod_key in time_course_fisher_dict:
-                    fisher_stats = time_course_fisher_dict[mod_key]
+                    fisher_output = time_course_fisher_dict[mod_key]
 
-                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_stats
+                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_output
 
             rr.save()
 
@@ -1499,12 +1491,12 @@ class Command(BaseCommand):
                         # TODO - why potentially no metrics? Not generated due to lack of data?
                         pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
 
-                    fisher_stats = DEFAULT_FISHER_STATS
+                    fisher_output = DEFAULT_FISHER_STATS
 
                     if mod_key in time_course_fisher_dict:
-                        fisher_stats = time_course_fisher_dict[mod_key]
+                        fisher_output = time_course_fisher_dict[mod_key]
 
-                    pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_stats
+                    pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_output
 
             rr.save()
 
@@ -1892,8 +1884,6 @@ class Command(BaseCommand):
                 # else:
                 #     gene_name, protein_name = getProteinInfo(protein.accession_number)
 
-    def _add_q_values(self, run):
-        pass
 
     # TODO - is this worth being a function at all?
     def _build_phospho_abundance_table(self, abundance_table, replicates, sample_stages, protein_abundances, mod_key):
@@ -2000,6 +1990,7 @@ class Command(BaseCommand):
         return json.loads(phospho_medians)
 
 
+    # TODO - rename
     def calcFisherG(self, run, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         """
         Performs a periodicity test using the 'Fisher' method.
@@ -2007,37 +1998,31 @@ class Command(BaseCommand):
         where each vector is a different protein and each value corresponds to a different timepoint, ordered from low to high
         the output is a dictionary containing the fisher g-statistic, pvalues and periodic frequencies for each protein.
         """
+        # global R_INSTALLED
+
         if not CALCULATE_FISHER_G:
             return {}
 
-        if not r_installed:
-            # R part for Fisher G-Statistic
-            import rpy2.robjects as ro
-            from rpy2.robjects.packages import importr
-            import rpy2.robjects.packages as rpackages
-            # R vector of strings
-            from rpy2.robjects.vectors import StrVector
+        logger.info("Calculate Fisher G Statistics")
 
-            logger.info("Calculate Fisher G Statistics")
-            # import R's utility package
-            utils = rpackages.importr('utils')
-            # select a mirror for R packages
-            utils.chooseCRANmirror(ind=1) # select the first mirror in the list
-            utils.install_packages("pak")
-            ro.r('library(pak)')
-            ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
-            packnames = ('perARMA', 'quantreg')
-            # Selectively install what needs to be install.
-            names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-            if len(names_to_install) > 0:
-                utils.install_packages(StrVector(names_to_install))
+        utils = rpackages.importr('utils')
+        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+        utils.install_packages("pak")
 
-            not_in_cran = ("ptest")
-            not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
-            if len(not_in_crac_names_to_install) > 0:
-                ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+        ro.r('library(pak)')
+        ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
 
-            r_installed = True
+        packnames = ('perARMA', 'quantreg')
+
+        # Selectively install what needs to be install.
+        names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+        if len(names_to_install) > 0:
+            utils.install_packages(StrVector(names_to_install))
+
+        not_in_cran = ("ptest")
+        not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
+        if len(not_in_crac_names_to_install) > 0:
+            ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
 
         # time_course_fisher = createAbundanceDf(combined_time_course_info, norm_method, raw, phospho, phospho_ab, phospho_reg)
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
@@ -2079,6 +2064,63 @@ class Command(BaseCommand):
 
         return time_course_fisher_dict
 
+    def _add_protein_annotations(self, run):
+        logger.info("Adding protein annotations")
+
+        run_results = self._fetch_run_results(run)
+
+        for rr in run_results:
+            pan = rr.protein.accession_number
+
+            if not index_protein_names.get(pan):
+                # TODO - fetch protein info remotely
+                # basic_localisation, localisation_keyword = getProteinLocalisation(pan)
+                continue
+
+            ipnan = index_protein_names[pan]
+
+            basic_localisation = index_protein_names[pan]["basic_localisation"]
+            localisation_keyword = index_protein_names[pan]["localisation_keyword"]
+
+            protein_info = {}
+
+            protein_info["localisation_info"] = {
+                "basic_localisation": basic_localisation,
+                "localisation_keyword": localisation_keyword
+            }
+
+            if "halflife_mean" in ipnan:
+                protein_info["halflife_mean"] = ipnan["halflife_mean"]     
+                protein_info['halflife_std'] = ipnan["halflife_std"]      
+                protein_info['halflife_min'] = ipnan["halflife_min"]      
+                protein_info['halflife_count'] = ipnan["halflife_count"]     
+                protein_info['relative_abundance_8h_count'] = ipnan["relative_abundance_8h_count"]     
+                protein_info['relative_abundance_8h_mean'] = ipnan["relative_abundance_8h_mean"]     
+                protein_info['relative_abundance_8h_std'] = ipnan["relative_abundance_8h_std"]      
+                protein_info['mean_gene_effect'] = ipnan["mean_gene_effect"]      
+                protein_info['in_DRIVE_cancer_proteins'] = ipnan["in_DRIVE_cancer_proteins"]      
+                protein_info['in_CGC_cancer_proteins'] = ipnan["in_CGC_cancer_proteins"]      
+                protein_info['role_in_cancer'] = ipnan["role_in_cancer"]
+                protein_info['tier'] = ipnan[ "tier"]      
+                protein_info['cell_cycle'] = ipnan["cell_cycle"]      
+                protein_info['mitotic_cell_cycle'] = ipnan["mitotic_cell_cycle"]      
+                protein_info['kinetochore'] = ipnan[ "kinetochore"]      
+                protein_info['spindle'] = ipnan["spindle"]      
+                protein_info['centriole'] = ipnan["centriole"]      
+                protein_info['replication_fork'] = ipnan[ "replication fork"]      
+                protein_info['G0_to_G1_transition'] = ipnan["G0_to_G1_transition"]      	
+                protein_info['G1/S_transition'] = ipnan["G1/S_transition"]      
+                protein_info['G2/M_transition'] = ipnan["G2/M_transition"]      	
+                protein_info['S_phase'] = ipnan["S_phase"]      
+                protein_info['transcription_factor'] = ipnan["transcription_factor"]     
+                protein_info['kinase_domain_containing'] = ipnan["kinase_domain_containing"]     
+                protein_info["is_E3"] = ipnan["is_E3"]
+                protein_info["APC_complex"] = ipnan["APC_complex"]
+                protein_info["dna_replication_machinery"] = ipnan["dna_replication_machinery"]
+
+            rr.protein_phospho_result[PROTEIN_INFO] = protein_info
+
+            rr.save()        
 
 
 
