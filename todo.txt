@@ -1,11 +1,8 @@
-### Steps
-
 TODO - Look up the gene names and protein names for that uniprot accession
 WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
 LATER - Get protein annotations
 
 
-The fisher G values are wildly different. Find out why.
 Don't get Fisher G values yet
     TODO does the python version have a bug?
     https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differs-from-exact-formula
@@ -15,9 +12,8 @@ NEXT - write tests for all functions
 
 
 Move r code to a separate script and communicate with it?
-Make batch populate a new field, so it can be run independently
+Make batch populate a new field, so it can be run independently?
 Create a JSON schema for the results
-Fix all the _calculate_metrics errors
 min-max and imputed values are calculated differently between protein and phospho
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points

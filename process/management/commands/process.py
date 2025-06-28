@@ -83,7 +83,7 @@ logger = logging.getLogger(__name__)
 with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
     index_protein_names = json.load(outfile)
 
-CALCULATE_FISHER_G = False
+CALCULATE_FISHER_G = True
 
 class Command(BaseCommand):
     help = "Processes all proteins and phosphoproteins for a given project"
@@ -212,15 +212,15 @@ class Command(BaseCommand):
         # TODO - some of the parts of the batch processing, e.g. protein oscillation
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch:
-            # self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
             # self._generate_kinase_predictions(run)
 
             # self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            # self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -505,24 +505,30 @@ class Command(BaseCommand):
 
                     self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
             else:
+                # Not all proteins have protein results, some are phospho only
+                if not rr.protein_phospho_result[PROTEIN_ABUNDANCES][NORMALISED].get(LOG2_MEAN):
+                    continue
+
                 pprpanlm = rr.protein_phospho_result[PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]
 
                 abundance_table[pan] = {}
 
                 for replicate in replicates:
-                    for sample_stage in sample_stages:
-                        rep_stage_name = f"{replicate.name}_{sample_stage.name}"
+                    for stage in sample_stages:
+                        if not pprpanlm[replicate.name].get(stage.name):
+                            continue
+
+                        rep_stage_name = f"{replicate.name}_{stage.name}"
 
                         abundance_table[pan][rep_stage_name] = pprpanlm[
                             replicate.name
-                        ][sample_stage.name]
+                        ][stage.name]
 
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
 
         new_cols = []
 
-        # TODO - get stage names properly
         for sample_stage in sample_stages:
             for replicate in replicates:
                 new_cols.append(f"{replicate.name}_{sample_stage.name}")
@@ -2008,9 +2014,6 @@ class Command(BaseCommand):
         where each vector is a different protein and each value corresponds to a different timepoint, ordered from low to high
         the output is a dictionary containing the fisher g-statistic, pvalues and periodic frequencies for each protein.
         """
-        if not CALCULATE_FISHER_G:
-            return {}
-
         raw = False
         norm_method = LOG2_MEAN
 
@@ -2044,6 +2047,17 @@ class Command(BaseCommand):
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
 
         time_course_fisher = time_course_fisher.dropna()
+
+        if phospho:
+            print("++++ TIME COURSE FISHER")
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
+            pd.set_option('display.width', None)
+            pd.set_option('display.max_colwidth', None)
+            print(time_course_fisher)
+            exit()
+
+        return {}
 
         for index,row in time_course_fisher.iterrows():
             row_z = row.tolist()
