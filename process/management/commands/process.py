@@ -2043,6 +2043,7 @@ class Command(BaseCommand):
         logger.info("Calculate Fisher G Statistics")
 
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
+        time_course_fisher = time_course_fisher.dropna()
 
         utils = rpackages.importr('utils')
         utils.chooseCRANmirror(ind=1) # select the first mirror in the list
@@ -2063,19 +2064,13 @@ class Command(BaseCommand):
         if len(not_in_crac_names_to_install) > 0:
             ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
 
-        time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
-
-        time_course_fisher = time_course_fisher.dropna()
-
         for index,row in time_course_fisher.iterrows():
             row_z = row.tolist()
             row_z = [str(i) for i in row_z]
+
             ro.r('''
                 library(ptest)
                 z <- c(''' + ','.join(row_z) + ''')
-                # p_value <- ptestg(z,method="Fisher")$pvalue
-                # # freq <- ptestg(z,method="Fisher")$freq
-                # # g_stat <- ptestg(z,method="Fisher")$$obsStat
                 ptestg_res <- ptestg(z,method="Fisher")
             '''
             )
