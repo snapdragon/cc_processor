@@ -12,10 +12,10 @@ def load_json():
     return _load
 
 @pytest.fixture
-def load_df():
+def load_pickle():
     def _load(file_name):
         file_path = Path(__file__).parent / "fixtures" / file_name
 
-        return pd.read_csv(file_path)
+        return pd.read_pickle(file_path)
 
     return _load

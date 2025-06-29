@@ -2044,8 +2044,6 @@ class Command(BaseCommand):
 
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
 
-        exit()
-
         utils = rpackages.importr('utils')
         utils.chooseCRANmirror(ind=1) # select the first mirror in the list
         utils.install_packages("pak")

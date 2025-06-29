@@ -592,7 +592,7 @@ def test_generate_df(load_json):
 
 
 @pytest.mark.django_db
-def test_create_results_dataframe(load_json, load_df):
+def test_create_results_dataframe(load_json, load_pickle):
     command = Command()
 
     project = ProjectFactory()
@@ -630,9 +630,56 @@ def test_create_results_dataframe(load_json, load_df):
         phospho_reg = False
     )
 
-    expected_output = load_df('create_results_dataframe_output.csv')
-
-    print(output)
-    print(expected_output)
+    expected_output = load_pickle('create_results_dataframe_output.pkl')
 
     pdt.assert_frame_equal(output, expected_output)
+
+
+
+@pytest.mark.django_db
+def test_calcFisherG(load_json, load_pickle):
+    command = Command()
+
+    project = ProjectFactory()
+
+    replicate1 = ReplicateFactory(name="abundance_rep_1", project=project)
+    replicate2 = ReplicateFactory(name="abundance_rep_2", project=project)
+
+    sample_stage1 = SampleStageFactory(name='Palbo', rank=1, project=project)
+    sample_stage2 = SampleStageFactory(name='Late G1_1', rank=2, project=project)
+    sample_stage3 = SampleStageFactory(name='G1/S', rank=3, project=project)
+    sample_stage4 = SampleStageFactory(name='S', rank=4, project=project)
+    sample_stage5 = SampleStageFactory(name='S/G2', rank=5, project=project)
+    sample_stage6 = SampleStageFactory(name='G2_2', rank=6, project=project)
+    sample_stage7 = SampleStageFactory(name='G2/M_1', rank=7, project=project)
+    sample_stage8 = SampleStageFactory(name='M/Early G1', rank=8, project=project)
+
+    protein1 = ProteinFactory(project=project, accession_number="Q9Y375")
+    protein2 = ProteinFactory(project=project, accession_number="Q14318")
+
+    run = RunFactory(project=project, with_bugs=True)
+
+    combined_result1 = load_json("create_results_dataframe_Q6P2Q9.json")
+    combined_result2 = load_json("create_results_dataframe_P0DMV9.json")
+
+    run_result1 = RunResultFactory(run=run, protein=protein1, combined_result=combined_result1)
+    run_result1 = RunResultFactory(run=run, protein=protein2, combined_result=combined_result2)
+
+    # TODO - add tests for phospho = True etc.
+    output = command.calcFisherG(
+        run,
+        [replicate1, replicate2],
+        [sample_stage1, sample_stage2, sample_stage3, sample_stage4, sample_stage5, sample_stage6, sample_stage7, sample_stage8],
+        phospho = False,
+        phospho_ab = False,
+        phospho_reg = False
+    )
+
+    assert isclose(output["Q9Y375"]["G_statistic"], 0.49601659913129864, rel_tol=1e-5) == True
+    assert isclose(output["Q9Y375"]["p_value"], 0.11470845673332825, rel_tol=1e-5) == True
+    assert isclose(output["Q9Y375"]["frequency"], 0.25, rel_tol=1e-5) == True
+    assert isclose(output["Q9Y375"]["q_value"], 0.13450086086505242, rel_tol=1e-5) == True
+    assert isclose(output["Q14318"]["G_statistic"], 0.4824672252751532, rel_tol=1e-5) == True
+    assert isclose(output["Q14318"]["p_value"], 0.13450086086505242, rel_tol=1e-5) == True
+    assert isclose(output["Q14318"]["frequency"], 0.25, rel_tol=1e-5) == True
+    assert isclose(output["Q14318"]["q_value"], 0.13450086086505242, rel_tol=1e-5) == True
