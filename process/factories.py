@@ -8,6 +8,8 @@ from process.models import (
     ProteinReading,
     Replicate,
     SampleStage,
+    Run,
+    RunResult,
 )
 
 
@@ -62,3 +64,23 @@ class ProteinReadingFactory(DjangoModelFactory):
     column_name = factory.SubFactory(ColumnNameFactory)
     protein = factory.SubFactory(ProteinFactory)
     reading = factory.Faker("pyfloat", left_digits=2, right_digits=2, positive=True)
+
+class RunFactory(DjangoModelFactory):
+    class Meta:
+        model = Run
+
+    project = factory.SubFactory(ProjectFactory)
+    with_bugs = False
+    protein_medians = factory.LazyFunction(dict)
+    phospho_medians = factory.LazyFunction(dict)
+    results = factory.LazyFunction(dict)
+
+class RunResultFactory(DjangoModelFactory):
+    class Meta:
+        model = RunResult
+
+    run = factory.SubFactory(RunFactory)
+    protein = factory.SubFactory(ProteinFactory)
+    protein_result = factory.LazyFunction(dict)
+    phospho_result = factory.LazyFunction(dict)
+    combined_result = factory.LazyFunction(dict)

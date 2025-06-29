@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
         logger.info(f"Outputting all proteins for {project_name} with bugs {with_bugs}")
 
-        run_results = RunResult.objects.filter(run__project=project, run__with_bugs=with_bugs)
+        run_results = RunResult.objects.filter(run__project=project, run__with_bugs=with_bugs).iterator(chunk_size=100)
 
         all_results = {}
 

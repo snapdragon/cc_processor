@@ -57,6 +57,9 @@ class Command(BaseCommand):
         row_no = 0
 
         for index, row in df.iterrows():
+            if row_no % 1000 == 0:
+                print(f"Adding row {row_no}")
+
             row_no += 1
 
             is_contaminant = False
@@ -66,9 +69,11 @@ class Command(BaseCommand):
                 if contaminant == "Yes" or contaminant == "TRUE":
                     is_contaminant = True
 
-            print(f"Adding row {row_no}")
-
             accession_number = row[project.proteome_file_accession_number_column_name]
+
+            if Protein.objects.filter(project=project, accession_number=accession_number).first():
+                print(f"DUPLICATE ACCESSION NUMBER {accession_number}")
+                continue
 
             protein = Protein.objects.create(
                 project=project, accession_number=accession_number, is_contaminant=is_contaminant

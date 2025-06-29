@@ -211,18 +211,18 @@ class Command(BaseCommand):
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch or calculate_all:
             # TODO - not a batch call, shouldn't be here.
-            self._add_protein_annotations(run)
+            # self._add_protein_annotations(run)
 
-            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            # self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
             # TODO - figure out how, or if at all, to get this working for SL
             # self._generate_kinase_predictions(run)
 
             self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            # self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -466,7 +466,17 @@ class Command(BaseCommand):
 
         abundance_table = {}
 
+        # num_proteins = 0
+
         for rr in run_results:
+            print(rr.protein.accession_number)
+            print(json.dumps(rr.combined_result))
+
+            # num_proteins += 1
+
+            # if num_proteins == 2:
+            #     exit()
+
             pan = rr.protein.accession_number
 
             if phospho:
@@ -1980,7 +1990,7 @@ class Command(BaseCommand):
         )
 
         if with_bugs:
-            protein_medians["One"] = protein_medians["Two"]
+            protein_medians["abundance_rep_1"] = protein_medians["abundance_rep_2"]
 
         run, _ = Run.objects.get_or_create(
             project=run.project, with_bugs=run.with_bugs
@@ -2032,6 +2042,10 @@ class Command(BaseCommand):
 
         logger.info("Calculate Fisher G Statistics")
 
+        time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
+
+        exit()
+
         utils = rpackages.importr('utils')
         utils.chooseCRANmirror(ind=1) # select the first mirror in the list
         utils.install_packages("pak")
@@ -2051,7 +2065,6 @@ class Command(BaseCommand):
         if len(not_in_crac_names_to_install) > 0:
             ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
 
-        # time_course_fisher = createAbundanceDf(combined_time_course_info, norm_method, raw, phospho, phospho_ab, phospho_reg)
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
 
         time_course_fisher = time_course_fisher.dropna()

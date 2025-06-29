@@ -164,8 +164,8 @@ class Command(BaseCommand):
                     phosphosite = mod["phosphorylation site"]
 
                     raw = {
-                        "One": {},
-                        "Two": {},
+                        "abundance_rep_1": {},
+                        "abundance_rep_2": {},
                     }
 
                     # Combine the abundances for a phosphosite from different modifications
@@ -175,17 +175,17 @@ class Command(BaseCommand):
 
                         for k, v in abundance_rep_1.items():
                             cur_ab = 0
-                            if k in raw["One"]:
-                                cur_ab += raw["One"][k]
+                            if k in raw["abundance_rep_1"]:
+                                cur_ab += raw["abundance_rep_1"][k]
 
-                            raw["One"][k] = (cur_ab + abundance_rep_1[k])
+                            raw["abundance_rep_1"][k] = (cur_ab + abundance_rep_1[k])
 
                         for k, v in abundance_rep_2.items():
                             cur_ab = 0
-                            if k in raw["Two"]:
-                                cur_ab += raw["Two"][k]
+                            if k in raw["abundance_rep_2"]:
+                                cur_ab += raw["abundance_rep_2"][k]
 
-                            raw["Two"][k] = (cur_ab + abundance_rep_2[k])
+                            raw["abundance_rep_2"][k] = (cur_ab + abundance_rep_2[k])
 
                 phospho = Phospho.objects.create(
                     protein=proteins[uniprot_accession], mod=mod_key, phosphosite=phosphosite
