@@ -45,7 +45,7 @@ class Command(BaseCommand):
         all_results = {}
 
         for rr in run_results:
-            all_results[rr.protein.accession_number] = rr.protein_phospho_result
+            all_results[rr.protein.accession_number] = rr.combined_result
 
         file_path = f"output/{project_name}_with_bugs_{with_bugs}_all.json"
 

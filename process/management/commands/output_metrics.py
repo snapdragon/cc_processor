@@ -55,4 +55,4 @@ class Command(BaseCommand):
         file_path = f"output/{project_name}_{protein}_with_bugs_{with_bugs}_metrics.json"
 
         with open(file_path, "w") as outfile:
-            json.dump(run_result.protein_phospho_result['metrics'], outfile, indent=4)
+            json.dump(run_result.combined_result['metrics'], outfile, indent=4)

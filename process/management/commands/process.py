@@ -5,6 +5,8 @@ import math
 import statistics
 import copy
 import requests
+# TODO - remove later
+from memory_profiler import profile
 
 import numpy as np
 import pandas as pd
@@ -211,15 +213,15 @@ class Command(BaseCommand):
             # TODO - not a batch call, shouldn't be here.
             # self._add_protein_annotations(run)
 
-            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            # self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
             # self._generate_kinase_predictions(run)
 
-            self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
+            # self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            # self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -370,8 +372,8 @@ class Command(BaseCommand):
         prot_anova_info: dict = {}
 
         for rr in run_results:
-            for mod in rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]:
-                pprpam = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][mod]
+            for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
+                pprpam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
 
                 phospho_key = f"{rr.protein.accession_number}_{pprpam['phosphorylation_site']}"
 
@@ -387,8 +389,8 @@ class Command(BaseCommand):
         prot_anova_info = prot_anova_info_df.to_dict("index")
 
         for rr in run_results:
-            for mod in rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]:
-                pprpam = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][mod]
+            for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
+                pprpam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
 
                 phospho_key = f"{rr.protein.accession_number}_{pprpam['phosphorylation_site']}"
 
@@ -401,14 +403,12 @@ class Command(BaseCommand):
 
             rr.save()
 
-
-
     def _calculate_batch_q_value_fisher(self, run, replicates, sample_stages):
         logger.info("Calculating q and fisher G values for proteins.")
 
         # TODO - blank all q_values in DB?
 
-        run_results_with_log2_mean = RunResult.objects.filter(run=run, protein_phospho_result__metrics__has_key = "log2_mean")
+        run_results_with_log2_mean = self._fetch_run_results(run, log2_mean = True)
 
         fisher_stats = self.calcFisherG(run, replicates, sample_stages)
 
@@ -417,7 +417,7 @@ class Command(BaseCommand):
 
         for rr in run_results_with_log2_mean:
             prot_anova_info[rr.protein] = {}
-            prot_anova_info[rr.protein][P_VALUE] = rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
+            prot_anova_info[rr.protein][P_VALUE] = rr.combined_result[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
 
         # TODO - converting to a dataframe seems excessive. Find an alternative.
         # TODO - is this the same as _generate_df?
@@ -427,14 +427,14 @@ class Command(BaseCommand):
         prot_anova_info = prot_anova_info_df.to_dict("index")
 
         for rr in run_results_with_log2_mean:
-            rr.protein_phospho_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
+            rr.combined_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
 
             fisher_output = DEFAULT_FISHER_STATS
 
             if rr.protein.accession_number in fisher_stats:
                 fisher_output = fisher_stats[rr.protein.accession_number]
 
-            rr.protein_phospho_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_output
+            rr.combined_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_output
 
             rr.save()
 
@@ -469,8 +469,8 @@ class Command(BaseCommand):
             pan = rr.protein.accession_number
 
             if phospho:
-                for mod in rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]:
-                    ppam = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][mod]
+                for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
+                    ppam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
 
                     mod_key = f"{pan}_{ppam[PHOSPHORYLATION_SITE]}"
 
@@ -493,10 +493,10 @@ class Command(BaseCommand):
                     self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
             else:
                 # Not all proteins have protein results, some are phospho only
-                if not rr.protein_phospho_result[PROTEIN_ABUNDANCES][NORMALISED].get(LOG2_MEAN):
+                if not rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED].get(LOG2_MEAN):
                     continue
 
-                pprpanlm = rr.protein_phospho_result[PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]
+                pprpanlm = rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]
 
                 abundance_table[pan] = {}
 
@@ -1367,6 +1367,7 @@ class Command(BaseCommand):
 
     # TODO - lifted from ICR
     # addProteinOscillations
+    @profile
     def _add_protein_oscillations(self, run, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
@@ -1383,7 +1384,7 @@ class Command(BaseCommand):
         num_proteins = 0
 
         for rr in run_results:
-            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             self._count_logger(
                 num_proteins,
@@ -1407,10 +1408,10 @@ class Command(BaseCommand):
 
         # TODO - tidy up, two loops not necessary?
         for rr in run_results:
-            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             # TODO - why check for raw?
-            if not len(pprpa) or not len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]):
+            if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
                 continue
 
             for mod in pprpa:
@@ -1469,12 +1470,12 @@ class Command(BaseCommand):
             self._count_logger(
                 num_proteins,
                 1000,
-                f"Merging protein {num_proteins} {rr.protein.accession_number}",
+                f"Adding phospho regression {num_proteins} for {rr.protein.accession_number}",
             )
 
             num_proteins += 1
 
-            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             if not len(pprpa):
                 continue
@@ -1493,9 +1494,9 @@ class Command(BaseCommand):
         regression_info = self._generate_df(regression_info)
 
         for rr in run_results:
-            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
-            if not len(pprpa) or not len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]):
+            if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
                 continue
                 
             # TODO - again, why called phosphosite and not mod?
@@ -1707,8 +1708,8 @@ class Command(BaseCommand):
 
         for rr in run_results:
             # TODO - these names are inconsistent with elsewhere
-            phosphoryl_abundances = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
-            protein_abundances = rr.protein_phospho_result[PROTEIN_ABUNDANCES]
+            phosphoryl_abundances = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
+            protein_abundances = rr.combined_result[PROTEIN_ABUNDANCES]
 
             if not len(phosphoryl_abundances) or not len(protein_abundances[RAW]):
                 continue
@@ -1809,8 +1810,8 @@ class Command(BaseCommand):
                     phospho_regression[ZERO_MAX][METRICS][PROTEIN_PHOSPHO_CORRELATION] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
 
                     # curve fold change phosphorylation/curve fold change protein for 0-max
-                    phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / rr.protein_phospho_result[METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
+                    phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][
+                        phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / rr.combined_result[METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
 
                     # ANOVA
                     phospho_regression[LOG2_MEAN][METRICS] = {}
@@ -1827,10 +1828,10 @@ class Command(BaseCommand):
         run_results = self._fetch_run_results(run)
 
         for rr in run_results:
-            prpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            prpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             # Not all samples have both protein and phosphorylation abundances
-            if not len(prpa) or not len(rr.protein_phospho_result[PROTEIN_ABUNDANCES][RAW]):
+            if not len(prpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
                 continue
 
             for mod in prpa:
@@ -1841,7 +1842,7 @@ class Command(BaseCommand):
                     # TODO - should this be passing phosphosite, not mod?
                     #   In the original the two seem to be interchangeable to an extent.
                     phospho_oscillations = self._calculate_protein_oscillation(
-                        rr.protein_phospho_result, norm_method, mod, replicates, sample_stages
+                        rr.combined_result, norm_method, mod, replicates, sample_stages
                     )
 
                     prpampoa[norm_method] = phospho_oscillations
@@ -1873,7 +1874,7 @@ class Command(BaseCommand):
         logger.info("Combining protein and phospho results.")
 
         # TODO - check all other functions that need to blank DB
-        self._fetch_run_results(run).update(protein_phospho_result=None)
+        self._fetch_run_results(run).update(combined_result=None)
 
         num_proteins = 0
 
@@ -1892,7 +1893,7 @@ class Command(BaseCommand):
 
             combined_result[PHOSPHORYLATION_ABUNDANCES] = run_result.phospho_result
 
-            run_result.protein_phospho_result = combined_result
+            run_result.combined_result = combined_result
 
             run_result.save()
 
@@ -1934,13 +1935,14 @@ class Command(BaseCommand):
 
         return info_df.to_dict('index')
 
+    # getConsensusKinasePred
     def _generate_kinase_predictions(self, run):
         logger.info("Generating kinase predictions")
 
         run_results = self._fetch_run_results(run)
 
         for rr in run_results:
-            pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
+            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             for mod in pprpa:
                 # only for certain phosphorylation sites
@@ -2088,7 +2090,6 @@ class Command(BaseCommand):
     def _add_protein_annotations(self, run):
         logger.info("Adding protein annotations")
 
-        # TODO - use 'only' to reduce fields fetched?
         run_results = self._fetch_run_results(run)
 
         num_proteins = 0
@@ -2126,22 +2127,29 @@ class Command(BaseCommand):
                 for field in PROTEIN_INFO_FIELDS:
                     protein_info[field] = ipnan[field]     
 
-            rr.protein_phospho_result[PROTEIN_INFO] = protein_info
+            rr.combined_result[PROTEIN_INFO] = protein_info
 
-            rr.protein_phospho_result[GENE_NAME] = ipnan[GENE_NAME]
-            rr.protein_phospho_result[PROTEIN_NAME] = ipnan[PROTEIN_NAME]
+            rr.combined_result[GENE_NAME] = ipnan[GENE_NAME]
+            rr.combined_result[PROTEIN_NAME] = ipnan[PROTEIN_NAME]
 
             # TODO - put in later
             # else:
             #     gene_name, protein_name = getProteinInfo(pan)
 
-            rr.save()        
+            # TODO - consider adding bulk updating
+            rr.save()
 
 
 
 
-    def _fetch_run_results(self, run):
-        return RunResult.objects.filter(run=run).iterator(chunk_size=100)
+    def _fetch_run_results(self, run, log2_mean = False):
+        set = RunResult.objects.only("run", "protein", "combined_result").filter(run=run)
+
+        if log2_mean:
+            # TODO - find more queries like this, it's probably efficient
+            set = set.filter(combined_result__metrics__has_key = "log2_mean")
+        
+        return set.iterator(chunk_size=100)
 
     def _dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))

@@ -11,12 +11,19 @@ NEXT - write tests for all functions
 # TODO - position_abundances imputed values are slightly too high.
 #   Due to empty values perhaps?
 
-# TODO - rename protein_phospho_result to combined_result or somesuch
 # TODO - make _proteo iterate by protein and not prebuild the dict
 # TODO - get rid of 'abundance_average' as an output field name
 # TODO - most of the warnings are from _calculate_metrics
 
 
+
+Fix NaN values in _add_protein_oscillations
+Get generate_kinase_predictions working with SL
+    How does generate_kinase_predictions even work? Is it appropriate for the data we have?
+
+Find a way to make the nested directory structure of the json less complicated.
+    Maybe add another DB table or two, with a name for the type of data and a replicate field?
+    And another table for metrics?
 
 Study all the SL phospho errors
 Find a way to assess how sparse the data sets are

@@ -160,7 +160,7 @@ class RunResult(models.Model):
     )
     protein_result = models.JSONField(blank=True, null=True)
     phospho_result = models.JSONField(blank=True, null=True)
-    protein_phospho_result = models.JSONField(blank=True, null=True)
+    combined_result = models.JSONField(blank=True, null=True)
 
     class Meta:
         constraints = [
