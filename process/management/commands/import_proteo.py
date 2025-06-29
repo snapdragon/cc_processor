@@ -71,13 +71,16 @@ class Command(BaseCommand):
 
             accession_number = row[project.proteome_file_accession_number_column_name]
 
-            if Protein.objects.filter(project=project, accession_number=accession_number).first():
+            if protein := Protein.objects.filter(project=project, accession_number=accession_number).first():
                 print(f"DUPLICATE ACCESSION NUMBER {accession_number}")
-                continue
 
-            protein = Protein.objects.create(
-                project=project, accession_number=accession_number, is_contaminant=is_contaminant
-            )
+                # To ensure the two readings don't get mashed up if they
+                #   have any missing values
+                ProteinReading.objects.filter(protein=protein).delete()
+            else:
+                protein = Protein.objects.create(
+                    project=project, accession_number=accession_number, is_contaminant=is_contaminant
+                )
 
             # We don't want the readings for contaminants
             if is_contaminant:

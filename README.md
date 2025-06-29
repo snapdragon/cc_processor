@@ -128,7 +128,7 @@ docker cp postgres-db:/Q09666_postgres.json ./
 ### Output the results for a protein to the /output dir
 
 ```sh
-python manage.py output_protein --project "ICR" --with-bugs --accession-number Q09666
+python manage.py output_protein --project "ICR" --with-bugs --accession-number Q93075
 ```
 
 ### Various DB queries

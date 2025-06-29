@@ -675,6 +675,12 @@ def test_calcFisherG(load_json, load_pickle):
         phospho_reg = False
     )
 
+    print("+++++ OUTPUT")
+    print("+++++ OUTPUT")
+    print("+++++ OUTPUT")
+    print("+++++ OUTPUT")
+    print(output)
+
     assert isclose(output["Q9Y375"]["G_statistic"], 0.49601659913129864, rel_tol=1e-5) == True
     assert isclose(output["Q9Y375"]["p_value"], 0.11470845673332825, rel_tol=1e-5) == True
     assert isclose(output["Q9Y375"]["frequency"], 0.25, rel_tol=1e-5) == True

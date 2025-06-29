@@ -5,23 +5,18 @@ import math
 import statistics
 import copy
 import requests
-# TODO - remove later
-from memory_profiler import profile
 
 import numpy as np
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import QuerySet
-from scipy.signal import periodogram
 from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.vectors import FloatVector
 
 from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
 from process.constants import (
@@ -77,11 +72,6 @@ logger = logging.getLogger(__name__)
 # TODO - whatever it is, a lot of it could be trimmed, and maybe put in the DB
 with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
     index_protein_names = json.load(outfile)
-
-CALCULATE_FISHER_G = True
-
-# TODO - find a better way of doing this
-R_INSTALLED = False
 
 class Command(BaseCommand):
     help = "Processes all proteins and phosphoproteins for a given project"
@@ -211,18 +201,20 @@ class Command(BaseCommand):
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch or calculate_all:
             # TODO - not a batch call, shouldn't be here.
-            # self._add_protein_annotations(run)
+            self._add_protein_annotations(run)
 
-            # self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
             # TODO - figure out how, or if at all, to get this working for SL
+            #   Actually it no longer works for ICR either, related to
+            #   P04264 somehow
             # self._generate_kinase_predictions(run)
 
             self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            # self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -389,6 +381,8 @@ class Command(BaseCommand):
 
         prot_anova_info = prot_anova_info_df.to_dict("index")
 
+        run_results = self._fetch_run_results(run)
+
         for rr in run_results:
             for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
                 pprpam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
@@ -409,7 +403,8 @@ class Command(BaseCommand):
 
         # TODO - blank all q_values in DB?
 
-        run_results_with_log2_mean = self._fetch_run_results(run, log2_mean = True)
+        # Only get the necessary fields to save on memory usage
+        run_results_with_log2_mean = RunResult.objects.only("run", "protein", "combined_result").filter(run=run, combined_result__metrics__has_key = "log2_mean")
 
         fisher_stats = self.calcFisherG(run, replicates, sample_stages)
 
@@ -466,17 +461,7 @@ class Command(BaseCommand):
 
         abundance_table = {}
 
-        # num_proteins = 0
-
         for rr in run_results:
-            print(rr.protein.accession_number)
-            print(json.dumps(rr.combined_result))
-
-            # num_proteins += 1
-
-            # if num_proteins == 2:
-            #     exit()
-
             pan = rr.protein.accession_number
 
             if phospho:
@@ -1276,6 +1261,7 @@ class Command(BaseCommand):
         return phospho_kinases_class
 
     # TODO - lifted from ICR
+    # getPeptideAligned
     def _get_peptide_aligned(self, uniprot_accession, phosphosite):
         """
         Checks if the phosphosite is centered in the peptide sequence and it aligns it if not.
@@ -1283,6 +1269,17 @@ class Command(BaseCommand):
         aa = phosphosite[0]
         position = int(phosphosite[1::]) -1
         site =  str(position+1)
+
+        # TODO - this was put in as without it the line
+        #       if not len(peptide_seq):
+        #   failed due to lack of access to the variable. This bug is in the
+        #   original, how did it ever work? Was it never called?
+        #   Why did it suddenly start erroring? It happened just after I
+        #   first removed some of the R code from calcFisherG.
+        #   It's something to do with P04264, one of the duplicated proteins
+        #   for ICR. It's the reason I made it like get_or_create in import_proteo
+        #   on duplicate, not just continue.
+        # peptide_seq = []
 
         if PHOSPHO in index_protein_names[uniprot_accession]:
             if site in index_protein_names[uniprot_accession][PHOSPHO]:
@@ -1381,7 +1378,6 @@ class Command(BaseCommand):
 
     # TODO - lifted from ICR
     # addProteinOscillations
-    @profile
     def _add_protein_oscillations(self, run, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
@@ -1419,6 +1415,8 @@ class Command(BaseCommand):
 
         # TODO - what's this for?
         ps_and_qs = self._generate_df(ps_and_qs)
+
+        run_results = self._fetch_run_results(run)
 
         # TODO - tidy up, two loops not necessary?
         for rr in run_results:
@@ -1507,12 +1505,14 @@ class Command(BaseCommand):
 
         regression_info = self._generate_df(regression_info)
 
+        run_results = self._fetch_run_results(run)
+
         for rr in run_results:
             pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
                 continue
-                
+
             # TODO - again, why called phosphosite and not mod?
             for phosphosite in pprpa:
                 if PHOSPHO_REGRESSION in pprpa[phosphosite]:
@@ -2029,66 +2029,31 @@ class Command(BaseCommand):
 
     # TODO - rename
     def calcFisherG(self, run, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
-        """
-        Performs a periodicity test using the 'Fisher' method.
-        it takes a vector containing just numeric abundance values as input
-        where each vector is a different protein and each value corresponds to a different timepoint, ordered from low to high
-        the output is a dictionary containing the fisher g-statistic, pvalues and periodic frequencies for each protein.
-        """
-        # global R_INSTALLED
-
-        if not CALCULATE_FISHER_G:
-            return {}
-
         logger.info("Calculate Fisher G Statistics")
 
         time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
         time_course_fisher = time_course_fisher.dropna()
 
-        utils = rpackages.importr('utils')
-        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
-        utils.install_packages("pak")
+        ptest = importr("ptest")
 
-        ro.r('library(pak)')
-        ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
+        for index, row in time_course_fisher.iterrows():
+            row_z = [i for i in row.tolist()]
+            z = FloatVector(row_z)
 
-        packnames = ('perARMA', 'quantreg')
+            ptestg_res = ptest.ptestg(z, method="Fisher")
 
-        # Selectively install what needs to be install.
-        names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-        if len(names_to_install) > 0:
-            utils.install_packages(StrVector(names_to_install))
+            g_stat = ptestg_res.rx2("obsStat")[0]
+            p_value = ptestg_res.rx2("pvalue")[0]
+            freq = ptestg_res.rx2("freq")
 
-        not_in_cran = ("ptest")
-        not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
-        if len(not_in_crac_names_to_install) > 0:
-            ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+            time_course_fisher.loc[index, G_STATISTIC] = g_stat
+            time_course_fisher.loc[index, 'p_value'] = p_value
+            time_course_fisher.loc[index, FREQUENCY] = list(freq)
 
-        for index,row in time_course_fisher.iterrows():
-            row_z = row.tolist()
-            row_z = [str(i) for i in row_z]
-
-            ro.r('''
-                library(ptest)
-                z <- c(''' + ','.join(row_z) + ''')
-                ptestg_res <- ptestg(z,method="Fisher")
-            '''
-            )
-            ptestg_res = ro.globalenv['ptestg_res']
-            g_stat = ptestg_res[0]
-            p_value = ptestg_res[1]
-            freq = ptestg_res[2]
-
-            time_course_fisher.loc[[index],[G_STATISTIC]] = g_stat
-            time_course_fisher.loc[[index],['p_value']] = p_value
-            time_course_fisher.loc[[index],[FREQUENCY]] = freq
-
-        # Add q-value columns 
         q_value = self.p_adjust_bh(time_course_fisher['p_value'])
 
         time_course_fisher['q_value'] = q_value
     
-        # Turn df into a dictionary
         cols = time_course_fisher.columns
         fisher_cols = [G_STATISTIC,'p_value', FREQUENCY, 'q_value']
         ab_col = [x for x in cols if x not in fisher_cols]
@@ -2149,16 +2114,9 @@ class Command(BaseCommand):
             # TODO - consider adding bulk updating
             rr.save()
 
-    def _fetch_run_results(self, run, log2_mean = False):
+    def _fetch_run_results(self, run):
         # Only get the necessary fields to save on memory usage
-        set = RunResult.objects.only("run", "protein", "combined_result").filter(run=run)
-
-        if log2_mean:
-            # TODO - find more queries like this, it's probably efficient
-            set = set.filter(combined_result__metrics__has_key = "log2_mean")
-
-        # Get results in batches to save on memory usage
-        return set.iterator(chunk_size=100)
+        return RunResult.objects.only("run", "protein", "combined_result").filter(run=run).iterator(chunk_size=100)
 
     def _dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))
