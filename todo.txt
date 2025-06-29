@@ -8,12 +8,12 @@ https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differ
 NEXT - write tests for all functions
 
 
-# TODO - position_abundances imputed values are slightly too high.
-#   Due to empty values perhaps?
+position_abundances imputed values are slightly too high.
+    Due to empty values perhaps?
 
-# TODO - make _proteo iterate by protein and not prebuild the dict
-# TODO - get rid of 'abundance_average' as an output field name
-# TODO - most of the warnings are from _calculate_metrics
+make _proteo iterate by protein and not prebuild the dict
+get rid of 'abundance_average' as an output field name
+most of the warnings are from _calculate_metrics
 
 
 
@@ -24,18 +24,16 @@ Get generate_kinase_predictions working with SL
 Find a way to make the nested directory structure of the json less complicated.
     Maybe add another DB table or two, with a name for the type of data and a replicate field?
     And another table for metrics?
+RunResult probably isn't needed, the results could be put in Protein and Phospho
 
 Study all the SL phospho errors
 Find a way to assess how sparse the data sets are
 Move all fisher calculations to one function, to save having multiple installs?
-Make batch populate a new field, so it can be run independently?
-Create a JSON schema for the results
 min-max and imputed values are calculated differently between protein and phospho in ICR
     Which way is the correct way?
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
 Change things to defaultdicts?
-RunResult probably isn't needed, the results could be put in Protein and Phospho
 When looking up gene names, try all the uniprot accessions for the protein.
     They all refer to the same protein.
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
@@ -44,7 +42,6 @@ Find out which functions aren't actually needed
 Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.
-Check uniqueness constraints for models
 Add Final to various variables
 I have no idea what PepTools_annotations is about
     or protein-phospho-correlation

@@ -211,17 +211,18 @@ class Command(BaseCommand):
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch or calculate_all:
             # TODO - not a batch call, shouldn't be here.
-            # self._add_protein_annotations(run)
+            self._add_protein_annotations(run)
 
-            # self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
+            # TODO - figure out how, or if at all, to get this working for SL
             # self._generate_kinase_predictions(run)
 
-            # self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
+            self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            # self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            # self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -229,7 +230,7 @@ class Command(BaseCommand):
         logger.info("Processing phosphoproteome")
 
         # Remove any earlier phospho_result values for this project
-        self._fetch_run_results(run).update(phospho_result=None)
+        RunResult.objects.filter(run=run).update(phospho_result=None)
 
         num_processed = 0
 
@@ -524,7 +525,7 @@ class Command(BaseCommand):
         try:
             time_course_abundance_df = time_course_abundance_df[new_cols]
         except Exception as e:
-            logger.error("++++ DF FAILED")
+            logger.error("DF FAILED")
             logger.error(phospho)
             logger.error(time_course_abundance_df)
             logger.error(e)
@@ -668,6 +669,12 @@ class Command(BaseCommand):
             r_squared = self._polyfit(
                 range(0, len(abundance_averages)), abundance_averages_list, 2
             )
+
+            # TODO - why does this happen?
+            # Converted to None as NaN can't be turned to json.
+            if math.isnan(r_squared) or math.isinf(r_squared):
+                r_squared = None
+
             max_fold_change = max(abundance_averages.values()) - min(
                 abundance_averages.values()
             )
@@ -1124,9 +1131,6 @@ class Command(BaseCommand):
         phospho_readings: dict,
         run
     ):
-        #   Correct output:
-        #   {'One': {'Palbo': 83.6, 'Late G1_1': 90.7, 'G1/S': 73.4, 'S': 76.6, 'S/G2': 63.8, 'G2_2': 91.75, 'G2/M_1': 107.0, 'M/Early G1': 181.8}, 'Two': {'Palbo': 103.95, 'Late G1_1': 71.2, 'G1/S': 122.8, 'S': 77.9, 'S/G2': 89.3, 'G2_2': 116.0, 'G2/M_1': 122.9, 'M/Early G1': 122.7}}
-
         # TODO - get rid of _format_phospho_readings, or at least put it in the loop
         readings = self._format_phospho_readings_full(phospho_readings)
 
@@ -1817,7 +1821,7 @@ class Command(BaseCommand):
                     phospho_regression[LOG2_MEAN][METRICS] = {}
                     phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN], replicates, sample_stages)
             except Exception as e:
-                logger.error("+++++ ERROR")
+                logger.error("generate_phospho_regression_metrics error")
                 logger.error(e)
                 logger.error()
 
@@ -1874,7 +1878,7 @@ class Command(BaseCommand):
         logger.info("Combining protein and phospho results.")
 
         # TODO - check all other functions that need to blank DB
-        self._fetch_run_results(run).update(combined_result=None)
+        RunResult.objects.filter(run=run).update(combined_result=None)
 
         num_proteins = 0
 
@@ -2139,16 +2143,15 @@ class Command(BaseCommand):
             # TODO - consider adding bulk updating
             rr.save()
 
-
-
-
     def _fetch_run_results(self, run, log2_mean = False):
+        # Only get the necessary fields to save on memory usage
         set = RunResult.objects.only("run", "protein", "combined_result").filter(run=run)
 
         if log2_mean:
             # TODO - find more queries like this, it's probably efficient
             set = set.filter(combined_result__metrics__has_key = "log2_mean")
-        
+
+        # Get results in batches to save on memory usage
         return set.iterator(chunk_size=100)
 
     def _dump(self, obj):
