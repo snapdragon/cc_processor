@@ -9,3 +9,9 @@ min-max and impute values are calculated differently in proteo and phosho. And p
     Which is correct?
     Proteo uses calclog2RelativeAbundance
     Phospho uses firstLevelNormalisationPhospho
+
+Is there some equivalent of ICR's cell_cycle_mitotic_exit_analyser?
+
+Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?
+
+What should phosphosite be for SL?

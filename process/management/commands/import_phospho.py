@@ -86,14 +86,15 @@ class Command(BaseCommand):
                     )
                     proteins[accession_number] = new_protein
 
-                protein, created = Protein.objects.get_or_create(
+                protein, _ = Protein.objects.get_or_create(
                     project=project, accession_number=accession_number, is_contaminant=False
                 )
 
-                mod = row['Modified.Sequence']
+                mod = row['Precursor.Id']
 
+                # TODO - what should phosphosite be here?
                 phospho = Phospho.objects.create(
-                    protein = protein, mod = mod
+                    protein = protein, mod = mod, phosphosite = mod
                 )
 
                 for col in df.columns:
@@ -423,9 +424,6 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
             continue
         try:
             modification_info = findModificationPositionRep1(data_point_2)
-
-            # print("+++++ MODIFICATION INFO")
-            # print(modification_info)
 
             for uniprot_accession_key in modification_info:
                 if (

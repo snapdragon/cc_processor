@@ -209,11 +209,11 @@ class Command(BaseCommand):
         #   metrics, aren't actually batch. Move them out.
         if calculate_batch or calculate_all:
             # TODO - not a batch call, shouldn't be here.
-            self._add_protein_annotations(run)
+            # self._add_protein_annotations(run)
 
             self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
-            self._generate_kinase_predictions(run)
+            # self._generate_kinase_predictions(run)
 
             self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
@@ -1462,8 +1462,18 @@ class Command(BaseCommand):
 
         run_results = self._fetch_run_results(run)
 
+        num_proteins = 0
+
         # TODO - looks very close to the code in protein oscillation. Make a function?
         for rr in run_results:
+            self._count_logger(
+                num_proteins,
+                1000,
+                f"Merging protein {num_proteins} {rr.protein.accession_number}",
+            )
+
+            num_proteins += 1
+
             pprpa = rr.protein_phospho_result[PHOSPHORYLATION_ABUNDANCES]
 
             if not len(pprpa):
@@ -2078,9 +2088,20 @@ class Command(BaseCommand):
     def _add_protein_annotations(self, run):
         logger.info("Adding protein annotations")
 
+        # TODO - use 'only' to reduce fields fetched?
         run_results = self._fetch_run_results(run)
 
+        num_proteins = 0
+
         for rr in run_results:
+            self._count_logger(
+                num_proteins,
+                1000,
+                f"Adding annotation {num_proteins} {rr.protein.accession_number}",
+            )
+
+            num_proteins += 1
+
             pan = rr.protein.accession_number
 
             if not index_protein_names.get(pan):
@@ -2090,8 +2111,9 @@ class Command(BaseCommand):
 
             ipnan = index_protein_names[pan]
 
-            basic_localisation = index_protein_names[pan]["basic_localisation"]
-            localisation_keyword = index_protein_names[pan]["localisation_keyword"]
+            # Not all entries have a value for basic_localisation
+            basic_localisation = index_protein_names[pan].get("basic_localisation")
+            localisation_keyword = index_protein_names[pan].get("localisation_keyword")
 
             protein_info = {}
 
@@ -2119,7 +2141,7 @@ class Command(BaseCommand):
 
 
     def _fetch_run_results(self, run):
-        return RunResult.objects.filter(run=run)
+        return RunResult.objects.filter(run=run).iterator(chunk_size=100)
 
     def _dump(self, obj):
         print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))

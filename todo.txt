@@ -1,6 +1,4 @@
-TODO - Look up the gene names and protein names for that uniprot accession
 WON'T DO - Calculate confidence - is included in ICR database but not ours AFAIK
-LATER - Get protein annotations
 
 
 TODO does the python version have a bug?
@@ -10,28 +8,27 @@ https://stackoverflow.com/questions/75477927/scipys-fishers-exact-p-value-differ
 NEXT - write tests for all functions
 
 
-# TODO - protein_oscillation_abundances residuals average is wrong. 
-#   Also R_squared_average, curve_fold_change and others.
-#   It's because calculate_metrics isn't working. It requires a lot of study.
-# TODO - is the above still true? They're OK for Q93075
-
 # TODO - position_abundances imputed values are slightly too high.
 #   Due to empty values perhaps?
 
 # TODO - rename protein_phospho_result to combined_result or somesuch
 # TODO - make _proteo iterate by protein and not prebuild the dict
-# TODO - ICR doesn't have phospho_regression (??). It's there for Q93075 though...
 # TODO - get rid of 'abundance_average' as an output field name
 # TODO - most of the warnings are from _calculate_metrics
 
 
+
+Study all the SL phospho errors
+Find a way to assess how sparse the data sets are
 Move all fisher calculations to one function, to save having multiple installs?
 Make batch populate a new field, so it can be run independently?
 Create a JSON schema for the results
-min-max and imputed values are calculated differently between protein and phospho
+min-max and imputed values are calculated differently between protein and phospho in ICR
+    Which way is the correct way?
 Add 'peptide_abundances' to phospho output?
 Count number of imputed data points
 Change things to defaultdicts?
+RunResult probably isn't needed, the results could be put in Protein and Phospho
 When looking up gene names, try all the uniprot accessions for the protein.
     They all refer to the same protein.
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
@@ -40,10 +37,8 @@ Find out which functions aren't actually needed
 Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.
-Add uniqueness constraints to models
+Check uniqueness constraints for models
 Add Final to various variables
-Write tests for with_bugs?
-Round the various stats
 I have no idea what PepTools_annotations is about
     or protein-phospho-correlation
     or phosho-protein-cfc_ratio
@@ -51,7 +46,6 @@ I have no idea what PepTools_annotations is about
 
 ### Later
 
-q value similar but not quite the same
 Validate all the various statistical calculations
 Change dockerfile to not have to run the env after start
 The docker config for the cc_processor keeps the shell alive, but it then does nothing.
