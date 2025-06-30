@@ -15,3 +15,7 @@ Is there some equivalent of ICR's cell_cycle_mitotic_exit_analyser?
 Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?
 
 What should phosphosite be for SL?
+
+Am I using the correct sheets?
+    What's the difference between the two Peptides 1% FDR (pr_matrix) pages?
+    The first has more rows.
