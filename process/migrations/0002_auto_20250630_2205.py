@@ -13,16 +13,11 @@ class Migration(migrations.Migration):
             proteome_file_accession_number_column_name="Protein.Group",
         )
 
-        Run = apps.get_model("process", "Run")
-        Run.objects.create(
-            project=proj,
-            with_bugs=False
-        )
-
         Replicate = apps.get_model("process", "Replicate")
-        replicate_1 = Replicate.objects.create(name="One", rank=1, project=proj)
-        replicate_2 = Replicate.objects.create(name="Two", rank=2, project=proj)
-        replicate_3 = Replicate.objects.create(name="Three", rank=3, project=proj)
+        replicate_1 = Replicate.objects.create(name="One", project=proj, mean=False)
+        replicate_2 = Replicate.objects.create(name="Two", project=proj, mean=False)
+        replicate_3 = Replicate.objects.create(name="Three", project=proj, mean=False)
+        replicate_3 = Replicate.objects.create(name="Mean", project=proj, mean=True)
 
         SampleStage = apps.get_model("process", "SampleStage")
         sample_stage_1 = SampleStage.objects.create(
@@ -218,20 +213,14 @@ class Migration(migrations.Migration):
             proteome_file_accession_number_column_name="Accession",
         )
 
-        Run.objects.create(
-            project=project_ICR,
-            with_bugs=True
-        )
-        Run.objects.create(
-            project=project_ICR,
-            with_bugs=False
-        )
-
         replicate_ICR_1 = Replicate.objects.create(
-            name="abundance_rep_1", rank=1, project=project_ICR
+            name="abundance_rep_1", project=project_ICR, mean=False
         )
         replicate_ICR_2 = Replicate.objects.create(
-            name="abundance_rep_2", rank=2, project=project_ICR
+            name="abundance_rep_2", project=project_ICR, mean=False
+        )
+        replicate_ICR_3 = Replicate.objects.create(
+            name="abundance_average", project=project_ICR, mean=True
         )
 
         sample_stage_ICR_1 = SampleStage.objects.create(
@@ -339,6 +328,83 @@ class Migration(migrations.Migration):
             replicate=replicate_ICR_2,
             sample_stage=sample_stage_ICR_8,
             name="Abundance: 134N, 2, 15",
+        )
+
+        StatisticType = apps.get_model("process", "StatisticType")
+        StatisticType.objects.create(
+            name="readings protein",
+        )
+        StatisticType.objects.create(
+            name="readings phospho",
+        )
+        StatisticType.objects.create(
+            name="readings median",
+        )
+
+        StatisticType.objects.create(
+            name="0-max",
+        )
+        StatisticType.objects.create(
+            name="log2_mean",
+        )
+
+        StatisticType.objects.create(
+            name="protein_abundances raw",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances imputed",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances normalised",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances 0-max",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances median",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances min-max",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances log2_mean",
+        )
+        StatisticType.objects.create(
+            name="protein_abundances log2 arrest",
+        )
+
+        StatisticType.objects.create(
+            name="phospho_regression 0-max",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression log2_mean",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances raw",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances imputed",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances normalised 0-max",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances normalised median",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances normalised min-max",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances normalised log2_mean",
+        )
+        StatisticType.objects.create(
+            name="phospho_regression position_abundances normalised log2 arrest",
+        )
+        StatisticType.objects.create(
+            name="protein_oscillation_abundances 0-max",
+        )
+        StatisticType.objects.create(
+            name="protein_oscillation_abundances log2_mean",
         )
 
     dependencies = [

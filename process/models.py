@@ -1,22 +1,21 @@
 from django.db import models
-
-# Create your models here.
-
+from django.db.models import Q, UniqueConstraint
 
 class Project(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    with_bugs = models.BooleanField(default=False)
     proteome_file = models.CharField(max_length=255)
     phosphoproteome_file = models.CharField(max_length=255)
     proteome_file_accession_number_column_name = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.name
+        return f"Project {self.name}"
 
 class Replicate(models.Model):
     name = models.CharField(max_length=255)
-    rank = models.IntegerField()
+    mean = models.BooleanField(default=False)
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="replicates"
+        Project, on_delete=models.CASCADE, related_name="replicate_project"
     )
 
     class Meta:
@@ -25,13 +24,13 @@ class Replicate(models.Model):
         ]
 
     def __str__(self):
-        return self.name
+        return f"Replicate {self.name}"
 
 class SampleStage(models.Model):
     name = models.CharField(max_length=255)
     rank = models.IntegerField()
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="sample_stages"
+        Project, on_delete=models.CASCADE, related_name="sample_stage_project"
     )
 
     class Meta:
@@ -40,16 +39,16 @@ class SampleStage(models.Model):
         ]
 
     def __str__(self):
-        return self.name
+        return f"SampleStage {self.name}"
 
 
 class ColumnName(models.Model):
     name = models.CharField(max_length=255)
     sample_stage = models.ForeignKey(
-        SampleStage, on_delete=models.CASCADE, related_name="column_names"
+        SampleStage, on_delete=models.CASCADE, related_name="column_name_sample_stage"
     )
     replicate = models.ForeignKey(
-        Replicate, on_delete=models.CASCADE, related_name="sample_stages"
+        Replicate, on_delete=models.CASCADE, related_name="sample_stage_replicate"
     )
 
     class Meta:
@@ -58,15 +57,17 @@ class ColumnName(models.Model):
         ]
 
     def __str__(self):
-        return self.sample_stage.name
+        return f"ColumnName {self.sample_stage.name}"
 
 
 class Protein(models.Model):
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="protein"
+        Project, on_delete=models.CASCADE, related_name="protein_project"
     )
     accession_number = models.CharField(max_length=255)
     is_contaminant = models.BooleanField(default=False)
+    gene_name = models.CharField(max_length=255, null=True, blank=True)
+    protein_name = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -74,35 +75,20 @@ class Protein(models.Model):
         ]
 
     def __str__(self):
-        return self.accession_number
-
-
-class ProteinReading(models.Model):
-    column_name = models.ForeignKey(
-        ColumnName, on_delete=models.CASCADE, related_name="protein_readings"
-    )
-    protein = models.ForeignKey(
-        Protein, on_delete=models.CASCADE, related_name="protein_readings"
-    )
-    reading = models.FloatField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['column_name', 'protein'], name='unique_column_name_protein')
-        ]
-
-    def __str__(self):
-        return f"{self.reading}"
+        return f"Protein {self.accession_number}"
 
 
 class Phospho(models.Model):
     protein = models.ForeignKey(
-        Protein, on_delete=models.CASCADE, related_name="phospho"
+        Protein, on_delete=models.CASCADE, related_name="phospho_protein"
     )
 
     mod = models.CharField(max_length=255)
 
     phosphosite = models.CharField(max_length=255)
+
+    pep_tools_annotations = models.JSONField(null=True, blank=True)
+    kinase_prediction = models.JSONField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -110,59 +96,64 @@ class Phospho(models.Model):
         ]
 
     def __str__(self):
-        return f"Phospho for {self.protein.accession_number}"
+        return f"Phospho for {self.protein.accession_number} mod {self.mod}"
 
 
-class PhosphoReading(models.Model):
-    column_name = models.ForeignKey(
-        ColumnName, on_delete=models.CASCADE, related_name="phospho_reading"
-    )
-    phospho = models.ForeignKey(
-        Phospho, on_delete=models.CASCADE, related_name="phospho_reading"
-    )
-    reading = models.FloatField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['phospho', 'column_name'], name='unique_phospho_column_name')
-        ]
+class StatisticType(models.Model):
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"{self.reading}"
+        return f"StatisticType {self.self.name}"
 
 
-class Run(models.Model):
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="run"
-    )
-    with_bugs = models.BooleanField(default=False)
-    protein_medians = models.JSONField(blank=True, null=True)
-    phospho_medians = models.JSONField(blank=True, null=True)
-    # TODO - is this field used?
-    results = models.JSONField(blank=True, null=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['project', 'with_bugs'], name='unique_project_with_bugs')
-        ]
-
-    def __str__(self):
-        return f"{self.project.name}, with-bugs {self.with_bugs}"
-
-# TODO - duplication here - proteins are per-project, so both run and protein link to protein
-#   Does it matter? Not sure if it's fixable.
-class RunResult(models.Model):
-    run = models.ForeignKey(
-        Run, on_delete=models.CASCADE, related_name="run_result"
+class Statistic(models.Model):
+    statistic_type = models.ForeignKey(
+        StatisticType, on_delete=models.CASCADE, related_name="statistic_type"
     )
     protein = models.ForeignKey(
-        Protein, on_delete=models.CASCADE, related_name="run_result"
+        Protein, on_delete=models.CASCADE, related_name="statistic_protein",
+        null=True, blank=True
     )
-    protein_result = models.JSONField(blank=True, null=True)
-    phospho_result = models.JSONField(blank=True, null=True)
-    combined_result = models.JSONField(blank=True, null=True)
+    phospho = models.ForeignKey(
+        Phospho, on_delete=models.CASCADE, related_name="statistic_phospho",
+        null=True, blank=True
+    )
+    metrics = models.JSONField(null=True, blank=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['run', 'protein'], name='unique_run_protein')
+            UniqueConstraint(
+                fields=["statistic_type", "protein"],
+                condition=Q(phospho__isnull=True),
+                name="unique_statistic_by_type_and_protein"
+            ),
+            UniqueConstraint(
+                fields=["statistic_type", "phospho"],
+                condition=Q(protein__isnull=True),
+                name="unique_statistic_by_type_and_phospho"
+            )
         ]
+
+    def __str__(self):
+        if self.phospho:
+            return f"Statistic {self.type.name} {self.phospho.accession_number} (phospho)"
+        elif self.protein:
+            return f"Statistic {self.type.name} {self.protein.accession_number}"
+        else:
+            return f"Invalid statistic {self.type.name} (no protein or phospho)"
+
+
+class Abundance(models.Model):
+    statistic = models.ForeignKey(
+        Statistic, on_delete=models.CASCADE, related_name="abundance_statistic"
+    )
+    sample_stage = models.ForeignKey(
+        SampleStage, on_delete=models.CASCADE, related_name="abundance_sample_stage"
+    )
+    replicate = models.ForeignKey(
+        Replicate, on_delete=models.CASCADE, related_name="abundance_replicate"
+    )
+    reading = models.FloatField()
+
+    def __str__(self):
+        return f"Abundance replicate {self.replicate.name} stage {self.sample_stage.name} statistic {self.statistic.name} reading {self.reading}"

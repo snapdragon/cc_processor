@@ -3,7 +3,11 @@ import logging
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-from process.models import ColumnName, Project, Protein, ProteinReading, Phospho, PhosphoReading, RunResult
+from process.models import ColumnName, Project, Protein, Abundance, Phospho, StatisticType, Statistic
+
+from process.constants import (
+    READINGS_PROTEIN
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,6 +39,7 @@ class Command(BaseCommand):
         logger.info(f"Importing spreadsheet for {project_name}")
 
         project = Project.objects.get(name=project_name)
+        stats_type_rp = StatisticType.objects.get(name=READINGS_PROTEIN)
 
         file_path = f"data/{project.proteome_file}"
 
@@ -47,11 +52,9 @@ class Command(BaseCommand):
         for cn in column_names:
             cns_by_name[cn.name] = cn
 
-        RunResult.objects.filter(protein__project=project).delete()
-        # TODO - update Run to not have results?
-        ProteinReading.objects.filter(protein__project=project).delete()
+        Abundance.objects.filter(statistic__protein__project=project).delete()
+        Statistic.objects.filter(protein__project=project).delete()
         Protein.objects.filter(project=project).delete()
-        PhosphoReading.objects.filter(phospho__protein__project=project).delete()
         Phospho.objects.filter(protein__project=project).delete()
 
         row_no = 0
@@ -76,10 +79,18 @@ class Command(BaseCommand):
 
                 # To ensure the two readings don't get mashed up if they
                 #   have any missing values
-                ProteinReading.objects.filter(protein=protein).delete()
+                Abundance.objects.filter(statistic__protein=protein).delete()
+
+                statistic = Statistic.objects.get(
+                    statistic_type=stats_type_rp, protein=protein
+                )
             else:
                 protein = Protein.objects.create(
                     project=project, accession_number=accession_number, is_contaminant=is_contaminant
+                )
+
+                statistic = Statistic.objects.create(
+                    statistic_type=stats_type_rp, protein=protein
                 )
 
             # We don't want the readings for contaminants
@@ -91,10 +102,10 @@ class Command(BaseCommand):
                     reading = row[col]
 
                     if reading != reading:
-                        reading = None
+                        continue
 
-                    ProteinReading.objects.create(
-                        column_name=cn, reading=reading, protein=protein
+                    Abundance.objects.create(
+                        statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                     )
 
         print(f"Total rows: {row_no}")

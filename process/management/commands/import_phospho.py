@@ -6,9 +6,13 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 import utilities_basicReader
 
-from process.models import ColumnName, Project, Protein, Phospho, PhosphoReading
-# TODO - delete static_mapping
+from process.models import ColumnName, Project, Protein, Phospho, StatisticType, Abundance, Statistic
+
 from static_mapping import time_points, data_files, data_files_datakeys, time_points_mapping
+
+from process.constants import (
+    READINGS_PHOSPHO
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,6 +41,7 @@ class Command(BaseCommand):
         logger.info(f"Importing phospho spreadsheet for {project_name}")
 
         project = Project.objects.get(name=project_name)
+        stats_type_rpho = StatisticType.objects.get(name=READINGS_PHOSPHO)
 
         file_path = f"data/{project.phosphoproteome_file}"
 
@@ -52,7 +57,8 @@ class Command(BaseCommand):
 
         proteins = {pr.accession_number: pr for pr in prs}
 
-        PhosphoReading.objects.filter(phospho__protein__project=project).delete()
+        Abundance.objects.filter(statistic__phospho__protein__project=project).delete()
+        Statistic.objects.filter(phospho__protein__project=project).delete()
         Phospho.objects.filter(protein__project=project).delete()
 
         cns_by_name = {}
@@ -97,6 +103,10 @@ class Command(BaseCommand):
                     protein = protein, mod = mod, phosphosite = mod
                 )
 
+                statistic = Statistic.objects.create(
+                    statistic_type=stats_type_rpho, phospho=phospho
+                )
+
                 for col in df.columns:
                     col_short = re.search(r'IITI_\d{3}_', col)
 
@@ -105,12 +115,12 @@ class Command(BaseCommand):
                             reading = row[col]
 
                             if reading != reading:
-                                reading = None
+                                continue
 
                             logger.info(f"Adding {phospho} {cn} {reading}")
 
-                            PhosphoReading.objects.create(
-                                phospho = phospho, column_name=cn, reading=reading,
+                            Abundance.objects.create(
+                                statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                             )
 
 
@@ -191,18 +201,23 @@ class Command(BaseCommand):
                     protein=proteins[uniprot_accession], mod=mod_key, phosphosite=phosphosite
                 )
 
+                statistic = Statistic.objects.create(
+                    statistic_type=stats_type_rpho, phospho=phospho
+                )
+
                 for replicate_name in raw.keys():
                     for column_name in raw[replicate_name]:
                         reading = raw[replicate_name][column_name]
 
                         if reading != reading:
-                            reading = None
+                            continue
 
-                        col_obj = cns_by_replicate_and_column_name[replicate_name][column_name]
+                        cn = cns_by_replicate_and_column_name[replicate_name][column_name]
 
-                        PhosphoReading.objects.create(
-                            column_name=col_obj, reading=reading, phospho=phospho
+                        Abundance.objects.create(
+                            statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                         )
+
 
 
 def findModificationPositionRep1(data_point):

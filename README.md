@@ -11,11 +11,11 @@ docker compose up
 docker exec -it cc_processor /bin/bash
 # poetry install        ?
 eval $(poetry env activate)
-python manage.py import_proteo --project "SL"
+python manage.py import_protein --project "SL"
 python manage.py import_phospho --project "SL"
 python manage.py process --project "SL" --calculate-all
 
-python manage.py import_proteo --project "ICR"
+python manage.py import_protein --project "ICR"
 python manage.py import_phospho --project "ICR"
 python manage.py process --project "ICR" --with-bugs --calculate-all
 
@@ -40,11 +40,10 @@ docker exec -it postgres-db /bin/bash
 psql -U myuser -d mydatabase
 \dt
 # DROP TABLE 'process_' for all tables starting 'process', e.g.
-drop table process_runresult;
-drop table process_run;
-drop table process_phosphoreading;
+drop table process_abundance;
+drop table process_statistic;
+drop table process_statistictype;
 drop table process_phospho;
-drop table process_proteinreading;
 drop table process_protein;
 drop table process_columnname;
 drop table process_samplestage;
@@ -133,10 +132,14 @@ python manage.py output_protein --project "ICR" --with-bugs --accession-number Q
 
 ### Various DB queries
 ```sh
+# Change DB
+\c dbify
+
+# List tables
+\dt
+
 # Display the length of non-empty phospho results in order
 SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM process_runresult where phospho_result != '{}' order by json_text_length asc;
+
 ```
 
-## How the results are structured
-
-See the JSON schema

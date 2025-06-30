@@ -74,3 +74,30 @@ PROTEIN_INFO_FIELDS = [
     "APC_complex",
     "dna_replication_machinery"
 ]
+
+# StatisticTypes
+
+READINGS_PROTEIN = "readings protein"
+READINGS_PHOSPHO = "readings phospho"
+READINGS_MEDIAN = "readings median"
+# 0-max and log2_mean already defined above
+# TODO - can probably shorten these names
+PROTEIN_ABUNDANCES_RAW = "protein_abundances raw"
+PROTEIN_ABUNDANCES_IMPUTED = "protein_abundances imputed"
+PROTEIN_ABUNDANCES_NORMALISED = "protein_abundances normalised"
+PROTEIN_ABUNDANCES_ZERO_MAX = "protein_abundances 0-max"
+PROTEIN_ABUNDANCES_MEDIAN = "protein_abundances median"
+PROTEIN_ABUNDANCES_MIN_MAX = "protein_abundances min-max"
+PROTEIN_ABUNDANCES_LOG2_MEAN = "protein_abundances log2_mean",
+PROTEIN_ABUNDANCES_LOG2_ARREST ="protein_abundances log2 arrest",
+PHOSPHO_REGRESSION_ZERO_MAX = "phospho_regression 0-max",
+PHOSPHO_REGRESSION_LOG2_MEAN = "phospho_regression log2_mean",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW = "phospho_regression position_abundances raw",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED = "phospho_regression position_abundances imputed",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX = "phospho_regression position_abundances normalised 0-max",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN = "phospho_regression position_abundances normalised median",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX = "phospho_regression position_abundances normalised min-max",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN = "phospho_regression position_abundances normalised log2_mean",
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST ="phospho_regression position_abundances normalised log2 arrest",
+PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX = "protein_oscillation_abundances 0-max",
+PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN = "protein_oscillation_abundances log2_mean",

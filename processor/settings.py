@@ -78,7 +78,7 @@ WSGI_APPLICATION = "processor.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DATABASE_NAME", "mydatabase"),
+        "NAME": os.environ.get("DATABASE_NAME", "dbify"),
         "USER": os.environ.get("DATABASE_USER", "myuser"),
         "PASSWORD": os.environ.get("DATABASE_PASSWORD", "mypassword"),
         "HOST": os.environ.get("DATABASE_HOST", "postgres-db"),

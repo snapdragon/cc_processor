@@ -18,19 +18,15 @@ Get generate_kinase_predictions working with SL
     Doesnt' work with ICR any more either (??)
     How does generate_kinase_predictions even work? Is it appropriate for the data we have?
 
-Find a way to make the nested directory structure of the json less complicated.
-    Maybe add another DB table or two, with a name for the type of data and a replicate field?
-    And another table for metrics?
-RunResult probably isn't needed, the results could be put in Protein and Phospho
+
+
+Check all constraints
 
 
 
-Get rid of Run, put a with_bugs field in Project
-protein_medians and phospho_medians fields can be converted to tables
-Create a Calculations (better name?) table that Abudance will relate to
-    e.g. normalised_zero_max
-Create an Abundance table that contains replicate, sample_stage, value
-
+Go through the code and make it work with no records created for empty values
+    in import_protein and import_phospho
+Move fetching of gene_name and protein_name to import_protein
 Review the code to decide if imports should set missing values to no record, None or 0
 Study all the SL phospho errors
 Find a way to assess how sparse the data sets are
@@ -59,12 +55,6 @@ Validate all the various statistical calculations
 Change dockerfile to not have to run the env after start
 The docker config for the cc_processor keeps the shell alive, but it then does nothing.
     How to improve this?
-
-
-
-
-Put gene_name and protein_name in Protein
-
 
 
 
