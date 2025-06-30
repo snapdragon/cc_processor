@@ -118,22 +118,32 @@ class Statistic(models.Model):
         Phospho, on_delete=models.CASCADE, related_name="statistic_phospho",
         null=True, blank=True
     )
+    project = models.ForeignKey(  # Needed for medians
+        Project, on_delete=models.SET_NULL, related_name="statistic_project",
+        null=True, blank=True
+    )
     metrics = models.JSONField(null=True, blank=True)
 
     class Meta:
         constraints = [
             UniqueConstraint(
+                fields=["statistic_type", "project"],
+                condition=Q(protein__isnull=True) & Q(phospho__isnull=True),
+                name="unique_statistic_by_type_and_project"
+            ),
+            UniqueConstraint(
                 fields=["statistic_type", "protein"],
-                condition=Q(phospho__isnull=True),
+                condition=Q(project__isnull=True) & Q(phospho__isnull=True),
                 name="unique_statistic_by_type_and_protein"
             ),
             UniqueConstraint(
                 fields=["statistic_type", "phospho"],
-                condition=Q(protein__isnull=True),
+                condition=Q(project__isnull=True) & Q(protein__isnull=True),
                 name="unique_statistic_by_type_and_phospho"
             )
         ]
 
+        
     def __str__(self):
         if self.phospho:
             return f"Statistic {self.type.name} {self.phospho.accession_number} (phospho)"

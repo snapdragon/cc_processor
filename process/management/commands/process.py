@@ -18,7 +18,7 @@ from scipy import stats
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
 
-from process.models import ColumnName, Project, Phospho, Protein, ProteinReading, Replicate, PhosphoReading, SampleStage, Run, RunResult
+from process.models import ColumnName, Project, Phospho, Protein, Replicate, SampleStage, StatisticType, Statistic, Abundance
 from process.constants import (
     RAW,
     METRICS,
@@ -59,6 +59,8 @@ from process.constants import (
     PROTEIN_INFO_FIELDS,
     GENE_NAME,
     PROTEIN_NAME,
+    READINGS_PROTEIN,
+    READINGS_PHOSPHO,
 )
 
 logging.basicConfig(
@@ -145,76 +147,76 @@ class Command(BaseCommand):
         # TODO - return if no calculate flags are set?
 
         project = Project.objects.get(name=project_name)
-        replicates = Replicate.objects.filter(project=project)
+        replicates = Replicate.objects.filter(project=project, mean=False)
         column_names = ColumnName.objects.filter(replicate__project=project)
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
-        proteins = None
-        protein_readings = None
-        phospho_readings = None
-        phosphos = None
+        # stats_type_readings_pr = StatisticType.objects.get(name=READINGS_PROTEIN)
+        # stats_type_readings_pho = StatisticType.objects.get(name=READINGS_PHOSPHO)
 
-        proteins = Protein.objects.filter(project=project, is_contaminant=False)
+        # proteins = Protein.objects.filter(project=project, is_contaminant=False)
+        # protein_readings = Abundance.objects.filter(
+        #     statistic__protein__project=project,
+        #     statistic__protein__is_contaminant = False,
+        #     statistic_type=stats_type_readings_pr
+        # )
+        # phospho_readings = Abundance.objects.filter(
+        #     statistic__phospho__protein__project=project,
+        #     statistic__phospho__protein__is_contaminant = False,
+        #     statistic_type=stats_type_readings_pho
+        # )
+        # phosphos = Phospho.objects.filter(
+        #     protein__project=project,
+        #     protein__is_contaminant = False
+        # )
 
-        protein_readings = ProteinReading.objects.filter(
-            column_name__replicate__project=project,
-            protein__is_contaminant = False
-        )
-        phospho_readings = PhosphoReading.objects.filter(
-            phospho__protein__project=project,
-            phospho__protein__is_contaminant = False
-        )
-        phosphos = Phospho.objects.filter(
-            protein__project=project,
-            protein__is_contaminant = False
-        )
-
-        run, _ = Run.objects.get_or_create(project=project, with_bugs=with_bugs)
+        project.with_bugs = with_bugs
+        project.save()
 
         if calculate_protein_medians or calculate_all:
-            protein_medians = self._calculate_protein_medians(run, replicates, protein_readings, column_names, with_bugs)
+            protein_medians = self._calculate_protein_medians(project, replicates, column_names, with_bugs)
         else:
-            protein_medians = self._fetch_protein_medians(run)
+            protein_medians = self._fetch_protein_medians(project)
 
-        if calculate_proteins or calculate_all:
-            self._proteo(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
+        # if calculate_proteins or calculate_all:
+        #     self._protein(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
 
-        if calculate_phospho_medians or calculate_all:
-            phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
-        else:
-            # TODO - if the script is run with only --process-protein-medians this will
-            #   raise an exception. How to make it not necessarily run? Check flags for
-            #   absence of flags that would require it?
-            phospho_medians = self._fetch_phospho_medians(run)
+        # if calculate_phospho_medians or calculate_all:
+        #     phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
+        # else:
+        #     # TODO - if the script is run with only --process-protein-medians this will
+        #     #   raise an exception. How to make it not necessarily run? Check flags for
+        #     #   absence of flags that would require it?
+        #     phospho_medians = self._fetch_phospho_medians(run)
 
-        if calculate_phosphos or calculate_all:
-            self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
+        # if calculate_phosphos or calculate_all:
+        #     self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
 
-        if merge_protein_phospho or calculate_proteins or calculate_phosphos or calculate_all:
-            # Merging has to be redone on new protein or phospho calculations
-            self._merge_phospho_with_proteo(proteins, run)
+        # if merge_protein_phospho or calculate_proteins or calculate_phosphos or calculate_all:
+        #     # Merging has to be redone on new protein or phospho calculations
+        #     self._merge_phospho_with_proteo(proteins, run)
 
-        # By this point there should be a combined result for every protein
+        # # By this point there should be a combined result for every protein
 
-        # Largely batch processing from now on
-        # TODO - some of the parts of the batch processing, e.g. protein oscillation
-        #   metrics, aren't actually batch. Move them out.
-        if calculate_batch or calculate_all:
-            # TODO - not a batch call, shouldn't be here.
-            self._add_protein_annotations(run)
+        # # Largely batch processing from now on
+        # # TODO - some of the parts of the batch processing, e.g. protein oscillation
+        # #   metrics, aren't actually batch. Move them out.
+        # if calculate_batch or calculate_all:
+        #     # TODO - not a batch call, shouldn't be here.
+        #     self._add_protein_annotations(run)
 
-            self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+        #     self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
 
-            # TODO - figure out how, or if at all, to get this working for SL
-            #   Actually it no longer works for ICR either, related to
-            #   P04264 somehow
-            # self._generate_kinase_predictions(run)
+        #     # TODO - figure out how, or if at all, to get this working for SL
+        #     #   Actually it no longer works for ICR either, related to
+        #     #   P04264 somehow
+        #     # self._generate_kinase_predictions(run)
 
-            self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
+        #     self._calculate_batch_q_value_fisher(run, replicates, sample_stages)
 
-            self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
+        #     self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
-            self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
+        #     self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
 
@@ -301,7 +303,7 @@ class Command(BaseCommand):
 
         run_result.save()
     
-    def _proteo(
+    def _protein(
         self, project, replicates, protein_readings, medians, column_names, sample_stages, run, proteins, with_bugs: bool
     ):
         logger.info("Processing proteins")
@@ -527,23 +529,6 @@ class Command(BaseCommand):
             exit()
 
         return time_course_abundance_df
-
-    def _all_replicates(self, *args, **kwargs):
-        """
-        Calls the passed function for each replicate for the project.
-        """
-        results = {}
-
-        # Remove the passed function and replicates as they're not needed by the passed function
-        call_kwargs = kwargs.copy()
-        func = call_kwargs.pop("func")
-        replicates = call_kwargs.pop("replicates")
-
-        for replicate in replicates:
-            call_kwargs["replicate_name"] = replicate.name
-            results[replicate.name] = func(**call_kwargs)
-
-        return results
 
     def _tp(self, stage_name, readings, replicates):
         """
@@ -1163,40 +1148,6 @@ class Command(BaseCommand):
         run.save()
 
         return phospho_medians
-
-
-    def _calculate_replicate_stage_name_medians(
-        self,
-        replicate_name: str,
-        protein_readings: QuerySet[ProteinReading],
-        column_names: QuerySet[ColumnName],
-    ):
-        stage_name_medians = {}
-
-        column_names_by_replicate = column_names.filter(replicate__name=replicate_name)
-
-        for column_name in column_names_by_replicate:
-            readings = []
-
-            protein_readings_by_column = protein_readings.filter(
-                column_name=column_name
-            )
-
-            for protein_reading in protein_readings_by_column:
-                # TODO - what to do about None values?
-                if protein_reading.reading is not None:
-                    readings.append(protein_reading.reading)
-
-            if len(readings) == 0:
-                raise Exception(
-                    "Can't create median with no abundances for protein {protein_reading.protein.accession_number}"
-                )
-
-            median = statistics.median(readings)
-
-            stage_name_medians[column_name.sample_stage.name] = median
-
-        return stage_name_medians
 
     # TODO - think this could be tidied
     # TODO - tested
@@ -1979,22 +1930,37 @@ class Command(BaseCommand):
 
             rr.save()
 
-    def _calculate_protein_medians(self, run, replicates, protein_readings, column_names, with_bugs):
+    def _calculate_protein_medians(self, project, replicates, column_names, with_bugs):
         # TODO - does this need to be by replicate? Why not just all columns at once?
-        # TODO - is _all_replicates really useful?
-        protein_medians = self._all_replicates(
-            func=self._calculate_replicate_stage_name_medians,
-            replicates=replicates,
-            protein_readings=protein_readings,
-            column_names=column_names,
-        )
+        stage_name_medians = {}
+
+        column_names_by_replicate = column_names.filter(replicate__name=replicate_name)
+
+        for column_name in column_names_by_replicate:
+            readings = []
+
+            protein_readings_by_column = protein_readings.filter(
+                column_name=column_name
+            )
+
+            for protein_reading in protein_readings_by_column:
+                # TODO - what to do about None values?
+                if protein_reading.reading is not None:
+                    readings.append(protein_reading.reading)
+
+            if len(readings) == 0:
+                raise Exception(
+                    "Can't create median with no abundances for protein {protein_reading.protein.accession_number}"
+                )
+
+            median = statistics.median(readings)
+
+            stage_name_medians[column_name.sample_stage.name] = median
+
+
 
         if with_bugs:
             protein_medians["abundance_rep_1"] = protein_medians["abundance_rep_2"]
-
-        run, _ = Run.objects.get_or_create(
-            project=run.project, with_bugs=run.with_bugs
-        )
 
         run.protein_medians = json.dumps(protein_medians)
 
