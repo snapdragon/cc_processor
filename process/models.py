@@ -103,7 +103,7 @@ class StatisticType(models.Model):
     name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"StatisticType {self.self.name}"
+        return f"StatisticType {self.name}"
 
 
 class Statistic(models.Model):
@@ -146,11 +146,13 @@ class Statistic(models.Model):
         
     def __str__(self):
         if self.phospho:
-            return f"Statistic {self.type.name} {self.phospho.accession_number} (phospho)"
+            return f"Statistic {self.statistic_type.name} {self.phospho.accession_number} (phospho)"
         elif self.protein:
-            return f"Statistic {self.type.name} {self.protein.accession_number}"
+            return f"Statistic {self.statistic_type.name} {self.protein.accession_number}"
+        elif self.project:
+            return f"Statistic {self.statistic_type.name} {self.project.name}"
         else:
-            return f"Invalid statistic {self.type.name} (no protein or phospho)"
+            return f"Invalid statistic {self.statistic_type.name} (no protein or phospho)"
 
 
 class Abundance(models.Model):
@@ -166,4 +168,4 @@ class Abundance(models.Model):
     reading = models.FloatField()
 
     def __str__(self):
-        return f"Abundance replicate {self.replicate.name} stage {self.sample_stage.name} statistic {self.statistic.name} reading {self.reading}"
+        return f"Abundance: replicate '{self.replicate.name}' stage '{self.sample_stage.name}' statistic type '{self.statistic.statistic_type.name}' reading: {self.reading}"

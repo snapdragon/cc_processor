@@ -1932,15 +1932,17 @@ class Command(BaseCommand):
     def _calculate_protein_medians(self, project, sample_stages, with_bugs):
         logger.info("Calculating protein medians")
 
-        # Remove all previous abundances for protein medians
-        stats_type_p_m = StatisticType.objects.get(name=PROTEIN_MEDIAN)
-        Abundance.objects.filter(statistic__project=project, statistic_type=stats_type_p_m).delete()
+        stat_type_prot_med = StatisticType.objects.get(name=PROTEIN_MEDIAN)
+        Abundance.objects.filter(statistic__project=project, statistic__statistic_type=stat_type_prot_med).delete()
 
-        abundances = Abundance.objects.filter(statistic__protein__project=project, statistics_type=PROTEIN_READINGS).iterate(batch_size=100)
+        abundances = Abundance.objects.filter(statistic__protein__project=project, statistic__statistic_type__name=PROTEIN_READINGS).iterator(chunk_size=100)
 
         rep_stage_abundances = {}
 
-        for abundance in abundances:
+        for i, abundance in enumerate(abundances):
+            if not i % 10000:
+                print(f"Processing abundance {i}")
+
             if not rep_stage_abundances.get(abundance.replicate):
                 rep_stage_abundances[abundance.replicate]  ={}
 
@@ -1955,6 +1957,8 @@ class Command(BaseCommand):
 
             rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 
+        stat_prot_med, _ = Statistic.objects.get_or_create(project=project, statistic_type=stat_type_prot_med)
+
         # Here we iterate the replicates in the dict, not in Replicates, because of the
         #   with_bugs code above
         for replicate in rep_stage_abundances:
@@ -1967,9 +1971,9 @@ class Command(BaseCommand):
 
                 median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 
-                Abundance.objects.create(statistic=stats_type_p_m, reading=median)
+                Abundance.objects.create(statistic=stat_prot_med, replicate=replicate, sample_stage=sample_stage, reading=median)
 
-        print(Abundance.objects.filter(statistic_type=stats_type_p_m))
+        print(Abundance.objects.filter(statistic=stat_prot_med))
 
 
 
