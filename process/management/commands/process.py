@@ -175,7 +175,7 @@ class Command(BaseCommand):
         project.save()
 
         if calculate_protein_medians or calculate_all:
-            self._calculate_protein_medians(project, sample_stages, with_bugs)
+            self._calculate_protein_medians(project, replicates, sample_stages, with_bugs)
 
         # if calculate_proteins or calculate_all:
         #     self._protein(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
@@ -1929,7 +1929,7 @@ class Command(BaseCommand):
 
             rr.save()
 
-    def _calculate_protein_medians(self, project, sample_stages, with_bugs):
+    def _calculate_protein_medians(self, project, replicates, sample_stages, with_bugs):
         logger.info("Calculating protein medians")
 
         stat_type_prot_med = StatisticType.objects.get(name=PROTEIN_MEDIAN)
@@ -1944,7 +1944,7 @@ class Command(BaseCommand):
                 print(f"Processing abundance {i}")
 
             if not rep_stage_abundances.get(abundance.replicate):
-                rep_stage_abundances[abundance.replicate]  ={}
+                rep_stage_abundances[abundance.replicate] = {}
 
             if not rep_stage_abundances[abundance.replicate].get(abundance.sample_stage):
                 rep_stage_abundances[abundance.replicate][abundance.sample_stage]  = []
@@ -1959,9 +1959,7 @@ class Command(BaseCommand):
 
         stat_prot_med, _ = Statistic.objects.get_or_create(project=project, statistic_type=stat_type_prot_med)
 
-        # Here we iterate the replicates in the dict, not in Replicates, because of the
-        #   with_bugs code above
-        for replicate in rep_stage_abundances:
+        for replicate in replicates:
             for sample_stage in sample_stages:
                 if not rep_stage_abundances[replicate].get(sample_stage):
                     logger.error(f"Median with no sample stage (??) {replicate.name} {sample_stage.name}")

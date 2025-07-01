@@ -27,7 +27,17 @@ from process.constants import (
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST,
     PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
-    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+    SL_SAMPLE_STAGE_NAME_1,
+    SL_SAMPLE_STAGE_NAME_2,
+    SL_SAMPLE_STAGE_NAME_3,
+    SL_SAMPLE_STAGE_NAME_4,
+    SL_SAMPLE_STAGE_NAME_5,
+    SL_SAMPLE_STAGE_NAME_6,
+    SL_SAMPLE_STAGE_NAME_7,
+    SL_SAMPLE_STAGE_NAME_8,
+    SL_SAMPLE_STAGE_NAME_9,
+    SL_SAMPLE_STAGE_NAME_10
 )
 
 
@@ -49,34 +59,34 @@ class Migration(migrations.Migration):
 
         SampleStage = apps.get_model("process", "SampleStage")
         sample_stage_1 = SampleStage.objects.create(
-            project=proj, name="RO sample 15 min", rank=1
+            project=proj, name=SL_SAMPLE_STAGE_NAME_1, rank=1
         )
         sample_stage_2 = SampleStage.objects.create(
-            project=proj, name="RO sample 30 min", rank=2
+            project=proj, name=SL_SAMPLE_STAGE_NAME_2, rank=2
         )
         sample_stage_3 = SampleStage.objects.create(
-            project=proj, name="Palb sample 1h", rank=3
+            project=proj, name=SL_SAMPLE_STAGE_NAME_3, rank=3
         )
         sample_stage_4 = SampleStage.objects.create(
-            project=proj, name="RO sample 2h", rank=4
+            project=proj, name=SL_SAMPLE_STAGE_NAME_4, rank=4
         )
         sample_stage_5 = SampleStage.objects.create(
-            project=proj, name="Palb sample, 2,5h", rank=5
+            project=proj, name=SL_SAMPLE_STAGE_NAME_5, rank=5
         )
         sample_stage_6 = SampleStage.objects.create(
-            project=proj, name="Palb sample, 4h", rank=6
+            project=proj, name=SL_SAMPLE_STAGE_NAME_6, rank=6
         )
         sample_stage_7 = SampleStage.objects.create(
-            project=proj, name="RO sample 5h", rank=7
+            project=proj, name=SL_SAMPLE_STAGE_NAME_7, rank=7
         )
         sample_stage_8 = SampleStage.objects.create(
-            project=proj, name="Palb sample, 8h", rank=8
+            project=proj, name=SL_SAMPLE_STAGE_NAME_8, rank=8
         )
         sample_stage_9 = SampleStage.objects.create(
-            project=proj, name="Palb sample, 10h", rank=9
+            project=proj, name=SL_SAMPLE_STAGE_NAME_9, rank=9
         )
         sample_stage_10 = SampleStage.objects.create(
-            project=proj, name="Nocodozole", rank=10
+            project=proj, name=SL_SAMPLE_STAGE_NAME_10, rank=10
         )
 
         ColumnName = apps.get_model("process", "ColumnName")

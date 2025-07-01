@@ -165,7 +165,7 @@ class Abundance(models.Model):
     replicate = models.ForeignKey(
         Replicate, on_delete=models.CASCADE, related_name="abundance_replicate"
     )
-    reading = models.FloatField()
+    reading = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"Abundance: replicate '{self.replicate.name}' stage '{self.sample_stage.name}' statistic type '{self.statistic.statistic_type.name}' reading: {self.reading}"

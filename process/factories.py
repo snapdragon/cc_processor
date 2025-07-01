@@ -2,16 +2,14 @@ import factory
 from factory.django import DjangoModelFactory
 
 from process.models import (
-    ColumnName,
     Project,
     Protein,
-    ProteinReading,
     Replicate,
     SampleStage,
-    Run,
-    RunResult,
+    StatisticType,
+    Statistic,
+    Abundance
 )
-
 
 class ProjectFactory(DjangoModelFactory):
     class Meta:
@@ -30,6 +28,7 @@ class ReplicateFactory(DjangoModelFactory):
     name = factory.Faker("word")
     project = factory.SubFactory(ProjectFactory)
     rank = factory.Sequence(lambda n: n + 1)
+    mean = False
 
 
 class SampleStageFactory(DjangoModelFactory):
@@ -41,15 +40,6 @@ class SampleStageFactory(DjangoModelFactory):
     project = factory.SubFactory(ProjectFactory)
 
 
-class ColumnNameFactory(DjangoModelFactory):
-    class Meta:
-        model = ColumnName
-
-    name = factory.Faker("word")
-    sample_stage = factory.SubFactory(SampleStageFactory)
-    replicate = factory.SubFactory(ReplicateFactory)
-
-
 class ProteinFactory(DjangoModelFactory):
     class Meta:
         model = Protein
@@ -57,30 +47,29 @@ class ProteinFactory(DjangoModelFactory):
     accession_number = factory.Faker("word")
 
 
-class ProteinReadingFactory(DjangoModelFactory):
+class StatisticTypeFactory(DjangoModelFactory):
     class Meta:
-        model = ProteinReading
+        model = StatisticType
 
-    column_name = factory.SubFactory(ColumnNameFactory)
-    protein = factory.SubFactory(ProteinFactory)
-    reading = factory.Faker("pyfloat", left_digits=2, right_digits=2, positive=True)
+    name = factory.Faker("word")
 
-class RunFactory(DjangoModelFactory):
+
+class StatisticFactory(DjangoModelFactory):
     class Meta:
-        model = Run
+        model = Statistic
 
-    project = factory.SubFactory(ProjectFactory)
-    with_bugs = False
-    protein_medians = factory.LazyFunction(dict)
-    phospho_medians = factory.LazyFunction(dict)
-    results = factory.LazyFunction(dict)
+    statistic_type = factory.SubFactory(StatisticTypeFactory)
+    # Only one of these should be populated so no defaults are given here
+    project = None
+    protein = None
+    phospho = None
+    metrics = {}
 
-class RunResultFactory(DjangoModelFactory):
+class AbundanceFactory(DjangoModelFactory):
     class Meta:
-        model = RunResult
+        model = Abundance
 
-    run = factory.SubFactory(RunFactory)
-    protein = factory.SubFactory(ProteinFactory)
-    protein_result = factory.LazyFunction(dict)
-    phospho_result = factory.LazyFunction(dict)
-    combined_result = factory.LazyFunction(dict)
+    statistic = factory.SubFactory(StatisticFactory)
+    replicate = factory.SubFactory(ReplicateFactory)
+    sample_stage = factory.SubFactory(SampleStageFactory)
+    reading = 1

@@ -3,6 +3,19 @@ import pytest
 from pathlib import Path
 import pandas as pd
 
+from process.factories import (
+    ProjectFactory,
+    ReplicateFactory,
+    SampleStageFactory,
+    ProteinFactory,
+)
+
+from process.models import (
+    Project,
+    Replicate,
+    SampleStage,
+)
+
 @pytest.fixture
 def load_json():
     def _load(file_name):
@@ -19,3 +32,23 @@ def load_pickle():
         return pd.read_pickle(file_path)
 
     return _load
+
+@pytest.fixture
+def basic_project_setup():
+    project = Project.objects.get(name="SL")
+    replicates = Replicate.objects.filter(project=project, mean=False)
+    sample_stages = SampleStage.objects.filter(project=project)
+
+    # TODO - give proteins accession_numbers?
+    proteins = [
+        ProteinFactory(project=project),
+        ProteinFactory(project=project),
+        ProteinFactory(project=project),
+    ]
+
+    return {
+        "project": project,
+        "replicates": replicates,
+        "sample_stages": sample_stages,
+        "proteins": proteins,
+    }
