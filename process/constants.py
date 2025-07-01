@@ -77,9 +77,10 @@ PROTEIN_INFO_FIELDS = [
 
 # StatisticTypes
 
-READINGS_PROTEIN = "readings protein"
-READINGS_PHOSPHO = "readings phospho"
-READINGS_MEDIAN = "readings median"
+PROTEIN_READINGS = "readings protein"
+PHOSPHO_READINGS = "readings phospho"
+PROTEIN_MEDIAN = "protein median"
+PHOSPHO_MEDIAN = "phospho median"
 # 0-max and log2_mean already defined above
 # TODO - can probably shorten these names
 PROTEIN_ABUNDANCES_RAW = "protein_abundances raw"

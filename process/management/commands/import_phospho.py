@@ -11,7 +11,7 @@ from process.models import ColumnName, Project, Protein, Phospho, StatisticType,
 from static_mapping import time_points, data_files, data_files_datakeys, time_points_mapping
 
 from process.constants import (
-    READINGS_PHOSPHO
+    PHOSPHO_READINGS
 )
 
 logging.basicConfig(
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         logger.info(f"Importing phospho spreadsheet for {project_name}")
 
         project = Project.objects.get(name=project_name)
-        stats_type_rpho = StatisticType.objects.get(name=READINGS_PHOSPHO)
+        stats_type_rpho = StatisticType.objects.get(name=PHOSPHO_READINGS)
 
         file_path = f"data/{project.phosphoproteome_file}"
 

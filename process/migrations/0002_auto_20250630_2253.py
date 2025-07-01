@@ -2,6 +2,34 @@
 
 from django.db import migrations
 
+from process.constants import (
+    PROTEIN_READINGS,
+    PHOSPHO_READINGS,
+    PROTEIN_MEDIAN,
+    PHOSPHO_MEDIAN,
+    ZERO_MAX,
+    LOG2_MEAN,
+    PROTEIN_ABUNDANCES_RAW,
+    PROTEIN_ABUNDANCES_IMPUTED,
+    PROTEIN_ABUNDANCES_NORMALISED,
+    PROTEIN_ABUNDANCES_ZERO_MAX,
+    PROTEIN_ABUNDANCES_MEDIAN,
+    PROTEIN_ABUNDANCES_MIN_MAX,
+    PROTEIN_ABUNDANCES_LOG2_MEAN,
+    PROTEIN_ABUNDANCES_LOG2_ARREST,
+    PHOSPHO_REGRESSION_ZERO_MAX,
+    PHOSPHO_REGRESSION_LOG2_MEAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN
+)
+
 
 class Migration(migrations.Migration):
     def add_initial_data(apps, schema_editor):
@@ -331,80 +359,85 @@ class Migration(migrations.Migration):
         )
 
         StatisticType = apps.get_model("process", "StatisticType")
+
         StatisticType.objects.create(
-            name="readings protein",
+            name=PROTEIN_READINGS,
         )
         StatisticType.objects.create(
-            name="readings phospho",
+            name=PHOSPHO_READINGS,
         )
         StatisticType.objects.create(
-            name="readings median",
+            name=PROTEIN_MEDIAN,
+        )
+        StatisticType.objects.create(
+            name=PHOSPHO_MEDIAN,
         )
 
         StatisticType.objects.create(
-            name="0-max",
+            name=ZERO_MAX,
         )
         StatisticType.objects.create(
-            name="log2_mean",
-        )
-
-        StatisticType.objects.create(
-            name="protein_abundances raw",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances imputed",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances normalised",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances 0-max",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances median",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances min-max",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances log2_mean",
-        )
-        StatisticType.objects.create(
-            name="protein_abundances log2 arrest",
+            name=LOG2_MEAN,
         )
 
         StatisticType.objects.create(
-            name="phospho_regression 0-max",
+            name=PROTEIN_ABUNDANCES_RAW,
         )
         StatisticType.objects.create(
-            name="phospho_regression log2_mean",
+            name=PROTEIN_ABUNDANCES_IMPUTED,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances raw",
+            name=PROTEIN_ABUNDANCES_NORMALISED,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances imputed",
+            name=PROTEIN_ABUNDANCES_ZERO_MAX,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances normalised 0-max",
+            name=PROTEIN_ABUNDANCES_MEDIAN,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances normalised median",
+            name=PROTEIN_ABUNDANCES_MIN_MAX,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances normalised min-max",
+            name=PROTEIN_ABUNDANCES_LOG2_MEAN,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances normalised log2_mean",
+            name=PROTEIN_ABUNDANCES_LOG2_ARREST,
+        )
+
+        StatisticType.objects.create(
+            name=PHOSPHO_REGRESSION_ZERO_MAX,
         )
         StatisticType.objects.create(
-            name="phospho_regression position_abundances normalised log2 arrest",
+            name=PHOSPHO_REGRESSION_LOG2_MEAN,
         )
         StatisticType.objects.create(
-            name="protein_oscillation_abundances 0-max",
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW,
         )
         StatisticType.objects.create(
-            name="protein_oscillation_abundances log2_mean",
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED,
+        )
+        StatisticType.objects.create(
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX,
+        )
+        StatisticType.objects.create(
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN,
+        )
+        StatisticType.objects.create(
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX,
+        )
+        StatisticType.objects.create(
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        )
+        StatisticType.objects.create(
+            name=PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST,
+        )
+
+        StatisticType.objects.create(
+            name=PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+        )
+        StatisticType.objects.create(
+            name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
         )
 
     dependencies = [

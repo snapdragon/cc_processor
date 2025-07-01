@@ -15,8 +15,8 @@ from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import FloatVector
+# from rpy2.robjects.packages import importr
+# from rpy2.robjects.vectors import FloatVector
 
 from process.models import ColumnName, Project, Phospho, Protein, Replicate, SampleStage, StatisticType, Statistic, Abundance
 from process.constants import (
@@ -59,8 +59,9 @@ from process.constants import (
     PROTEIN_INFO_FIELDS,
     GENE_NAME,
     PROTEIN_NAME,
-    READINGS_PROTEIN,
-    READINGS_PHOSPHO,
+    PROTEIN_READINGS,
+    PHOSPHO_READINGS,
+    PROTEIN_MEDIAN,
 )
 
 logging.basicConfig(
@@ -151,8 +152,8 @@ class Command(BaseCommand):
         column_names = ColumnName.objects.filter(replicate__project=project)
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
-        # stats_type_readings_pr = StatisticType.objects.get(name=READINGS_PROTEIN)
-        # stats_type_readings_pho = StatisticType.objects.get(name=READINGS_PHOSPHO)
+        # stats_type_readings_pr = StatisticType.objects.get(name=PROTEIN_READINGS)
+        # stats_type_readings_pho = StatisticType.objects.get(name=PHOSPHO_READINGS)
 
         # proteins = Protein.objects.filter(project=project, is_contaminant=False)
         # protein_readings = Abundance.objects.filter(
@@ -174,9 +175,7 @@ class Command(BaseCommand):
         project.save()
 
         if calculate_protein_medians or calculate_all:
-            protein_medians = self._calculate_protein_medians(project, replicates, column_names, with_bugs)
-        else:
-            protein_medians = self._fetch_protein_medians(project)
+            self._calculate_protein_medians(project, sample_stages, with_bugs)
 
         # if calculate_proteins or calculate_all:
         #     self._protein(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
@@ -970,7 +969,7 @@ class Command(BaseCommand):
 
         return qc_proteins
 
-    def _format_protein_readings(self, protein_readings: QuerySet[ProteinReading]):
+    def _format_protein_readings(self, protein_readings):
         readings_by_stage: dict = {}
 
         for protein_reading in protein_readings:
@@ -987,7 +986,7 @@ class Command(BaseCommand):
 
         return readings_by_stage
 
-    def _format_phospho_readings_full(self, phospho_readings: QuerySet[PhosphoReading]):
+    def _format_phospho_readings_full(self, phospho_readings):
         logger.info(
             "Converting phospho_readings QuerySet into dict by protein, mod, replicate and stage name"
         )
@@ -1025,7 +1024,7 @@ class Command(BaseCommand):
 
         return readings_by_rep_stage
 
-    def _format_phospho_readings(self, phospho_readings: QuerySet[PhosphoReading]):
+    def _format_phospho_readings(self, phospho_readings):
         readings_by_rep_stage: dict = {}
 
         for phospho_reading in phospho_readings:
@@ -1930,43 +1929,49 @@ class Command(BaseCommand):
 
             rr.save()
 
-    def _calculate_protein_medians(self, project, replicates, column_names, with_bugs):
-        # TODO - does this need to be by replicate? Why not just all columns at once?
-        stage_name_medians = {}
+    def _calculate_protein_medians(self, project, sample_stages, with_bugs):
+        logger.info("Calculating protein medians")
 
-        column_names_by_replicate = column_names.filter(replicate__name=replicate_name)
+        # Remove all previous abundances for protein medians
+        stats_type_p_m = StatisticType.objects.get(name=PROTEIN_MEDIAN)
+        Abundance.objects.filter(statistic__project=project, statistic_type=stats_type_p_m).delete()
 
-        for column_name in column_names_by_replicate:
-            readings = []
+        abundances = Abundance.objects.filter(statistic__protein__project=project, statistics_type=PROTEIN_READINGS).iterate(batch_size=100)
 
-            protein_readings_by_column = protein_readings.filter(
-                column_name=column_name
-            )
+        rep_stage_abundances = {}
 
-            for protein_reading in protein_readings_by_column:
-                # TODO - what to do about None values?
-                if protein_reading.reading is not None:
-                    readings.append(protein_reading.reading)
+        for abundance in abundances:
+            if not rep_stage_abundances.get(abundance.replicate):
+                rep_stage_abundances[abundance.replicate]  ={}
 
-            if len(readings) == 0:
-                raise Exception(
-                    "Can't create median with no abundances for protein {protein_reading.protein.accession_number}"
-                )
+            if not rep_stage_abundances[abundance.replicate].get(abundance.sample_stage):
+                rep_stage_abundances[abundance.replicate][abundance.sample_stage]  = []
 
-            median = statistics.median(readings)
-
-            stage_name_medians[column_name.sample_stage.name] = median
-
-
+            rep_stage_abundances[abundance.replicate][abundance.sample_stage].append(abundance.reading)
 
         if with_bugs:
-            protein_medians["abundance_rep_1"] = protein_medians["abundance_rep_2"]
+            replicate1 = Replicate.objects.get(project=project, name="abundance_rep_1")
+            replicate2 = Replicate.objects.get(project=project, name="abundance_rep_2")
 
-        run.protein_medians = json.dumps(protein_medians)
+            rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 
-        run.save()
+        # Here we iterate the replicates in the dict, not in Replicates, because of the
+        #   with_bugs code above
+        for replicate in rep_stage_abundances:
+            for sample_stage in sample_stages:
+                if not rep_stage_abundances[replicate].get(sample_stage):
+                    logger.error(f"Median with no sample stage (??) {replicate.name} {sample_stage.name}")
 
-        return protein_medians
+                if not len(rep_stage_abundances[replicate][sample_stage]):
+                    logger.error(f"Median with no values (??) {replicate.name} {sample_stage.name}")
+
+                median = statistics.median(rep_stage_abundances[replicate][sample_stage])
+
+                Abundance.objects.create(statistic=stats_type_p_m, reading=median)
+
+        print(Abundance.objects.filter(statistic_type=stats_type_p_m))
+
+
 
     def _fetch_protein_medians(self, run):
         unlimited_run = Run.objects.get(
