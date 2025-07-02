@@ -14,11 +14,12 @@ from process.factories import (
     AbundanceFactory,
 )
 from process.management.commands.process import Command
-from process.models import Project, Replicate, SampleStage, Abundance, StatisticType
+from process.models import Abundance, StatisticType, Statistic
 
 from process.constants import (
     PROTEIN_READINGS,
-    PROTEIN_MEDIAN
+    PROTEIN_MEDIAN,
+    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN
 )
 
 @pytest.mark.django_db
@@ -64,6 +65,57 @@ def test_calculate_protein_medians(basic_project_setup):
             abundance = Abundance.objects.get(statistic__project=project, replicate=replicate, sample_stage=sample_stage)
 
             assert abundance.reading == median
+
+
+@pytest.mark.django_db
+def test_calculate_normalised_medians(basic_project_setup):
+    command = Command()
+
+    project = basic_project_setup["project"]
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    stat_type_prot_median = StatisticType.objects.get(name=PROTEIN_MEDIAN)
+    stat_prot_medians = StatisticFactory(statistic_type=stat_type_prot_median, project=project)
+
+    median = 30
+
+    # Create some medians like the ones generated in test_calculate_protein_medians
+    for replicate in replicates:
+        for sample_stage in sample_stages:
+            median += 1
+
+            Abundance.objects.create(statistic=stat_prot_medians, replicate=replicate, sample_stage=sample_stage, reading=median)
+
+    stat_type_prot_reading = StatisticType.objects.get(name=PROTEIN_READINGS)
+    stat_prot_readings = StatisticFactory(statistic_type=stat_type_prot_reading, protein=proteins[0])
+
+    reading = 0
+
+    # Create some readings to normalise
+    for replicate in replicates:
+        for sample_stage in sample_stages:
+            reading += 1
+
+            Abundance.objects.create(statistic=stat_prot_readings, replicate=replicate, sample_stage=sample_stage, reading=reading)
+
+    command._calculate_normalised_medians(proteins[0])        
+
+    stat_type_normalised_median = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_NORMALISED_MEDIAN)
+    stat_normalised_median = Statistic.objects.get(statistic_type=stat_type_normalised_median, protein=proteins[0])
+
+    abundances = Abundance.objects.filter(statistic=stat_normalised_median)
+
+    assert len(abundances) == 30
+
+    reading = 0
+    for abundance in abundances:
+        reading += 1
+
+        # Protein readings start at 1, protein medians at 31
+        assert abundance.reading == reading / (reading + 30)
+
 
 
 
