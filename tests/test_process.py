@@ -118,6 +118,54 @@ def test_calculate_normalised_medians(basic_project_setup):
 
 
 
+@pytest.mark.django_db
+def test_calculate_means(basic_project_setup):
+    command = Command()
+
+    project = basic_project_setup["project"]
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    stat_type_prot_reading = StatisticType.objects.get(name=PROTEIN_READINGS)
+    stat_prot_readings = StatisticFactory(statistic_type=stat_type_prot_reading, protein=proteins[0])
+
+    reading = 0
+
+    # Create some readings to calculate means for
+    for replicate in replicates:
+        for sample_stage in sample_stages:
+            reading += 1
+
+            Abundance.objects.create(statistic=stat_prot_readings, replicate=replicate, sample_stage=sample_stage, reading=reading)
+
+    command._calculate_means(
+        PROTEIN_READINGS,
+        proteins[0],
+        False
+    )
+
+    abundances = Abundance.objects.filter(statistic=stat_prot_readings)
+
+    assert len(abundances) == 40
+
+    abundances = Abundance.objects.filter(
+        statistic=stat_prot_readings,
+        replicate__mean=True
+    ).order_by(
+        'sample_stage__rank'
+    )
+
+    assert len(abundances) == 10
+
+    reading = 10
+
+    # Readings are 1, 11, 21, then 12, 22, 32 and so on
+    for abundance in abundances:
+        reading += 1
+
+        assert abundance.reading == reading
+
 
 # @pytest.mark.django_db
 # def test_all_replicates():

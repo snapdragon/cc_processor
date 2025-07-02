@@ -1087,41 +1087,51 @@ class Command(BaseCommand):
     # calculateAverageRepAbundance
     def _calculate_means(
         self,
-        reading: dict,
+        statistic_type_name: str,
+        protein: Protein,
         with_bugs: bool,
         imputed: bool = False,
     ):
-        means: dict = {}
+        readings: dict = {}
 
-        abundances: dict = {}
+        abundances = self._get_abundances(statistic_type_name, protein=protein)
 
-        for replicate_name in reading:
-            for stage_name in reading[replicate_name]:
-                if not abundances.get(stage_name):
-                    abundances[stage_name] = []
+        for abundance in abundances:
+            sample_stage = abundance.sample_stage
 
-                if with_bugs and not imputed:
-                    # We throw away the second reading
-                    # TODO - how will this behave towards None?
-                    if len(abundances[stage_name]) == 1:
-                        continue
+            if not readings.get(sample_stage):
+                readings[sample_stage] = []
+            
+            if with_bugs and not imputed:
+                # We throw away the second reading
+                # TODO - how will this behave towards None?
+                if len(readings[sample_stage]) == 1:
+                    continue
 
-                if reading[replicate_name][stage_name] is not None:
-                    abundances[stage_name].append(reading[replicate_name][stage_name])
+            if abundance.reading is not None:
+                readings[sample_stage].append(abundance.reading)
 
-            means = {}
+        stat = self._get_statistic(statistic_type_name, protein=protein)
+        mean_replicate = Replicate.objects.get(project=protein.project, mean=True)
 
-            for stage_name in abundances:
-                abundance = abundances[stage_name]
+        for sample_stage in readings:
+            reading_list = readings[sample_stage]
 
-                if len(abundance):
-                    mean = sum(abundance) / len(abundance)
-                    means[stage_name] = self._round(mean)
-                else:
-                    # TODO - is this the right thing to do?
-                    means[stage_name] = None
+            if len(reading_list):
+                mean = sum(reading_list) / len(reading_list)
+                mean = self._round(mean)
+            else:
+                # TODO - is this the right thing to do?
+                mean = None
 
-        return means
+            Abundance.objects.create(
+                statistic=stat,
+                replicate=mean_replicate,
+                sample_stage=sample_stage,
+                reading=mean
+            )
+
+
 
     def _calculate_phospho_medians(
         self,
@@ -1562,7 +1572,7 @@ class Command(BaseCommand):
     ):
         # firstLevelNormalisationProteomics
         # firstLevelNormalisationPhospho
-        # TODO - remove all returned values
+        # TODO - remove all returned values, e.g. normalised_medians
         normalised_medians = self._calculate_normalised_medians(
             protein
         )
@@ -1598,11 +1608,11 @@ class Command(BaseCommand):
         #     )
         # )
 
-        # normalised_averages = (
-        #     self._calculate_means(
-        #         normalised_medians, with_bugs
-        #     )
-        # )
+        normalised_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein, with_bugs
+            )
+        )
 
         # min_max_averages = (
         #     self._calculate_means(
