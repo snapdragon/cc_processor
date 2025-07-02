@@ -77,6 +77,7 @@ PROTEIN_INFO_FIELDS = [
 
 # StatisticTypes
 
+# TODO - fix names
 PROTEIN_READINGS = "readings protein"
 PHOSPHO_READINGS = "readings phospho"
 PROTEIN_MEDIAN = "protein median"

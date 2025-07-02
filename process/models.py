@@ -146,11 +146,11 @@ class Statistic(models.Model):
         
     def __str__(self):
         if self.phospho:
-            return f"Statistic {self.statistic_type.name} {self.phospho.accession_number} (phospho)"
+            return f"Statistic {self.statistic_type.name} {self.phospho.mod} (phospho)"
         elif self.protein:
-            return f"Statistic {self.statistic_type.name} {self.protein.accession_number}"
+            return f"Statistic {self.statistic_type.name} {self.protein.accession_number} (protein)"
         elif self.project:
-            return f"Statistic {self.statistic_type.name} {self.project.name}"
+            return f"Statistic {self.statistic_type.name} {self.project.name} (project)"
         else:
             return f"Invalid statistic {self.statistic_type.name} (no protein or phospho)"
 

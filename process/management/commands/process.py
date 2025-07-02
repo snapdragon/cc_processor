@@ -210,6 +210,7 @@ class Command(BaseCommand):
         if calculate_protein_medians or calculate_all:
             self._calculate_protein_medians(project, replicates, sample_stages, with_bugs)
 
+        # N.B. there must be protein medians for this to run
         if calculate_proteins or calculate_all:
             self._proteins(project, replicates, sample_stages, with_bugs)
 
@@ -342,7 +343,10 @@ class Command(BaseCommand):
 
         proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
 
-        for protein in proteins:
+        for i, protein in enumerate(proteins):
+            if not i % 1000:
+                logger.info(f"Calculating protein {i} {protein.accession_number}")
+
             self._calculate_abundances_metrics(
                 replicates,
                 sample_stages,
@@ -1034,30 +1038,51 @@ class Command(BaseCommand):
         return self._get_abundances(PROTEIN_MEDIAN, project=project)
 
     def _get_abundances(self, statistic_type_name, project=None, protein=None, phospho=None):
-        statistic_type = self._get_statistic_type(statistic_type_name)
-
-        statistic = self._get_statistic(statistic_type, project, protein, phospho)
+        statistic = self._get_statistic(statistic_type_name, project, protein, phospho)
 
         return Abundance.objects.filter(statistic=statistic)
 
+    def _get_abundance(self, statistic, replicate, sample_stage):
+        return Abundance.objects.get(statistic=statistic, replicate=replicate, sample_stage=sample_stage)
+
+    def _delete_abundances(self, statistic):
+        Abundance.objects.filter(statistic=statistic).delete()
+
+    def _output_abundances(self, statistic):
+        print(Abundance.objects.filter(statistic=statistic))
+
     def _calculate_normalised_medians(self, protein):
-        protein_abundances = self._get_protein_readings(protein=protein)
         stat_protein_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
-        stat_normalised_medians = self._get_statistic(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN)
 
-        for abundance in protein_abundances:
-            reading = abundance.reading
+        stat_normalised_medians = self._get_statistic(
+            PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein
+        )
+        self._delete_abundances(stat_normalised_medians)
 
+        protein_reading = self._get_protein_readings(protein=protein)
+
+        for prr in protein_reading:
+            reading = prr.reading
+
+            # TODO - is this if statement needed?
             if reading is not None:
                 median = self._get_abundance(
                     stat_protein_medians, 
-                    abundance.replicate,
-                    abundance.sample_stage
+                    prr.replicate,
+                    prr.sample_stage
                 )
 
-                normalised_reading = reading / median
+                normalised_reading = reading / median.reading
 
-                Abundance.objects.create(statistic=stat_normalised_medians, abundance=normalised_reading)
+                Abundance.objects.create(
+                    statistic=stat_normalised_medians,
+                    replicate=prr.replicate,
+                    sample_stage=prr.sample_stage,
+                    reading=normalised_reading
+                )
+
+        self._output_abundances(stat_normalised_medians)
 
 
 
@@ -1543,6 +1568,8 @@ class Command(BaseCommand):
         normalised_medians = self._calculate_normalised_medians(
             protein
         )
+
+        exit()
 
         # # calclog2PalboNormalisation
         # arrest_readings = self._calculate_arrest_log2_normalisation(
