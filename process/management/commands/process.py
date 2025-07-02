@@ -1082,8 +1082,6 @@ class Command(BaseCommand):
                     reading=normalised_reading
                 )
 
-        self._output_abundances(stat_normalised_medians)
-
 
 
     # calculateAverageRepAbundance
@@ -1568,8 +1566,6 @@ class Command(BaseCommand):
         normalised_medians = self._calculate_normalised_medians(
             protein
         )
-
-        exit()
 
         # # calclog2PalboNormalisation
         # arrest_readings = self._calculate_arrest_log2_normalisation(
