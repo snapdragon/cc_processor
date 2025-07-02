@@ -177,8 +177,8 @@ class Command(BaseCommand):
         if calculate_protein_medians or calculate_all:
             self._calculate_protein_medians(project, replicates, sample_stages, with_bugs)
 
-        # if calculate_proteins or calculate_all:
-        #     self._protein(project, replicates, protein_readings, protein_medians, column_names, sample_stages, run, proteins, with_bugs)
+        if calculate_proteins or calculate_all:
+            self._proteins(project, replicates, sample_stages, with_bugs)
 
         # if calculate_phospho_medians or calculate_all:
         #     phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
@@ -302,55 +302,34 @@ class Command(BaseCommand):
 
         run_result.save()
     
-    def _protein(
-        self, project, replicates, protein_readings, medians, column_names, sample_stages, run, proteins, with_bugs: bool
+    def _proteins(
+        self, project, replicates, sample_stages, with_bugs: bool
     ):
         logger.info("Processing proteins")
 
-        for pr in proteins:
-            filtered_protein_readings = protein_readings.filter(protein=pr)
+        stat_type_prot_r = StatisticType.objects.get(name=PROTEIN_READINGS)
 
-            reading = self._format_protein_readings(filtered_protein_readings)
+        proteins = Protein.objects.filter(project=project).iterator(batch_size=100)
 
-            reading_minus_none_replicates = self._qc_protein_reading(reading)
-
-            result = {
-                PROTEIN_ABUNDANCES: {
-                    RAW: {},
-                    NORMALISED: {},
-                    IMPUTED: {}
-                },
-                METRICS: {}
-            }
+        for protein in proteins:
+            # TODO - does this need to filter none or zero values, like it did
+            #   before? There shouldn't be any Nones.
+            abundances = Abundance.objects.filter(
+                statistic__statistic_type=stat_type_prot_r,
+                statistic__protein=protein,
+            )
 
             # Not all proteins have protein_readings, due to being created during
             #   import_phospho - that is, proteins that are mentioned in the phospho
             #   file but not in the protein file.
-            if reading_minus_none_replicates:
+            if len(abundances):
                 self._calculate_abundances_metrics(
-                    result,
                     project,
                     replicates,
-                    reading_minus_none_replicates,
-                    column_names,
                     sample_stages,
-                    medians,
-                    PROTEIN_ABUNDANCES,
+                    abundances,
                     with_bugs
                 )
-
-            run_result, _ = RunResult.objects.get_or_create(
-                run=run,
-                protein=pr
-            )
-
-            run_result.protein_result = result
-
-            run_result.save()
-
-        # TODO - do other optimisations like this
-        # TODO - does this actually work? Is the QuerySet a generator or a list?
-        del(protein_readings)
 
 
 
@@ -953,38 +932,6 @@ class Command(BaseCommand):
 
         return log2_normalised_readings
 
-    # TODO - why does ICR not need to do QC?
-    def _qc_protein_reading(self, all_readings: dict):
-        qc_proteins: dict = {}
-
-        for replicate_name in all_readings:
-            qc_proteins[replicate_name] = {}
-
-            abundances = all_readings[replicate_name]
-
-            # TODO - what was this for again? It seems to remove any replicate
-            #   that is solely None values. Why? Why here?
-            if any(x is not None for x in abundances.values()):
-                qc_proteins[replicate_name] = abundances
-
-        return qc_proteins
-
-    def _format_protein_readings(self, protein_readings):
-        readings_by_stage: dict = {}
-
-        for protein_reading in protein_readings:
-            # TODO - what about Nones? Will there be any here? Check the import script.
-            reading = protein_reading.reading
-
-            replicate_name = protein_reading.column_name.replicate.name
-            stage_name = protein_reading.column_name.sample_stage.name
-
-            if not readings_by_stage.get(replicate_name):
-                readings_by_stage[replicate_name] = {}
-
-            readings_by_stage[replicate_name][stage_name] = reading
-
-        return readings_by_stage
 
     def _format_phospho_readings_full(self, phospho_readings):
         logger.info(
@@ -1537,14 +1484,9 @@ class Command(BaseCommand):
 
     def _calculate_abundances_metrics(
         self,
-        result,
-        project,
         replicates,
-        readings,
-        column_names,
         sample_stages,
         medians,
-        location,
         with_bugs
     ):
         # firstLevelNormalisationProteomics
@@ -1970,8 +1912,6 @@ class Command(BaseCommand):
                 median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 
                 Abundance.objects.create(statistic=stat_prot_med, replicate=replicate, sample_stage=sample_stage, reading=median)
-
-        print(Abundance.objects.filter(statistic=stat_prot_med))
 
 
 
