@@ -3,6 +3,7 @@ import numpy as np
 from math import isclose
 import pandas as pd
 import pandas.testing as pdt
+import math
 
 from process.factories import (
     ProjectFactory,
@@ -19,7 +20,8 @@ from process.models import Abundance, StatisticType, Statistic
 from process.constants import (
     PROTEIN_READINGS,
     PROTEIN_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN
+    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST
 )
 
 @pytest.mark.django_db
@@ -76,29 +78,21 @@ def test_calculate_normalised_medians(basic_project_setup):
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
 
-    stat_type_prot_median = StatisticType.objects.get(name=PROTEIN_MEDIAN)
-    stat_prot_medians = StatisticFactory(statistic_type=stat_type_prot_median, project=project)
+    stat_type_prot_median, stat_prot_medians = create_readings(
+        PROTEIN_MEDIAN,
+        replicates,
+        sample_stages,
+        reading = 30,
+        project=project
+    )
 
-    median = 30
-
-    # Create some medians like the ones generated in test_calculate_protein_medians
-    for replicate in replicates:
-        for sample_stage in sample_stages:
-            median += 1
-
-            Abundance.objects.create(statistic=stat_prot_medians, replicate=replicate, sample_stage=sample_stage, reading=median)
-
-    stat_type_prot_reading = StatisticType.objects.get(name=PROTEIN_READINGS)
-    stat_prot_readings = StatisticFactory(statistic_type=stat_type_prot_reading, protein=proteins[0])
-
-    reading = 0
-
-    # Create some readings to normalise
-    for replicate in replicates:
-        for sample_stage in sample_stages:
-            reading += 1
-
-            Abundance.objects.create(statistic=stat_prot_readings, replicate=replicate, sample_stage=sample_stage, reading=reading)
+    stat_type_prot_reading, stat_prot_readings = create_readings(
+        PROTEIN_READINGS,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
 
     command._calculate_normalised_medians(proteins[0])        
 
@@ -122,22 +116,17 @@ def test_calculate_normalised_medians(basic_project_setup):
 def test_calculate_means(basic_project_setup):
     command = Command()
 
-    project = basic_project_setup["project"]
     replicates = basic_project_setup["replicates"]
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
 
-    stat_type_prot_reading = StatisticType.objects.get(name=PROTEIN_READINGS)
-    stat_prot_readings = StatisticFactory(statistic_type=stat_type_prot_reading, protein=proteins[0])
-
-    reading = 0
-
-    # Create some readings to calculate means for
-    for replicate in replicates:
-        for sample_stage in sample_stages:
-            reading += 1
-
-            Abundance.objects.create(statistic=stat_prot_readings, replicate=replicate, sample_stage=sample_stage, reading=reading)
+    _, stat_prot_readings = create_readings(
+        PROTEIN_READINGS,
+        replicates,
+        sample_stages,
+        0,
+        protein=proteins[0]
+    )
 
     command._calculate_means(
         PROTEIN_READINGS,
@@ -165,6 +154,54 @@ def test_calculate_means(basic_project_setup):
         reading += 1
 
         assert abundance.reading == reading
+
+
+@pytest.mark.django_db
+def test_calculate_arrest_log2_normalisation(basic_project_setup):
+    command = Command()
+
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    stat_type_normalised_median, stat_normalised_median = create_readings(
+        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
+
+    command._calculate_arrest_log2_normalisation(
+        proteins[0]
+    )
+
+    stat_type_arrest_log2_normalisation = StatisticType.objects.get(
+        name=PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST
+    )
+    stat_arrest_log2_normalisation = Statistic.objects.get(
+        statistic_type=stat_type_arrest_log2_normalisation,
+        protein=proteins[0]
+    )
+
+    abundances = Abundance.objects.filter(statistic=stat_arrest_log2_normalisation)
+
+    assert len(abundances) == 30
+
+    assert len(abundances.filter(replicate__name="One")) == 10
+
+    reading = 0
+
+    # TODO - hardcoding "One" is bad
+    for abundance in abundances.filter(
+        replicate__name="One"
+    ).order_by(
+        'sample_stage__rank'
+    ):
+        reading += 1
+
+        # The arresting agent is the last, hence divide by 10
+        assert abundance.reading == round(math.log2(reading / 10), 4)
 
 
 # @pytest.mark.django_db
@@ -799,3 +836,25 @@ def test_calculate_means(basic_project_setup):
 #     assert isclose(output["Q14318"]["p_value"], 0.13450086086505242, rel_tol=1e-5) == True
 #     assert isclose(output["Q14318"]["frequency"], 0.25, rel_tol=1e-5) == True
 #     assert isclose(output["Q14318"]["q_value"], 0.13450086086505242, rel_tol=1e-5) == True
+
+def create_readings(
+    statistic_type_name, replicates, sample_stages, reading, project = None, protein = None, phospho=None
+):
+    stat_type = StatisticType.objects.get(name=statistic_type_name)
+
+    if project:
+        stat = StatisticFactory(statistic_type=stat_type, project=project)
+    elif protein:
+        stat = StatisticFactory(statistic_type=stat_type, protein=protein)
+    elif phospho:
+        stat = StatisticFactory(statistic_type=stat_type, phospho=phospho)
+    else:
+        raise Exception
+
+    for replicate in replicates:
+        for sample_stage in sample_stages:
+            reading += 1
+
+            Abundance.objects.create(statistic=stat, replicate=replicate, sample_stage=sample_stage, reading=reading)
+
+    return stat_type, stat

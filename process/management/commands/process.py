@@ -924,35 +924,45 @@ class Command(BaseCommand):
 
         return log2_normalised_readings
 
-    def _calculate_arrest_log2_normalisation(self, readings: dict, project: Project):
-        log2_normalised_readings: dict = {}
-
-        # TODO - what should the stage name be?
+    def _calculate_arrest_log2_normalisation(self, protein: Protein):
         # TODO - is ARRESTING_AGENT the wrong name?
         ARRESTING_AGENT = "Nocodozole"
 
         # TODO - this is a hack, maybe add the field to the Project model?
-        if project.name == "ICR":
+        if protein.project.name == "ICR":
             ARRESTING_AGENT = "Palbo"
 
-        log2_normalised_readings = {}
+        stat_normalised_log2_arrest = self._get_statistic(
+            PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+            protein = protein
+        )
+        self._delete_abundances(stat_normalised_log2_arrest)
 
-        for replicate_name in readings:
-            log2_normalised_readings[replicate_name] = {}
+        abundances = self._get_abundances(
+            PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein
+        )
 
-            for stage_name in readings[replicate_name]:
-                log2_reading = None
-                reading = readings[replicate_name][stage_name]
+        for abundance in abundances:
+            reading = abundance.reading
 
-                if readings[replicate_name].get(ARRESTING_AGENT):
-                    arrest_reading = readings[replicate_name][ARRESTING_AGENT]
+            arrest_abundance = abundances.filter(
+                sample_stage__name=ARRESTING_AGENT,
+                replicate=abundance.replicate
+            ).first()
 
-                    if reading is not None and arrest_reading is not None:
-                        log2_reading = self._round(math.log2(reading / arrest_reading))
+            # TODO - do we need to check for either none?
+            if reading is not None and arrest_abundance.reading is not None:
+                log2_reading = self._round(math.log2(
+                    reading / arrest_abundance.reading
+                ))
 
-                log2_normalised_readings[replicate_name][stage_name] = log2_reading
-
-        return log2_normalised_readings
+                Abundance.objects.create(
+                    statistic=stat_normalised_log2_arrest,
+                    replicate=abundance.replicate,
+                    sample_stage=abundance.sample_stage,
+                    reading=log2_reading
+                )
 
 
     def _format_phospho_readings_full(self, phospho_readings):
@@ -1060,6 +1070,7 @@ class Command(BaseCommand):
         )
         self._delete_abundances(stat_normalised_medians)
 
+        # TODO - get rid of _get_protein_readings? It may not be that useful
         protein_reading = self._get_protein_readings(protein=protein)
 
         for prr in protein_reading:
@@ -1112,6 +1123,10 @@ class Command(BaseCommand):
                 readings[sample_stage].append(abundance.reading)
 
         stat = self._get_statistic(statistic_type_name, protein=protein)
+
+        # Delete all mean abundances for this statistic
+        Abundance.objects.filter(statistic=stat, replicate__mean=True).delete()
+
         mean_replicate = Replicate.objects.get(project=protein.project, mean=True)
 
         for sample_stage in readings:
@@ -1577,10 +1592,10 @@ class Command(BaseCommand):
             protein
         )
 
-        # # calclog2PalboNormalisation
-        # arrest_readings = self._calculate_arrest_log2_normalisation(
-        #     normalised_medians, project
-        # )
+        # calclog2PalboNormalisation
+        arrest_readings = self._calculate_arrest_log2_normalisation(
+            protein
+        )
 
         # # calclog2RelativeAbundance
         # log2_readings = (
@@ -1632,11 +1647,11 @@ class Command(BaseCommand):
         #     )
         # )
 
-        # arrest_averages = (
-        #     self._calculate_means(
-        #         arrest_readings, with_bugs
-        #     )
-        # )
+        arrest_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST, protein, with_bugs
+            )
+        )
 
         # imputed_averages = (
         #     self._calculate_means(
