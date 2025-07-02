@@ -18,7 +18,18 @@ from scipy import stats
 # from rpy2.robjects.packages import importr
 # from rpy2.robjects.vectors import FloatVector
 
-from process.models import ColumnName, Project, Phospho, Protein, Replicate, SampleStage, StatisticType, Statistic, Abundance
+from process.models import (
+    ColumnName,
+    Project,
+    Phospho,
+    Protein,
+    Replicate,
+    SampleStage,
+    StatisticType,
+    Statistic,
+    Abundance
+)
+
 from process.constants import (
     RAW,
     METRICS,
@@ -62,6 +73,28 @@ from process.constants import (
     PROTEIN_READINGS,
     PHOSPHO_READINGS,
     PROTEIN_MEDIAN,
+
+    PROTEIN_ABUNDANCES_RAW,
+    PROTEIN_ABUNDANCES_IMPUTED,
+
+    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+
+    PHOSPHO_REGRESSION_ZERO_MAX,
+    PHOSPHO_REGRESSION_LOG2_MEAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST,
+
+    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
 )
 
 logging.basicConfig(
@@ -307,16 +340,10 @@ class Command(BaseCommand):
     ):
         logger.info("Processing proteins")
 
-        stat_type_prot_r = StatisticType.objects.get(name=PROTEIN_READINGS)
-
-        proteins = Protein.objects.filter(project=project).iterator(batch_size=100)
+        proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
 
         for protein in proteins:
-            # TODO - does this need to filter none or zero values, like it did
-            #   before? There shouldn't be any Nones.
-
             self._calculate_abundances_metrics(
-                project,
                 replicates,
                 sample_stages,
                 protein,
@@ -983,49 +1010,56 @@ class Command(BaseCommand):
 
         return readings_by_rep_stage
 
-    def _get_statistic_type(name):
+    def _get_statistic_type(self, name):
         return StatisticType.objects.get(name=name)
 
-    def _get_protein_medians(self, project=None, protein=None, phospho=None):
-        stat_type_prot_median = self._get_statistic_type(name=PROTEIN_MEDIAN)
+    def _get_statistic(self, statistic_type_name, project=None, protein=None, phospho=None):
+        statistic_type = self._get_statistic_type(statistic_type_name)
 
         if project:
-            stat, _ = Statistic.get_or_create(statistic_type=stat_type_prot_median, project=project)
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, project=project)
         elif protein:
-            stat, _ = Statistic.get_or_create(statistic_type=stat_type_prot_median, protein=protein)
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, protein=protein)
         elif phospho:
-            stat, _ = Statistic.get_or_create(statistic_type=stat_type_prot_median, phospho=phospho)
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, phospho=phospho)
         else:
             raise Exception(f"_get_protein_medians needs a project, protein or phospho")
 
         return stat
 
-    def _calculate_first_level_normalisation(self, protein):
-        protein_medians = self._get_protein_medians(project = protein.project)
+    def _get_protein_readings(self, protein):
+        return self._get_abundances(PROTEIN_READINGS, protein=protein)
 
-        stat_type_prot_median = self._get_statistic_type()
+    def _get_protein_medians(self, project):
+        return self._get_abundances(PROTEIN_MEDIAN, project=project)
 
-        abundances = Abundance.objects.filter()
+    def _get_abundances(self, statistic_type_name, project=None, protein=None, phospho=None):
+        statistic_type = self._get_statistic_type(statistic_type_name)
 
-        normalised_readings: dict = {}
+        statistic = self._get_statistic(statistic_type, project, protein, phospho)
 
-        for replicate_name in readings:
-            normalised_readings[replicate_name] = {}
+        return Abundance.objects.filter(statistic=statistic)
 
-            for stage_name in readings[replicate_name]:
-                normalised_reading = None
+    def _calculate_normalised_medians(self, protein):
+        protein_abundances = self._get_protein_readings(protein=protein)
+        stat_protein_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
+        stat_normalised_medians = self._get_statistic(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN)
 
-                reading = readings[replicate_name][stage_name]
+        for abundance in protein_abundances:
+            reading = abundance.reading
 
-                if reading is not None:
-                    median = medians[replicate_name][stage_name]
+            if reading is not None:
+                median = self._get_abundance(
+                    stat_protein_medians, 
+                    abundance.replicate,
+                    abundance.sample_stage
+                )
 
-                    # TODO - need to round this?
-                    normalised_reading = reading / median
+                normalised_reading = reading / median
 
-                normalised_readings[replicate_name][stage_name] = normalised_reading
+                Abundance.objects.create(statistic=stat_normalised_medians, abundance=normalised_reading)
 
-        return normalised_readings
+
 
     # calculateAverageRepAbundance
     def _calculate_means(
@@ -1505,18 +1539,19 @@ class Command(BaseCommand):
     ):
         # firstLevelNormalisationProteomics
         # firstLevelNormalisationPhospho
-        self._calculate_first_level_normalisation(
+        # TODO - remove all returned values
+        normalised_medians = self._calculate_normalised_medians(
             protein
         )
 
         # # calclog2PalboNormalisation
         # arrest_readings = self._calculate_arrest_log2_normalisation(
-        #     normalised_readings, project
+        #     normalised_medians, project
         # )
 
         # # calclog2RelativeAbundance
         # log2_readings = (
-        #     self._calculate_relative_log2_normalisation(normalised_readings)
+        #     self._calculate_relative_log2_normalisation(normalised_medians)
         # )
 
         # # normaliseData
@@ -1526,7 +1561,7 @@ class Command(BaseCommand):
 
         # # normaliseData
         # zero_max_readings = self._calculate_level_two_normalisation(
-        #     normalised_readings, True
+        #     normalised_medians, True
         # )
 
 
@@ -1542,7 +1577,7 @@ class Command(BaseCommand):
 
         # normalised_averages = (
         #     self._calculate_means(
-        #         normalised_readings, with_bugs
+        #         normalised_medians, with_bugs
         #     )
         # )
 
@@ -1597,24 +1632,31 @@ class Command(BaseCommand):
         # #     protein
         # # ] = log2_readings
 
-        # result[location][RAW] = readings
-        # result[location][RAW][ABUNDANCE_AVERAGE] = raw_averages
-        # # TODO - confirm the output later calculations are as they should be after this
-        # result[location][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
-        # result[location][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
-        # result[location][NORMALISED][MIN_MAX] = min_max_readings
-        # result[location][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
-        # result[location][NORMALISED][MEDIAN] = normalised_readings
-        # result[location][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
-        # result[location][NORMALISED][ZERO_MAX] = zero_max_readings
-        # result[location][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
-        # result[location][NORMALISED][LOG2_ARREST] = arrest_readings
-        # result[location][NORMALISED][LOG2_ARREST][ABUNDANCE_AVERAGE] = arrest_averages
-        # result[location][IMPUTED] = imputed_readings
-        # result[location][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
         # result[METRICS][LOG2_MEAN] = log2_mean_metrics
         # result[METRICS][LOG2_MEAN][ANOVA] = anova
         # result[METRICS][ZERO_MAX] = zero_max_mean_metrics
+
+        # result[location][RAW] = readings
+        # result[location][RAW][ABUNDANCE_AVERAGE] = raw_averages
+        # result[location][IMPUTED] = imputed_readings
+        # result[location][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
+
+        # # TODO - confirm the output later calculations are as they should be after this
+        # result[location][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
+        # result[location][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
+
+        # result[location][NORMALISED][MIN_MAX] = min_max_readings
+        # result[location][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
+
+        # result[location][NORMALISED][MEDIAN] = normalised_medians
+        # result[location][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
+
+        # result[location][NORMALISED][ZERO_MAX] = zero_max_readings
+        # result[location][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
+
+        # result[location][NORMALISED][LOG2_ARREST] = arrest_readings
+        # result[location][NORMALISED][LOG2_ARREST][ABUNDANCE_AVERAGE] = arrest_averages
+
 
 
 
