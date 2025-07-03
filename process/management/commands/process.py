@@ -873,56 +873,56 @@ class Command(BaseCommand):
 
         return level_two_normalised_readings
 
-    def _calculate_relative_log2_normalisation(self, readings: dict):
+    def _calculate_relative_log2_normalisation(self, protein: Protein):
         log2_abundances: dict = {}
 
-        for replicate_name in readings:
-            log2_abundances[replicate_name] = {}
+        # for replicate_name in readings:
+        #     log2_abundances[replicate_name] = {}
 
-            for stage_name in readings[replicate_name]:
-                log2 = None
-                reading = readings[replicate_name][stage_name]
+        #     for stage_name in readings[replicate_name]:
+        #         log2 = None
+        #         reading = readings[replicate_name][stage_name]
 
-                if reading is not None:
-                    log2 = math.log2(reading)
+        #         if reading is not None:
+        #             log2 = math.log2(reading)
 
-                log2_abundances[replicate_name][stage_name] = log2
+        #         log2_abundances[replicate_name][stage_name] = log2
 
-        total_abundances = 0
-        total_lengths = 0
+        # total_abundances = 0
+        # total_lengths = 0
 
-        log2_normalised_readings: dict = {}
+        # log2_normalised_readings: dict = {}
 
-        for replicate_name in log2_abundances:
-            for stage_name in log2_abundances[replicate_name]:
-                if log2_abundances[replicate_name][stage_name] is not None:
-                    total_abundances += log2_abundances[replicate_name][stage_name]
-                    total_lengths += 1
+        # for replicate_name in log2_abundances:
+        #     for stage_name in log2_abundances[replicate_name]:
+        #         if log2_abundances[replicate_name][stage_name] is not None:
+        #             total_abundances += log2_abundances[replicate_name][stage_name]
+        #             total_lengths += 1
 
-            mean = None
+        #     mean = None
 
-            if total_lengths != 0:
-                mean = total_abundances / total_lengths
-            # TODO - is mean is None then the loop below can be simplified
+        #     if total_lengths != 0:
+        #         mean = total_abundances / total_lengths
+        #     # TODO - is mean is None then the loop below can be simplified
 
-            log2_normalised_readings = {}
+        #     log2_normalised_readings = {}
 
-            for replicate_name in readings:
-                log2_normalised_readings[replicate_name] = {}
+        #     for replicate_name in readings:
+        #         log2_normalised_readings[replicate_name] = {}
 
-                for stage_name in readings[replicate_name]:
-                    normalised_abundance = None
+        #         for stage_name in readings[replicate_name]:
+        #             normalised_abundance = None
 
-                    if log2_abundances[replicate_name].get(stage_name) is not None and mean is not None:
-                        normalised_abundance = self._round(
-                            log2_abundances[replicate_name][stage_name] - mean
-                        )
+        #             if log2_abundances[replicate_name].get(stage_name) is not None and mean is not None:
+        #                 normalised_abundance = self._round(
+        #                     log2_abundances[replicate_name][stage_name] - mean
+        #                 )
 
-                    log2_normalised_readings[replicate_name][
-                        stage_name
-                    ] = normalised_abundance
+        #             log2_normalised_readings[replicate_name][
+        #                 stage_name
+        #             ] = normalised_abundance
 
-        return log2_normalised_readings
+        # return log2_normalised_readings
 
     def _calculate_arrest_log2_normalisation(self, protein: Protein):
         # TODO - is ARRESTING_AGENT the wrong name?
@@ -946,13 +946,15 @@ class Command(BaseCommand):
         for abundance in abundances:
             reading = abundance.reading
 
+            # Get the arresting agent abundance for this replicate
             arrest_abundance = abundances.filter(
                 sample_stage__name=ARRESTING_AGENT,
                 replicate=abundance.replicate
             ).first()
 
-            # TODO - do we need to check for either none?
-            if reading is not None and arrest_abundance.reading is not None:
+            # Not all replicates have an arresting agent value
+            # TODO - do we need to check for the other two Nones?
+            if reading is not None and arrest_abundance is not None and arrest_abundance.reading is not None:
                 log2_reading = self._round(math.log2(
                     reading / arrest_abundance.reading
                 ))
@@ -1597,10 +1599,10 @@ class Command(BaseCommand):
             protein
         )
 
-        # # calclog2RelativeAbundance
-        # log2_readings = (
-        #     self._calculate_relative_log2_normalisation(normalised_medians)
-        # )
+        # calclog2RelativeAbundance
+        log2_readings = (
+            self._calculate_relative_log2_normalisation(protein)
+        )
 
         # # normaliseData
         # min_max_readings = self._calculate_level_two_normalisation(
