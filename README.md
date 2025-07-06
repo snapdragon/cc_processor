@@ -143,3 +143,12 @@ SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM pro
 
 ```
 
+### Import the original ICR output into the DB
+```sh
+python manage.py import_original
+```
+
+### Compare a protein from the original output with new output
+```sh
+python manage.py compare --accession-number Q93075
+```

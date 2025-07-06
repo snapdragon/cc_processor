@@ -71,7 +71,7 @@ from process.constants import (
     PROTEIN_INFO_FIELDS,
     GENE_NAME,
     PROTEIN_NAME,
-    PROTEIN_READINGS,
+    PROTEIN_ABUNDANCES_RAW,
     PHOSPHO_READINGS,
     PROTEIN_MEDIAN,
 
@@ -185,7 +185,7 @@ class Command(BaseCommand):
         column_names = ColumnName.objects.filter(replicate__project=project)
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
-        # stats_type_readings_pr = StatisticType.objects.get(name=PROTEIN_READINGS)
+        # stats_type_readings_pr = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_RAW)
         # stats_type_readings_pho = StatisticType.objects.get(name=PHOSPHO_READINGS)
 
         # proteins = Protein.objects.filter(project=project, is_contaminant=False)
@@ -1027,7 +1027,7 @@ class Command(BaseCommand):
         return stat
 
     def _get_protein_readings(self, protein):
-        return self._get_abundances(PROTEIN_READINGS, protein=protein)
+        return self._get_abundances(PROTEIN_ABUNDANCES_RAW, protein=protein)
 
     def _get_protein_medians(self, project):
         return self._get_abundances(PROTEIN_MEDIAN, project=project)
@@ -1928,7 +1928,7 @@ class Command(BaseCommand):
         stat_type_prot_med = StatisticType.objects.get(name=PROTEIN_MEDIAN)
         Abundance.objects.filter(statistic__project=project, statistic__statistic_type=stat_type_prot_med).delete()
 
-        abundances = Abundance.objects.filter(statistic__protein__project=project, statistic__statistic_type__name=PROTEIN_READINGS).iterator(chunk_size=100)
+        abundances = Abundance.objects.filter(statistic__protein__project=project, statistic__statistic_type__name=PROTEIN_ABUNDANCES_RAW).iterator(chunk_size=100)
 
         rep_stage_abundances = {}
 

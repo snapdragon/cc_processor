@@ -16,7 +16,7 @@ from process.models import (
 )
 
 from process.constants import (
-    PROTEIN_READINGS,
+    PROTEIN_ABUNDANCES_RAW,
     RAW,
     PROTEIN_ABUNDANCES,
     PROTEIN_ABUNDANCES_RAW
@@ -38,7 +38,7 @@ class Command(BaseCommand):
         logger.info(f"Importing original output")
 
         project = Project.objects.get(name=PROJECT_NAME)
-        stats_type_rp = StatisticType.objects.get(name=PROTEIN_READINGS)
+        stats_type_rp = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_RAW)
 
         file_path = f"data/ICR/TimeCourse_Full_info_full_indented.json"
 
@@ -63,9 +63,14 @@ class Command(BaseCommand):
         for sample_stage in sample_stages:
             sample_stages_by_name[sample_stage.name] = sample_stage
 
+        num_proteins = 0
+
         with open(file_path, 'r') as f:
             for gene_name, gene_data in ijson.kvitems(f, ''):
-                print(f"Processing {gene_name}")
+                num_proteins += 1
+
+                if not num_proteins % 1000:
+                    print(f"Processing {gene_name}")
 
                 protein = Protein.objects.create(
                     project=project, accession_number=gene_name, is_contaminant=False
@@ -87,7 +92,8 @@ class Command(BaseCommand):
                             reading=reading
                         )
 
-                # raw_abundances = Abundance.objects.filter(statistic=stat_prot_raw)
+                # if protein.accession_number == 'Q93075':
+                #     print(Abundance.objects.filter(statistic=stat_prot_raw))
 
 
 

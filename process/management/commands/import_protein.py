@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from process.models import ColumnName, Project, Protein, Abundance, Phospho, StatisticType, Statistic
 
 from process.constants import (
-    PROTEIN_READINGS
+    PROTEIN_ABUNDANCES_RAW
 )
 
 logging.basicConfig(
@@ -39,7 +39,7 @@ class Command(BaseCommand):
         logger.info(f"Importing spreadsheet for {project_name}")
 
         project = Project.objects.get(name=project_name)
-        stats_type_rp = StatisticType.objects.get(name=PROTEIN_READINGS)
+        stats_type_rp = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_RAW)
 
         file_path = f"data/{project.proteome_file}"
 

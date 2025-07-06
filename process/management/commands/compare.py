@@ -4,7 +4,22 @@ import json
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-from process.models import Project, Protein, RunResult
+from process.models import (
+    Project,
+    Protein,
+    Abundance,
+    Phospho,
+    StatisticType,
+    Statistic,
+    Replicate,
+    SampleStage
+)
+
+from process.constants import (
+    PROTEIN_ABUNDANCES_RAW,
+    RAW,
+    PROTEIN_ABUNDANCES,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,68 +28,93 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-def compare_json(obj1, obj2, path=""):
-    differences = []
-
-    if isinstance(obj1, dict) and isinstance(obj2, dict):
-        all_keys = set(obj1.keys()).union(obj2.keys())
-        for key in all_keys:
-            new_path = f"{path}.{key}" if path else key
-            val1 = obj1.get(key, "__MISSING__")
-            val2 = obj2.get(key, "__MISSING__")
-            differences += compare_json(val1, val2, new_path)
-
-    elif isinstance(obj1, list) and isinstance(obj2, list):
-        for i, (item1, item2) in enumerate(zip(obj1, obj2)):
-            new_path = f"{path}[{i}]"
-            differences += compare_json(item1, item2, new_path)
-        if len(obj1) != len(obj2):
-            differences.append(f"{path}: List lengths differ ({len(obj1)} != {len(obj2)})")
-
-    else:
-        if obj1 != obj2:
-            differences.append(f"{path}: {obj1} != {obj2}")
-
-    return differences
-
 class Command(BaseCommand):
-    help = "Compare output files from ICR and Process"
-
     def add_arguments(self, parser):
         parser.add_argument(
             "--accession-number",
             required=True,
             help="The accession number of the protein to output.",
         )
-        parser.add_argument(
-            "--with-bugs",
-            help="Run with the original ICR bugs",
-            action="store_true",
-        )
 
     def handle(self, *args, **options):
         accession_number = options["accession_number"]
-        with_bugs = options["with_bugs"]
 
         if not accession_number:
             raise Exception("Please provide an accession number")
 
-        logger.info(f"Comparing files for  {accession_number} with_bugs {with_bugs}")
+        logger.info(f"Comparing original and new")
 
-        process_file_path = f"output/ICR_{accession_number}_with_bugs_{with_bugs}_combined_result.json"
-        ICR_file_path = f"output_ICR/TimeCourse_{accession_number}_info.json"
+        project_original = Project.objects.get(name="ICR")
+        project_process = Project.objects.get(name="Original")
 
-        # with open(process_file_path) as file:
-        #     process_result = json.load(process_file_path)
+        if not project_original.with_bugs:
+            raise Exception("Only a with_bugs ICR project can be compared to the original. You'll have to run 'process' again with --with-bugs.")
 
-        # with open(ICR_file_path) as file:
-        #     ICR_result = json.load(process_file_path)
+        # replicates_original = Replicate.objects.filter(
+        #     project=project_original
+        # )
+        # sample_stages_original = SampleStage.objects.filter(
+        #     project=project_original
+        # ).order_by('rank')
 
-        with open(process_file_path) as f1, open(ICR_file_path) as f2:
-            process_result = json.load(f1)
-            ICR_result = json.load(f2)
+        # replicates_process = Replicate.objects.filter(
+        #     project=project_process
+        # )
+        # sample_stages_process = SampleStage.objects.filter(
+        #     project=project_process
+        # ).order_by('rank')
 
-        diffs = compare_json(process_result, ICR_result)
+        protein_original = Protein.objects.get(
+            project=project_original,
+            accession_number = accession_number
+        )
+        protein_process = Protein.objects.get(
+            project=project_process,
+            accession_number = accession_number
+        )
 
-        for diff in diffs:
-            print(diff)
+        _, stat_prot_raw_original = self._fetch_stats_type_and_stats(
+            PROTEIN_ABUNDANCES_RAW,
+            protein=protein_original
+        )
+        _, stat_prot_raw_process = self._fetch_stats_type_and_stats(
+            PROTEIN_ABUNDANCES_RAW,
+            protein=protein_process
+        )
+
+        stat_prot_raw_abundances_original = Abundance.objects.filter(
+            statistic = stat_prot_raw_original
+        )
+        stat_prot_raw_abundances_process = Abundance.objects.filter(
+            statistic = stat_prot_raw_process
+        )
+
+        print(len(stat_prot_raw_abundances_original))
+        print(len(stat_prot_raw_abundances_process))
+
+        for ab_original in stat_prot_raw_abundances_original:
+            ab_process = stat_prot_raw_abundances_process.filter(
+                replicate__name = ab_original.replicate.name,
+                sample_stage__name = ab_original.sample_stage.name
+            ).first()
+
+            if ab_original.reading != ab_process.reading:
+                print(f"No match for {ab_original.replicate.name} for {ab_original.sample_stage.name}")
+            else:
+                print(f"Raw matched {protein_original.accession_number} reading {ab_original.reading}")
+
+
+    # TODO - copied from import_original
+    def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
+        statistic_type = StatisticType.objects.get(name=statistic_type_name)
+
+        if project:
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, project=project)
+        elif protein:
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, protein=protein)
+        elif phospho:
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, phospho=phospho)
+        else:
+            raise Exception(f"_clear_and_fetch_stats needs a project, protein or phospho")
+
+        return statistic_type, stat

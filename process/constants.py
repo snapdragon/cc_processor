@@ -78,7 +78,7 @@ PROTEIN_INFO_FIELDS = [
 # StatisticTypes
 
 # TODO - fix names
-PROTEIN_READINGS = "readings protein"
+# TODO - change to PHOSPHO_READINGS_RAW?
 PHOSPHO_READINGS = "readings phospho"
 PROTEIN_MEDIAN = "protein median"
 PHOSPHO_MEDIAN = "phospho median"
@@ -89,23 +89,23 @@ PHOSPHO_MEDIAN = "phospho median"
 PROTEIN_ABUNDANCES_RAW = "protein_abundances raw"
 PROTEIN_ABUNDANCES_IMPUTED = "protein_abundances imputed"
 
-PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN = "protein_abundances normalised log2_mean",
+PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN = "protein_abundances normalised log2_mean"
 PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX = "protein_abundances normalised min-max"
 PROTEIN_ABUNDANCES_NORMALISED_MEDIAN = "protein_abundances normalised median"
 PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX = "protein_abundances normalised 0-max"
-PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST ="protein_abundances normalised log2 arrest",
+PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST ="protein_abundances normalised log2 arrest"
 
-PHOSPHO_REGRESSION_ZERO_MAX = "phospho_regression 0-max",
-PHOSPHO_REGRESSION_LOG2_MEAN = "phospho_regression log2_mean",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW = "phospho_regression position_abundances raw",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED = "phospho_regression position_abundances imputed",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX = "phospho_regression position_abundances normalised 0-max",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN = "phospho_regression position_abundances normalised median",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX = "phospho_regression position_abundances normalised min-max",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN = "phospho_regression position_abundances normalised log2_mean",
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST = "phospho_regression position_abundances normalised log2 arrest",
-PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX = "protein_oscillation_abundances 0-max",
-PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN = "protein_oscillation_abundances log2_mean",
+PHOSPHO_REGRESSION_ZERO_MAX = "phospho_regression 0-max"
+PHOSPHO_REGRESSION_LOG2_MEAN = "phospho_regression log2_mean"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW = "phospho_regression position_abundances raw"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED = "phospho_regression position_abundances imputed"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX = "phospho_regression position_abundances normalised 0-max"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN = "phospho_regression position_abundances normalised median"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX = "phospho_regression position_abundances normalised min-max"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN = "phospho_regression position_abundances normalised log2_mean"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST = "phospho_regression position_abundances normalised log2 arrest"
+PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX = "protein_oscillation_abundances 0-max"
+PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN = "protein_oscillation_abundances log2_mean"
 
 SL_SAMPLE_STAGE_NAME_1 = "RO sample 15 min"
 SL_SAMPLE_STAGE_NAME_2 = "RO sample 30 min"

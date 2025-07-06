@@ -18,7 +18,7 @@ from process.management.commands.process import Command
 from process.models import Abundance, StatisticType, Statistic
 
 from process.constants import (
-    PROTEIN_READINGS,
+    PROTEIN_ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
     PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
     PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST
@@ -33,7 +33,7 @@ def test_calculate_protein_medians(basic_project_setup):
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
 
-    stat_type_prot_r = StatisticTypeFactory(name=PROTEIN_READINGS)
+    stat_type_prot_r = StatisticTypeFactory(name=PROTEIN_ABUNDANCES_RAW)
     stat_1 = StatisticFactory(statistic_type=stat_type_prot_r, protein=proteins[0])
     stat_2 = StatisticFactory(statistic_type=stat_type_prot_r, protein=proteins[1])
     stat_3 = StatisticFactory(statistic_type=stat_type_prot_r, protein=proteins[2])
@@ -87,7 +87,7 @@ def test_calculate_normalised_medians(basic_project_setup):
     )
 
     stat_type_prot_reading, stat_prot_readings = create_readings(
-        PROTEIN_READINGS,
+        PROTEIN_ABUNDANCES_RAW,
         replicates,
         sample_stages,
         reading = 0,
@@ -121,7 +121,7 @@ def test_calculate_means(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     _, stat_prot_readings = create_readings(
-        PROTEIN_READINGS,
+        PROTEIN_ABUNDANCES_RAW,
         replicates,
         sample_stages,
         0,
@@ -129,7 +129,7 @@ def test_calculate_means(basic_project_setup):
     )
 
     command._calculate_means(
-        PROTEIN_READINGS,
+        PROTEIN_ABUNDANCES_RAW,
         proteins[0],
         False
     )
