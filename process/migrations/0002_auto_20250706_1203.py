@@ -372,6 +372,57 @@ class Migration(migrations.Migration):
             name="Abundance: 134N, 2, 15",
         )
 
+
+
+
+        # Config for importing ICR results
+        project_ICR = Project.objects.create(
+            name="Original",
+            proteome_file="N/A",
+            phosphoproteome_file="N/A",
+            proteome_file_accession_number_column_name="N/A",
+        )
+
+        replicate_ICR_1 = Replicate.objects.create(
+            name="abundance_rep_1", project=project_ICR, mean=False
+        )
+        replicate_ICR_2 = Replicate.objects.create(
+            name="abundance_rep_2", project=project_ICR, mean=False
+        )
+        replicate_ICR_3 = Replicate.objects.create(
+            name="abundance_average", project=project_ICR, mean=True
+        )
+
+        sample_stage_ICR_1 = SampleStage.objects.create(
+            project=project_ICR, name="Palbo", rank=1
+        )
+        sample_stage_ICR_2 = SampleStage.objects.create(
+            project=project_ICR, name="Late G1_1", rank=2
+        )
+        sample_stage_ICR_3 = SampleStage.objects.create(
+            project=project_ICR, name="G1/S", rank=3
+        )
+        sample_stage_ICR_4 = SampleStage.objects.create(
+            project=project_ICR, name="S", rank=4
+        )
+        sample_stage_ICR_5 = SampleStage.objects.create(
+            project=project_ICR, name="S/G2", rank=5
+        )
+        sample_stage_ICR_6 = SampleStage.objects.create(
+            project=project_ICR, name="G2_2", rank=6
+        )
+        sample_stage_ICR_7 = SampleStage.objects.create(
+            project=project_ICR, name="G2/M_1", rank=7
+        )
+        sample_stage_ICR_8 = SampleStage.objects.create(
+            project=project_ICR, name="M/Early G1", rank=8
+        )
+
+
+
+
+
+
         StatisticType = apps.get_model("process", "StatisticType")
 
         StatisticType.objects.create(
