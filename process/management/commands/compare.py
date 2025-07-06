@@ -87,10 +87,10 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
         self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
 
     def _compare_protein_stat(
@@ -131,9 +131,9 @@ class Command(BaseCommand):
                 continue
 
             if round(ab_original.reading, dps) != round(ab_process.reading, dps):
-                print(f"No {statistic_type_name} match for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, dps)} vs {round(ab_process.reading, dps)}")
-            else:
-                print(f"{statistic_type_name} match for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+                print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, dps)} vs {round(ab_process.reading, dps)}")
+            # else:
+            #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 
     # TODO - copied from import_original
     def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):

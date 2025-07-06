@@ -830,16 +830,21 @@ class Command(BaseCommand):
                 PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
                 protein = protein
             )
+
+            abundances = self._get_abundances(
+                PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+                protein = protein
+            )
         else:
             _, stat = self._clear_and_fetch_stats(
                 PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
                 protein = protein
             )
 
-        abundances = self._get_abundances(
-            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-            protein = protein
-        )
+            abundances = self._get_abundances(
+                PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+                protein = protein
+            )
     
         for replicate in replicates:
             abs = abundances.filter(replicate=replicate)

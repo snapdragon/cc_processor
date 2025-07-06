@@ -310,7 +310,7 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     stat_type_normalised_median, stat_normalised_median = create_readings(
-        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
         reading = 0,
