@@ -1047,13 +1047,12 @@ class Command(BaseCommand):
         print(Abundance.objects.filter(statistic=statistic))
 
     def _calculate_normalised_medians(self, protein):
-        stat_protein_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
-
-        stat_normalised_medians = self._get_statistic(
+        _, stat_normalised_medians = self._clear_and_fetch_stats(
             PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
             protein = protein
         )
-        self._delete_abundances(stat_normalised_medians)
+
+        stat_protein_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
 
         # TODO - get rid of _get_protein_readings? It may not be that useful
         protein_reading = self._get_protein_readings(protein=protein)
@@ -2078,6 +2077,23 @@ class Command(BaseCommand):
 
             # TODO - consider adding bulk updating
             rr.save()
+
+    def _clear_and_fetch_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
+        statistic_type = self._get_statistic_type(statistic_type_name)
+
+        if project:
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, project=project)
+        elif protein:
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, protein=protein)
+        elif phospho:
+            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, phospho=phospho)
+        else:
+            raise Exception(f"_clear_and_fetch_stats needs a project, protein or phospho")
+
+        self._delete_abundances(stat)
+
+        return statistic_type, stat
+
 
     def _fetch_run_results(self, run):
         # Only get the necessary fields to save on memory usage
