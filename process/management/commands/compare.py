@@ -1,5 +1,6 @@
 import logging
 import json
+import math
 
 import pandas as pd
 from django.core.management.base import BaseCommand
@@ -19,6 +20,11 @@ from process.constants import (
     PROTEIN_ABUNDANCES_RAW,
     RAW,
     PROTEIN_ABUNDANCES,
+    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
 )
 
 logging.basicConfig(
@@ -32,77 +38,102 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--accession-number",
-            required=True,
-            help="The accession number of the protein to output.",
+            required=False,
+            help="The accession number of the protein to compare.",
         )
 
     def handle(self, *args, **options):
         accession_number = options["accession_number"]
 
-        if not accession_number:
-            raise Exception("Please provide an accession number")
-
         logger.info(f"Comparing original and new")
 
-        project_original = Project.objects.get(name="ICR")
-        project_process = Project.objects.get(name="Original")
+        project_original = Project.objects.get(name="Original")
+        project_process = Project.objects.get(name="ICR")
 
-        if not project_original.with_bugs:
+        if not project_process.with_bugs:
             raise Exception("Only a with_bugs ICR project can be compared to the original. You'll have to run 'process' again with --with-bugs.")
 
-        # replicates_original = Replicate.objects.filter(
-        #     project=project_original
-        # )
-        # sample_stages_original = SampleStage.objects.filter(
-        #     project=project_original
-        # ).order_by('rank')
+        if accession_number:
+            self._compare(accession_number, project_original, project_process)
+        else:
+            # TODO - only compares proteins in original, any missing from
+            #   new will be missed. Do both?
+            proteins = Protein.objects.filter(project=project_original)
 
-        # replicates_process = Replicate.objects.filter(
-        #     project=project_process
-        # )
-        # sample_stages_process = SampleStage.objects.filter(
-        #     project=project_process
-        # ).order_by('rank')
+            num_proteins = 0
 
+            for pr in proteins:
+                if not num_proteins % 1000:
+                    print(f"Comparing {num_proteins} {pr.accession_number}")
+
+                num_proteins += 1
+
+                self._compare(pr.accession_number, project_original, project_process)
+
+    def _compare(self, accession_number, project_original, project_process):
         protein_original = Protein.objects.get(
             project=project_original,
             accession_number = accession_number
         )
-        protein_process = Protein.objects.get(
-            project=project_process,
-            accession_number = accession_number
-        )
 
-        _, stat_prot_raw_original = self._fetch_stats_type_and_stats(
-            PROTEIN_ABUNDANCES_RAW,
+        try:
+            protein_process = Protein.objects.get(
+                project=project_process,
+                accession_number = accession_number
+            )
+        except Exception as e:
+            # TODO - why would this happen?
+            print(f"Can't get process protein {accession_number}")
+            return
+
+        # Don't compare protein medians as they're not stored in the ICR json
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+
+    def _compare_protein_stat(
+        self,
+        statistic_type_name,
+        protein_original,
+        protein_process,
+        dps = 0
+    ):
+        _, stat_prot_original = self._fetch_stats_type_and_stats(
+            statistic_type_name,
             protein=protein_original
         )
-        _, stat_prot_raw_process = self._fetch_stats_type_and_stats(
-            PROTEIN_ABUNDANCES_RAW,
+        _, stat_prot_process = self._fetch_stats_type_and_stats(
+            statistic_type_name,
             protein=protein_process
         )
 
-        stat_prot_raw_abundances_original = Abundance.objects.filter(
-            statistic = stat_prot_raw_original
+        stat_prot_abundances_original = Abundance.objects.filter(
+            statistic = stat_prot_original
         )
-        stat_prot_raw_abundances_process = Abundance.objects.filter(
-            statistic = stat_prot_raw_process
+        stat_prot_abundances_process = Abundance.objects.filter(
+            statistic = stat_prot_process
         )
 
-        print(len(stat_prot_raw_abundances_original))
-        print(len(stat_prot_raw_abundances_process))
+        # print(len(stat_prot_abundances_original))
+        # print(len(stat_prot_abundances_process))
 
-        for ab_original in stat_prot_raw_abundances_original:
-            ab_process = stat_prot_raw_abundances_process.filter(
+        for ab_original in stat_prot_abundances_original:
+            ab_process = stat_prot_abundances_process.filter(
+                statistic = stat_prot_process,
                 replicate__name = ab_original.replicate.name,
                 sample_stage__name = ab_original.sample_stage.name
             ).first()
 
-            if ab_original.reading != ab_process.reading:
-                print(f"No match for {ab_original.replicate.name} for {ab_original.sample_stage.name}")
-            else:
-                print(f"Raw matched {protein_original.accession_number} reading {ab_original.reading}")
+            if not ab_process:
+                print(f"No reading for {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading}")
+                continue
 
+            if round(ab_original.reading, dps) != round(ab_process.reading, dps):
+                print(f"No {statistic_type_name} match for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, dps)} vs {round(ab_process.reading, dps)}")
+            else:
+                print(f"{statistic_type_name} match for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 
     # TODO - copied from import_original
     def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):

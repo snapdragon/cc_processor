@@ -11,8 +11,6 @@ most of the warnings are from _calculate_metrics
 
 
 
-Regenerate SL, there's a new phospho table
-
 
 Get generate_kinase_predictions working with SL
     Doesnt' work with ICR any more either (??)

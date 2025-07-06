@@ -19,7 +19,17 @@ from process.constants import (
     PROTEIN_ABUNDANCES_RAW,
     RAW,
     PROTEIN_ABUNDANCES,
-    PROTEIN_ABUNDANCES_RAW
+    PROTEIN_ABUNDANCES_RAW,
+    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+    NORMALISED,
+    MEDIAN,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    LOG2_MEAN,
+    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+    MIN_MAX,
+    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+    ZERO_MAX,
 )
 
 logging.basicConfig(
@@ -70,31 +80,104 @@ class Command(BaseCommand):
                 num_proteins += 1
 
                 if not num_proteins % 1000:
-                    print(f"Processing {gene_name}")
+                    print(f"Importing original protein result {num_proteins} {gene_name}")
 
                 protein = Protein.objects.create(
                     project=project, accession_number=gene_name, is_contaminant=False
                 )
 
-                _, stat_prot_raw = self._fetch_stats_type_and_stats(PROTEIN_ABUNDANCES_RAW, protein=protein)
-
                 pa = gene_data[PROTEIN_ABUNDANCES]
 
-                for replicate_name, readings in pa[RAW].items():
-                    for sample_stage_name, reading in readings.items():
-                        replicate = replicates_by_name[replicate_name]
-                        sample_stage = sample_stages_by_name[sample_stage_name]
+                # self._import_protein_readings(
+                #     replicates_by_name,
+                #     sample_stages_by_name,
+                #     protein,
+                #     PROTEIN_ABUNDANCES_RAW,
+                #     pa[RAW],
+                # )
 
-                        Abundance.objects.create(
-                            statistic=stat_prot_raw,
-                            replicate=replicate,
-                            sample_stage=sample_stage,
-                            reading=reading
-                        )
+                # # Apparently not all originals have normalised medians
+                # #   Phospho-only imports maybe?
+                # if pa.get(NORMALISED) and pa[NORMALISED].get(MEDIAN):
+                #     self._import_protein_readings(
+                #         replicates_by_name,
+                #         sample_stages_by_name,
+                #         protein,
+                #         PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+                #         pa[NORMALISED][MEDIAN],
+                #     )
+                # else:
+                #     print(f"No normalised medians for protein {protein.accession_number}")
+
+                # if pa.get(NORMALISED) and pa[NORMALISED].get("log2_palbo"):
+                #     self._import_protein_readings(
+                #         replicates_by_name,
+                #         sample_stages_by_name,
+                #         protein,
+                #         PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+                #         pa[NORMALISED]["log2_palbo"],
+                #     )
+                # else:
+                #     print(f"No normalised log2 arrest for protein {protein.accession_number}")
+
+                # if pa.get(NORMALISED) and pa[NORMALISED].get(LOG2_MEAN):
+                #     self._import_protein_readings(
+                #         replicates_by_name,
+                #         sample_stages_by_name,
+                #         protein,
+                #         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+                #         pa[NORMALISED][LOG2_MEAN],
+                #     )
+                # else:
+                #     print(f"No normalised log2 mean for protein {protein.accession_number}")
+                
+                # if pa.get(NORMALISED) and pa[NORMALISED].get(MIN_MAX):
+                #     self._import_protein_readings(
+                #         replicates_by_name,
+                #         sample_stages_by_name,
+                #         protein,
+                #         PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+                #         pa[NORMALISED][MIN_MAX],
+                #     )
+                # else:
+                #     print(f"No normalised min max for protein {protein.accession_number}")
+
+                if pa.get(NORMALISED) and pa[NORMALISED].get(ZERO_MAX):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+                        pa[NORMALISED][ZERO_MAX],
+                    )
+                else:
+                    print(f"No normalised zero max for protein {protein.accession_number}")
 
                 # if protein.accession_number == 'Q93075':
                 #     print(Abundance.objects.filter(statistic=stat_prot_raw))
 
+
+    def _import_protein_readings(
+        self,
+        replicates_by_name,
+        sample_stages_by_name,
+        protein,
+        statistic_type_name,
+        obj
+    ):
+        _, stat_prot_raw = self._fetch_stats_type_and_stats(statistic_type_name, protein=protein)
+
+        for replicate_name, readings in obj.items():
+            for sample_stage_name, reading in readings.items():
+                replicate = replicates_by_name[replicate_name]
+                sample_stage = sample_stages_by_name[sample_stage_name]
+
+                Abundance.objects.create(
+                    statistic=stat_prot_raw,
+                    replicate=replicate,
+                    sample_stage=sample_stage,
+                    reading=reading
+                )
 
 
 

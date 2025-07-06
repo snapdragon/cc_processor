@@ -745,119 +745,207 @@ class Command(BaseCommand):
         # TODO - all these pr types are wrong, and also probably bad variable names
         self,
         readings: dict,
+        protein: Protein,
         replicates: QuerySet[Replicate],
-        column_names: QuerySet[ColumnName],
     ):
-        replicates_by_name: dict = {}
-        column_names_by_replicate: dict = {}
+        return
 
-        # TODO - is this needed now we no longer use Replicate objects as keys?
-        for replicate in replicates:
-            replicates_by_name[replicate.name] = replicate
-            column_names_by_replicate[replicate.name] = []
+        # replicates_by_name: dict = {}
+        # column_names_by_replicate: dict = {}
 
-        # TODO - and this?
-        for column_name in column_names:
-            column_names_by_replicate[column_name.replicate.name].append(
-                column_name.sample_stage.name
+        # # TODO - is this needed now we no longer use Replicate objects as keys?
+        # for replicate in replicates:
+        #     replicates_by_name[replicate.name] = replicate
+        #     column_names_by_replicate[replicate.name] = []
+
+        # # TODO - and this?
+        # for column_name in column_names:
+        #     column_names_by_replicate[column_name.replicate.name].append(
+        #         column_name.sample_stage.name
+        #     )
+
+        # imputed_readings: dict = {}
+
+        # for replicate_name in readings.keys():
+        #     imputed_readings[replicate_name] = {}
+
+        #     abundances_dict = readings[replicate_name]
+        #     abundances = list(abundances_dict.values())
+
+        #     stage_names = column_names_by_replicate[replicate_name]
+
+        #     for idx, stage_name in enumerate(stage_names):
+        #         # Default value, should never be used
+        #         value = 0
+
+        #         if abundances_dict.get(stage_name) is not None:
+        #             value = abundances_dict[stage_name]
+        #         else:
+        #             last = None
+        #             next = None
+
+        #             # TODO - isn't there a better way to iterate?
+        #             for offset in range(1, len(stage_names)):
+        #                 prev_idx = idx - offset
+        #                 if prev_idx < 0:
+        #                     # Gone before the beginning of the list, give up
+        #                     break
+
+        #                 prev_stage_name = stage_names[prev_idx]
+
+        #                 if abundances_dict.get(prev_stage_name) is not None:
+        #                     last = (offset, abundances_dict[prev_stage_name])
+        #                     # last = abundances_dict[prev_stage_name]
+        #                     break
+
+        #             for offset in range(1, len(abundances)):
+        #                 # Look forward
+        #                 # TODO - this seems to loop back to the beginning. Is that right?
+        #                 next_idx = (idx + offset) % len(abundances)
+        #                 next_stage_name = stage_names[next_idx]
+
+        #                 if abundances_dict.get(stage_name) is not None:
+        #                     next = (offset, abundances[next_stage_name])
+        #                     # next = abundances[next_stage_name]
+        #                     break
+
+        #             if last and next:
+        #                 # Linear imputation between nearest timepoints
+        #                 # TODO - find out why this calculation
+        #                 # TODO - name variables better
+        #                 d1, a1 = last
+        #                 d2, a2 = next
+        #                 step_height = (a1 - a2) / (d1 + d2)
+        #                 value = d2 * step_height + a2
+
+        #         # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
+        #         # TODO - for some reason ICR rounds to 2, not 4. What to do?
+        #         imputed_readings[replicate_name][stage_name] = round(float(value), 2)
+
+        # return imputed_readings
+
+    def _calculate_zero_or_min_normalisation(self, protein: Protein, replicates, zero_min=False):
+        if zero_min:
+            _, stat = self._clear_and_fetch_stats(
+                PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+                protein = protein
+            )
+        else:
+            _, stat = self._clear_and_fetch_stats(
+                PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+                protein = protein
             )
 
-        imputed_readings: dict = {}
-
-        for replicate_name in readings.keys():
-            imputed_readings[replicate_name] = {}
-
-            abundances_dict = readings[replicate_name]
-            abundances = list(abundances_dict.values())
-
-            stage_names = column_names_by_replicate[replicate_name]
-
-            for idx, stage_name in enumerate(stage_names):
-                # Default value, should never be used
-                value = 0
-
-                if abundances_dict.get(stage_name) is not None:
-                    value = abundances_dict[stage_name]
-                else:
-                    last = None
-                    next = None
-
-                    # TODO - isn't there a better way to iterate?
-                    for offset in range(1, len(stage_names)):
-                        prev_idx = idx - offset
-                        if prev_idx < 0:
-                            # Gone before the beginning of the list, give up
-                            break
-
-                        prev_stage_name = stage_names[prev_idx]
-
-                        if abundances_dict.get(prev_stage_name) is not None:
-                            last = (offset, abundances_dict[prev_stage_name])
-                            # last = abundances_dict[prev_stage_name]
-                            break
-
-                    for offset in range(1, len(abundances)):
-                        # Look forward
-                        # TODO - this seems to loop back to the beginning. Is that right?
-                        next_idx = (idx + offset) % len(abundances)
-                        next_stage_name = stage_names[next_idx]
-
-                        if abundances_dict.get(stage_name) is not None:
-                            next = (offset, abundances[next_stage_name])
-                            # next = abundances[next_stage_name]
-                            break
-
-                    if last and next:
-                        # Linear imputation between nearest timepoints
-                        # TODO - find out why this calculation
-                        # TODO - name variables better
-                        d1, a1 = last
-                        d2, a2 = next
-                        step_height = (a1 - a2) / (d1 + d2)
-                        value = d2 * step_height + a2
-
-                # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
-                # TODO - for some reason ICR rounds to 2, not 4. What to do?
-                imputed_readings[replicate_name][stage_name] = round(float(value), 2)
-
-        return imputed_readings
-
-    def _calculate_level_two_normalisation(self, readings: dict, zero_min=False):
-        level_two_normalised_readings: dict = {}
-
-        for replicate_name in readings:
-            level_two_normalised_readings[replicate_name] = {}
+        abundances = self._get_abundances(
+            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein = protein
+        )
+    
+        for replicate in replicates:
+            abs = abundances.filter(replicate=replicate)
 
             min_value = 0
             max_value = 0
 
-            abundances = readings[replicate_name]
+            readings = []
 
-            abundance_values_non_null = [
-                val for val in abundances.values() if val is not None
-            ]
+            for ab in abs:
+                readings.append(ab.reading)
 
-            if len(abundance_values_non_null) != 0:
+            if len(readings):
                 if not zero_min:
-                    min_value = min(abundance_values_non_null)
+                    min_value = min(readings)
 
-                max_value = max(abundance_values_non_null)
+                max_value = max(readings)
+            
+            denominator = max_value - min_value
 
-            for stage_name, abundance in abundances.items():
-                denominator = max_value - min_value
-                if abundance is None or denominator == 0:
-                    abundance_normalised = 0.5
+            for ab in abs:
+                reading = ab.reading
+
+                if reading is None or denominator == 0:
+                    reading_normalised = 0.5
                 else:
-                    abundance_normalised = (abundance - min_value) / denominator
+                    reading_normalised = (reading - min_value) / denominator
 
-                level_two_normalised_readings[replicate_name][stage_name] = self._round(
-                    abundance_normalised
+                Abundance.objects.create(
+                    statistic=stat,
+                    replicate=ab.replicate,
+                    sample_stage=ab.sample_stage,
+                    reading=reading_normalised
                 )
 
-        return level_two_normalised_readings
+        #         level_two_normalised_readings[replicate_name][stage_name] = self._round(
+        #             abundance_normalised
+        #         )
 
+        # level_two_normalised_readings: dict = {}
+
+        # for replicate_name in readings:
+        #     level_two_normalised_readings[replicate_name] = {}
+
+        #     min_value = 0
+        #     max_value = 0
+
+        #     abundances = readings[replicate_name]
+
+        #     abundance_values_non_null = [
+        #         val for val in abundances.values() if val is not None
+        #     ]
+
+        #     if len(abundance_values_non_null) != 0:
+        #         if not zero_min:
+        #             min_value = min(abundance_values_non_null)
+
+        #         max_value = max(abundance_values_non_null)
+
+        #     for stage_name, abundance in abundances.items():
+        #         denominator = max_value - min_value
+        #         if abundance is None or denominator == 0:
+        #             abundance_normalised = 0.5
+        #         else:
+        #             abundance_normalised = (abundance - min_value) / denominator
+
+        #         level_two_normalised_readings[replicate_name][stage_name] = self._round(
+        #             abundance_normalised
+        #         )
+
+        # return level_two_normalised_readings
+
+    # calclog2RelativeAbundance
     def _calculate_relative_log2_normalisation(self, protein: Protein):
-        log2_abundances: dict = {}
+        _, stat_normalised_log2_mean = self._clear_and_fetch_stats(
+            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein = protein
+        )
+
+        abundances = self._get_abundances(
+            PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein
+        )
+
+        total_abundances = 0
+        total_lengths = 0
+
+        for abundance in abundances:
+            if abundance.reading is not None:
+                total_abundances += math.log2(abundance.reading)
+                total_lengths += 1
+
+        mean = None
+
+        if total_lengths != 0:
+            mean = total_abundances / total_lengths
+
+        for abundance in abundances:
+            normalised_abundance = self._round(math.log2(abundance.reading) - mean)
+
+            Abundance.objects.create(
+                statistic=stat_normalised_log2_mean,
+                replicate=abundance.replicate,
+                sample_stage=abundance.sample_stage,
+                reading=normalised_abundance
+            )
 
         # for replicate_name in readings:
         #     log2_abundances[replicate_name] = {}
@@ -915,11 +1003,10 @@ class Command(BaseCommand):
         if protein.project.name == "ICR":
             ARRESTING_AGENT = "Palbo"
 
-        stat_normalised_log2_arrest = self._get_statistic(
+        _, stat_normalised_log2_arrest = self._clear_and_fetch_stats(
             PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
             protein = protein
         )
-        self._delete_abundances(stat_normalised_log2_arrest)
 
         abundances = self._get_abundances(
             PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
@@ -1569,6 +1656,13 @@ class Command(BaseCommand):
         protein,
         with_bugs
     ):
+        # Clear any raw average abundances set by a previous run
+        Abundance.objects.filter(
+            statistic__statistic_type__name=PROTEIN_ABUNDANCES_RAW,
+            statistic__protein=protein,
+            replicate__mean = True
+        ).delete()
+
         # firstLevelNormalisationProteomics
         # firstLevelNormalisationPhospho
         # TODO - remove all returned values, e.g. normalised_medians
@@ -1586,26 +1680,25 @@ class Command(BaseCommand):
             self._calculate_relative_log2_normalisation(protein)
         )
 
-        # # normaliseData
-        # min_max_readings = self._calculate_level_two_normalisation(
-        #     log2_readings
-        # )
+        # normaliseData
+        min_max_readings = self._calculate_zero_or_min_normalisation(
+            protein, replicates
+        )
 
-        # # normaliseData
-        # zero_max_readings = self._calculate_level_two_normalisation(
-        #     normalised_medians, True
-        # )
+        # normaliseData
+        zero_max_readings = self._calculate_zero_or_min_normalisation(
+            protein, replicates, True
+        )
 
+        imputed_readings = self._impute(
+            PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein, replicates
+        )
 
-        # imputed_readings = self._impute(
-        #     min_max_readings, replicates, column_names
-        # )
-
-        # raw_averages = (
-        #     self._calculate_means(
-        #         readings, with_bugs
-        #     )
-        # )
+        raw_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_RAW, protein, with_bugs
+            )
+        )
 
         normalised_averages = (
             self._calculate_means(
@@ -1613,23 +1706,23 @@ class Command(BaseCommand):
             )
         )
 
-        # min_max_averages = (
-        #     self._calculate_means(
-        #         min_max_readings, with_bugs
-        #     )
-        # )
+        min_max_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein, with_bugs
+            )
+        )
 
-        # zero_max_averages = (
-        #     self._calculate_means(
-        #         zero_max_readings, with_bugs
-        #     )
-        # )
+        zero_max_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein, with_bugs
+            )
+        )
 
-        # log2_averages = (
-        #     self._calculate_means(
-        #         log2_readings, with_bugs
-        #     )
-        # )
+        log2_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein, with_bugs
+            )
+        )
 
         arrest_averages = (
             self._calculate_means(
@@ -1925,16 +2018,18 @@ class Command(BaseCommand):
     def _calculate_protein_medians(self, project, replicates, sample_stages, with_bugs):
         logger.info("Calculating protein medians")
 
-        stat_type_prot_med = StatisticType.objects.get(name=PROTEIN_MEDIAN)
-        Abundance.objects.filter(statistic__project=project, statistic__statistic_type=stat_type_prot_med).delete()
+        _, stat_prot_med = self._clear_and_fetch_stats(PROTEIN_MEDIAN, project=project)
 
-        abundances = Abundance.objects.filter(statistic__protein__project=project, statistic__statistic_type__name=PROTEIN_ABUNDANCES_RAW).iterator(chunk_size=100)
+        abundances = Abundance.objects.filter(
+            statistic__protein__project=project,
+            statistic__statistic_type__name=PROTEIN_ABUNDANCES_RAW
+        ).iterator(chunk_size=100)
 
         rep_stage_abundances = {}
 
         for i, abundance in enumerate(abundances):
             if not i % 10000:
-                print(f"Processing abundance {i}")
+                print(f"Processing abundance for median {i}")
 
             if not rep_stage_abundances.get(abundance.replicate):
                 rep_stage_abundances[abundance.replicate] = {}
@@ -1950,8 +2045,6 @@ class Command(BaseCommand):
 
             rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 
-        stat_prot_med, _ = Statistic.objects.get_or_create(project=project, statistic_type=stat_type_prot_med)
-
         for replicate in replicates:
             for sample_stage in sample_stages:
                 if not rep_stage_abundances[replicate].get(sample_stage):
@@ -1963,32 +2056,6 @@ class Command(BaseCommand):
                 median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 
                 Abundance.objects.create(statistic=stat_prot_med, replicate=replicate, sample_stage=sample_stage, reading=median)
-
-
-
-    def _fetch_protein_medians(self, run):
-        unlimited_run = Run.objects.get(
-            project=run.project, with_bugs=run.with_bugs
-        )
-
-        protein_medians = unlimited_run.protein_medians
-
-        if not protein_medians:
-            raise Exception(f"No protein medians created yet for {unlimited_run}")
-
-        return json.loads(protein_medians)
-
-    def _fetch_phospho_medians(self, run):
-        unlimited_run = Run.objects.get(
-            project=run.project, with_bugs=run.with_bugs
-        )
-
-        phospho_medians = unlimited_run.phospho_medians
-
-        if not phospho_medians:
-            raise Exception(f"No phospho medians created yet for {unlimited_run}")
-
-        return json.loads(phospho_medians)
 
 
     # TODO - rename

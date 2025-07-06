@@ -21,7 +21,10 @@ from process.constants import (
     PROTEIN_ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
     PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
 )
 
 @pytest.mark.django_db
@@ -202,6 +205,152 @@ def test_calculate_arrest_log2_normalisation(basic_project_setup):
 
         # The arresting agent is the last, hence divide by 10
         assert abundance.reading == round(math.log2(reading / 10), 4)
+
+
+@pytest.mark.django_db
+def test_calculate_relative_log2_normalisation(basic_project_setup):
+    command = Command()
+
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    stat_type_normalised_median, stat_normalised_median = create_readings(
+        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
+
+    command._calculate_relative_log2_normalisation(proteins[0])
+
+    stat_type_arrest_log2_mean = StatisticType.objects.get(
+        name=PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN
+    )
+    stat_arrest_log2_mean = Statistic.objects.get(
+        statistic_type=stat_type_arrest_log2_mean,
+        protein=proteins[0]
+    )
+
+    abundances = Abundance.objects.filter(statistic=stat_arrest_log2_mean)
+
+    print(abundances)
+
+    sum = 0
+
+    # 1 + 2 + 3 ... / 30
+    for i in range(1, 31):
+        sum += math.log2(i)
+
+    mean = sum / 30
+
+    assert len(abundances) == 30
+
+    num = 0
+
+    for abundance in abundances:
+        num += 1
+
+        assert abundance.reading == round(math.log2(num) - mean, 4)
+
+
+@pytest.mark.django_db
+def test_calculate_min_normalisation(basic_project_setup):
+    command = Command()
+
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    stat_type_normalised_median, stat_normalised_median = create_readings(
+        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
+
+    command._calculate_zero_or_min_normalisation(
+        proteins[0],
+        replicates
+    )
+
+    stat_type_min_max = StatisticType.objects.get(
+        name=PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX
+    )
+    stat_min_max = Statistic.objects.get(
+        statistic_type=stat_type_min_max,
+        protein=proteins[0]
+    )
+
+    abundances = Abundance.objects.filter(statistic=stat_min_max)
+
+    # replicate one: min is 1, max is 10, so denominator is 9
+    # replicate two: min is 11, max is 20, so denominator is 9
+    for replicate in replicates:
+        num = -1
+
+        for ab in abundances.filter(replicate=replicate):
+            num += 1
+
+            assert ab.reading == num / 9
+
+    assert len(abundances) == 30
+
+
+
+
+@pytest.mark.django_db
+def test_calculate_zero_max_normalisation(basic_project_setup):
+    command = Command()
+
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    stat_type_normalised_median, stat_normalised_median = create_readings(
+        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
+
+    command._calculate_zero_or_min_normalisation(
+        proteins[0],
+        replicates,
+        True,
+    )
+
+    stat_type_zero = StatisticType.objects.get(
+        name=PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX
+    )
+    stat_zero = Statistic.objects.get(
+        statistic_type=stat_type_zero,
+        protein=proteins[0]
+    )
+
+    abundances = Abundance.objects.filter(statistic=stat_zero)
+
+    print(abundances)
+
+    # replicate one: min is 0, max is 10, so denominator is 10
+    # replicate two: min is 0, max is 20, so denominator is 20
+    replicate_num = 0
+    num = 0
+
+    for replicate in replicates:
+        replicate_num += 1
+
+        for ab in abundances.filter(replicate=replicate):
+            num += 1
+
+            assert ab.reading == num / (replicate_num * 10)
+
+    assert len(abundances) == 30
+
+
 
 
 
