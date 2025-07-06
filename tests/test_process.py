@@ -204,22 +204,6 @@ def test_calculate_arrest_log2_normalisation(basic_project_setup):
         assert abundance.reading == round(math.log2(reading / 10), 4)
 
 
-# @pytest.mark.django_db
-# def test_all_replicates():
-#     command = Command()
-#     project = ProjectFactory()
-#     replicates = [
-#         ReplicateFactory(project=project, name="r1"),
-#         ReplicateFactory(project=project, name="r2"),
-#     ]
-
-#     def test_func(replicate_name):
-#         return {}
-
-#     results = command._all_replicates(func=test_func, replicates=replicates)
-
-#     assert results == {replicates[0].name: {}, replicates[1].name: {}}
-
 
 # @pytest.mark.django_db
 # def test_calculate_means():

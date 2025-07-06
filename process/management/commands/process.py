@@ -5,6 +5,7 @@ import math
 import statistics
 import copy
 import requests
+from scipy import stats
 
 import numpy as np
 import pandas as pd
@@ -166,7 +167,6 @@ class Command(BaseCommand):
         calculate_proteins = options["calculate_proteins"]
         calculate_phospho_medians = options["calculate_phospho_medians"]
         calculate_phosphos = options["calculate_phosphos"]
-        merge_protein_phospho = options["merge_protein_phospho"]
         calculate_batch = options["calculate_batch"]
         calculate_all = options["calculate_all"]
 
@@ -224,10 +224,6 @@ class Command(BaseCommand):
 
         # if calculate_phosphos or calculate_all:
         #     self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
-
-        # if merge_protein_phospho or calculate_proteins or calculate_phosphos or calculate_all:
-        #     # Merging has to be redone on new protein or phospho calculations
-        #     self._merge_phospho_with_proteo(proteins, run)
 
         # # By this point there should be a combined result for every protein
 
@@ -376,12 +372,12 @@ class Command(BaseCommand):
                     P_VALUE: pprpam[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
                 }
 
-        # TODO - is there an alternative to converting this to a dataframe?
-        # TODO - is this the same as _generate_df?
-        prot_anova_info_df = pd.DataFrame(prot_anova_info).T
-        prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
+        # prot_anova_info_df = pd.DataFrame(prot_anova_info).T
+        # prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
 
-        prot_anova_info = prot_anova_info_df.to_dict("index")
+        # prot_anova_info = prot_anova_info_df.to_dict("index")
+
+        prot_anova_info = self._add_q_value(prot_anova_info)
 
         run_results = self._fetch_run_results(run)
 
@@ -417,12 +413,12 @@ class Command(BaseCommand):
             prot_anova_info[rr.protein] = {}
             prot_anova_info[rr.protein][P_VALUE] = rr.combined_result[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
 
-        # TODO - converting to a dataframe seems excessive. Find an alternative.
-        # TODO - is this the same as _generate_df?
-        prot_anova_info_df = pd.DataFrame(prot_anova_info).T
-        prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
+        # prot_anova_info_df = pd.DataFrame(prot_anova_info).T
+        # prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
 
-        prot_anova_info = prot_anova_info_df.to_dict("index")
+        # prot_anova_info = prot_anova_info_df.to_dict("index")
+
+        prot_anova_info = self._add_q_value(prot_anova_info)
 
         for rr in run_results_with_log2_mean:
             rr.combined_result[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = prot_anova_info[rr.protein][Q_VALUE]
@@ -435,19 +431,6 @@ class Command(BaseCommand):
             rr.combined_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_output
 
             rr.save()
-
-
-    # TODO - lifted from ICR, rewrite
-    # TODO - does it really need to be a dataframe? Write tests and change if possible.
-    def p_adjust_bh(self, p):
-        """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
-        p = np.asarray(p, dtype=float)
-        by_descend = p.argsort()[::-1]
-        by_orig = by_descend.argsort()
-        steps = float(len(p)) / np.arange(len(p), 0, -1)
-        q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
-
-        return q[by_orig]
 
 
 
@@ -1409,7 +1392,7 @@ class Command(BaseCommand):
                     ps_and_qs[phospho_key][P_VALUE] = pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
 
         # TODO - what's this for?
-        ps_and_qs = self._generate_df(ps_and_qs)
+        ps_and_qs = self._add_q_value(ps_and_qs)
 
         run_results = self._fetch_run_results(run)
 
@@ -1498,7 +1481,7 @@ class Command(BaseCommand):
                     if pprpa[mod][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
                         regression_info[phospho_key][P_VALUE] = pprpa[mod][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
 
-        regression_info = self._generate_df(regression_info)
+        regression_info = self._add_q_value(regression_info)
 
         run_results = self._fetch_run_results(run)
 
@@ -1881,43 +1864,6 @@ class Command(BaseCommand):
 
             rr.save()
 
-    # TODO - is this necessary at all?
-    def _merge_phospho_with_proteo(self, proteins, run):
-        logger.info("Combining protein and phospho results.")
-
-        # TODO - check all other functions that need to blank DB
-        RunResult.objects.filter(run=run).update(combined_result=None)
-
-        num_proteins = 0
-
-        for pr in proteins:
-            self._count_logger(
-                num_proteins,
-                1000,
-                f"Merging protein {num_proteins} {pr.accession_number}",
-            )
-
-            num_proteins += 1
-
-            run_result = RunResult.objects.get(run=run, protein=pr)
-
-            combined_result = run_result.protein_result
-
-            combined_result[PHOSPHORYLATION_ABUNDANCES] = run_result.phospho_result
-
-            run_result.combined_result = combined_result
-
-            run_result.save()
-
-                # TODO - put these in as needed
-                # if protein in index_protein_names:
-                #     gene_name = index_protein_names[protein.accession_number]["gene_name"]
-                #     protein_name = index_protein_names[protein.accession_number][
-                #         "protein_name"
-                #     ]
-                # else:
-                #     gene_name, protein_name = getProteinInfo(protein.accession_number)
-
 
     # TODO - is this worth being a function at all?
     def _build_phospho_abundance_table(self, abundance_table, replicates, sample_stages, protein_abundances, mod_key):
@@ -1938,12 +1884,12 @@ class Command(BaseCommand):
                 rep_timepoint = f"{replicate.name}_{sample_stage.name}"
                 abundance_table[mod_key][rep_timepoint] = protein_abundances[replicate.name][sample_stage.name]
 
-    # TODO - tested
-    def _generate_df(self, info):
+    # TODO - test
+    def _add_q_value(self, info):
         info_df = pd.DataFrame(info)
         info_df = info_df.T
 
-        info_df[Q_VALUE] = self.p_adjust_bh(info_df[P_VALUE])
+        info_df[Q_VALUE] = stats.false_discovery_control(p)
 
         return info_df.to_dict('index')
 
