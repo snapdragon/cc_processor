@@ -90,84 +90,93 @@ class Command(BaseCommand):
                     project=project, accession_number=gene_name, is_contaminant=False
                 )
 
+                if not gene_data.get(PROTEIN_ABUNDANCES):
+                    print(f"No protein abundances for {gene_name}")
+                    continue
+
                 pa = gene_data[PROTEIN_ABUNDANCES]
+
+                if not gene_data.get(METRICS):
+                    print(f"No metrics for {gene_name}")
+                    continue
+
                 pm = gene_data[METRICS]
 
-                # self._import_protein_readings(
-                #     replicates_by_name,
-                #     sample_stages_by_name,
-                #     protein,
-                #     PROTEIN_ABUNDANCES_RAW,
-                #     pa[RAW],
-                # )
+                self._import_protein_readings(
+                    replicates_by_name,
+                    sample_stages_by_name,
+                    protein,
+                    PROTEIN_ABUNDANCES_RAW,
+                    pa[RAW],
+                )
 
-                # # Apparently not all originals have normalised medians
-                # #   Phospho-only imports maybe?
-                # if pa.get(NORMALISED) and pa[NORMALISED].get(MEDIAN):
-                #     self._import_protein_readings(
-                #         replicates_by_name,
-                #         sample_stages_by_name,
-                #         protein,
-                #         PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-                #         pa[NORMALISED][MEDIAN],
-                #     )
-                # else:
-                #     print(f"No normalised medians for protein {protein.accession_number}")
+                # Apparently not all originals have normalised medians
+                #   Phospho-only imports maybe?
+                if pa.get(NORMALISED) and pa[NORMALISED].get(MEDIAN):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+                        pa[NORMALISED][MEDIAN],
+                    )
+                else:
+                    print(f"No normalised medians for protein {protein.accession_number}")
 
-                # if pa.get(NORMALISED) and pa[NORMALISED].get("log2_palbo"):
-                #     self._import_protein_readings(
-                #         replicates_by_name,
-                #         sample_stages_by_name,
-                #         protein,
-                #         PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
-                #         pa[NORMALISED]["log2_palbo"],
-                #     )
-                # else:
-                #     print(f"No normalised log2 arrest for protein {protein.accession_number}")
+                if pa.get(NORMALISED) and pa[NORMALISED].get("log2_palbo"):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+                        pa[NORMALISED]["log2_palbo"],
+                    )
+                else:
+                    print(f"No normalised log2 arrest for protein {protein.accession_number}")
 
-                # if pa.get(NORMALISED) and pa[NORMALISED].get(LOG2_MEAN):
-                #     self._import_protein_readings(
-                #         replicates_by_name,
-                #         sample_stages_by_name,
-                #         protein,
-                #         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-                #         pa[NORMALISED][LOG2_MEAN],
-                #     )
-                # else:
-                #     print(f"No normalised log2 mean for protein {protein.accession_number}")
+                if pa.get(NORMALISED) and pa[NORMALISED].get(LOG2_MEAN):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+                        pa[NORMALISED][LOG2_MEAN],
+                    )
+                else:
+                    print(f"No normalised log2 mean for protein {protein.accession_number}")
                 
-                # if pa.get(NORMALISED) and pa[NORMALISED].get(MIN_MAX):
-                #     self._import_protein_readings(
-                #         replicates_by_name,
-                #         sample_stages_by_name,
-                #         protein,
-                #         PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-                #         pa[NORMALISED][MIN_MAX],
-                #     )
-                # else:
-                #     print(f"No normalised min max for protein {protein.accession_number}")
+                if pa.get(NORMALISED) and pa[NORMALISED].get(MIN_MAX):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+                        pa[NORMALISED][MIN_MAX],
+                    )
+                else:
+                    print(f"No normalised min max for protein {protein.accession_number}")
 
-                # if pa.get(NORMALISED) and pa[NORMALISED].get(ZERO_MAX):
-                #     self._import_protein_readings(
-                #         replicates_by_name,
-                #         sample_stages_by_name,
-                #         protein,
-                #         PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
-                #         pa[NORMALISED][ZERO_MAX],
-                #     )
-                # else:
-                #     print(f"No normalised zero max for protein {protein.accession_number}")
+                if pa.get(NORMALISED) and pa[NORMALISED].get(ZERO_MAX):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+                        pa[NORMALISED][ZERO_MAX],
+                    )
+                else:
+                    print(f"No normalised zero max for protein {protein.accession_number}")
 
-                # if pa.get(IMPUTED):
-                #     self._import_protein_readings(
-                #         replicates_by_name,
-                #         sample_stages_by_name,
-                #         protein,
-                #         PROTEIN_ABUNDANCES_IMPUTED,
-                #         pa[IMPUTED],
-                #     )
-                # else:
-                #     print(f"No imputed values for protein {protein.accession_number}")
+                if pa.get(IMPUTED):
+                    self._import_protein_readings(
+                        replicates_by_name,
+                        sample_stages_by_name,
+                        protein,
+                        PROTEIN_ABUNDANCES_IMPUTED,
+                        pa[IMPUTED],
+                    )
+                else:
+                    print(f"No imputed values for protein {protein.accession_number}")
 
                 if pm.get(LOG2_MEAN):
                     self._import_metrics(
@@ -177,9 +186,6 @@ class Command(BaseCommand):
                     )
                 else:
                     print(f"No log2 mean metrics {protein.accession_number}")
-
-                # if protein.accession_number == 'Q93075':
-                #     print(Abundance.objects.filter(statistic=stat_prot_raw))
 
 
 

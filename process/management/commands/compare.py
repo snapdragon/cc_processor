@@ -26,6 +26,10 @@ from process.constants import (
     PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
     PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
     PROTEIN_ABUNDANCES_IMPUTED,
+    P_VALUE,
+    F_STATISTICS,
+    Q_VALUE,
+    ANOVA,
 )
 
 # TODO - move to constants file
@@ -42,6 +46,12 @@ METRICS_NUMBER_FIELDS = [
     'residuals_all',
     'R_squared_all',
     'curve_fold_change'
+]
+
+METRICS_ANOVA_FIELDS = [
+    P_VALUE,
+    F_STATISTICS,
+    Q_VALUE,
 ]
 
 logging.basicConfig(
@@ -104,12 +114,12 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, 10)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
         self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
 
 
@@ -133,18 +143,22 @@ class Command(BaseCommand):
         metrics_original = stat_prot_original.metrics
         metrics_process = stat_prot_process.metrics
 
-        # for field in METRICS_STRING_FIELDS:
-        #     if not metrics_process or not metrics_process.get(field):
-        #         print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
-        #         continue
+        if not metrics_process:
+            print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
+            return
 
-        #     if metrics_original[field] != metrics_process[field]:
-        #         print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
-        #     # else:
-        #     #     print(f"Match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+        for field in METRICS_STRING_FIELDS:
+            if not metrics_process.get(field):
+                print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                continue
+
+            if metrics_original[field] != metrics_process[field]:
+                print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+            # else:
+            #     print(f"Match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         for field in METRICS_NUMBER_FIELDS:
-            if not metrics_process or not metrics_process.get(field):
+            if not metrics_process.get(field):
                 print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
                 continue
 
@@ -153,7 +167,19 @@ class Command(BaseCommand):
             # else:
             #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
+        # if not metrics_process.get(ANOVA):
+        #     print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
+        # else:
+        #     # Check ANOVA
+        #     for field in METRICS_ANOVA_FIELDS:
+        #         if not metrics_process[ANOVA].get(field):
+        #             print(f"No ANOVA reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+        #             continue
 
+        #         if round(metrics_original[ANOVA][field], dps) != round(metrics_process[ANOVA][field], dps):
+        #             print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+        #         # else:
+        #         #     print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
 
 
 
@@ -180,8 +206,8 @@ class Command(BaseCommand):
             statistic = stat_prot_process
         )
 
-        # print(len(stat_prot_abundances_original))
-        # print(len(stat_prot_abundances_process))
+        if len(stat_prot_abundances_original) != len(stat_prot_abundances_process):
+            print(f"Protein abundance lengths don't match for {protein_original.accession_number}: {len(stat_prot_abundances_original)} vs {len(stat_prot_abundances_process)}")
 
         for ab_original in stat_prot_abundances_original:
             ab_process = stat_prot_abundances_process.filter(
@@ -196,8 +222,9 @@ class Command(BaseCommand):
 
             if round(ab_original.reading, dps) != round(ab_process.reading, dps):
                 print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, dps)} vs {round(ab_process.reading, dps)}")
-            else:
-                print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            # else:
+            #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+
 
     # TODO - copied from import_original
     def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):

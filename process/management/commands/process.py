@@ -120,6 +120,10 @@ class Command(BaseCommand):
             help="The name of the project to process",
         )
         parser.add_argument(
+            "--accession-number",
+            help="Optional accession number",
+        )
+        parser.add_argument(
             "--with-bugs",
             help="Run with the original ICR bugs",
             action="store_true",
@@ -162,6 +166,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         project_name = options["project"]
+        accession_number = options["accession_number"]
         with_bugs = options["with_bugs"]
         calculate_protein_medians = options["calculate_protein_medians"]
         calculate_proteins = options["calculate_proteins"]
@@ -182,27 +187,7 @@ class Command(BaseCommand):
 
         project = Project.objects.get(name=project_name)
         replicates = Replicate.objects.filter(project=project, mean=False)
-        column_names = ColumnName.objects.filter(replicate__project=project)
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
-
-        # stats_type_readings_pr = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_RAW)
-        # stats_type_readings_pho = StatisticType.objects.get(name=PHOSPHO_READINGS)
-
-        # proteins = Protein.objects.filter(project=project, is_contaminant=False)
-        # protein_readings = Abundance.objects.filter(
-        #     statistic__protein__project=project,
-        #     statistic__protein__is_contaminant = False,
-        #     statistic_type=stats_type_readings_pr
-        # )
-        # phospho_readings = Abundance.objects.filter(
-        #     statistic__phospho__protein__project=project,
-        #     statistic__phospho__protein__is_contaminant = False,
-        #     statistic_type=stats_type_readings_pho
-        # )
-        # phosphos = Phospho.objects.filter(
-        #     protein__project=project,
-        #     protein__is_contaminant = False
-        # )
 
         project.with_bugs = with_bugs
         project.save()
@@ -212,7 +197,36 @@ class Command(BaseCommand):
 
         # N.B. there must be protein medians for this to run
         if calculate_proteins or calculate_all:
-            self._proteins(project, replicates, sample_stages, with_bugs)
+            if accession_number:
+                logger.info(f"Processing protein {accession_number}")
+
+                protein = Protein.objects.get(
+                    project=project,
+                    accession_number=accession_number
+                )
+
+                self._calculate_abundances_metrics(
+                    replicates,
+                    sample_stages,
+                    protein,
+                    with_bugs
+                )
+            else:
+                logger.info("Processing all proteins")
+
+                proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
+
+                for i, protein in enumerate(proteins):
+                    if not i % 1000:
+                        logger.info(f"Calculating protein {i} {protein.accession_number}")
+
+                    self._calculate_abundances_metrics(
+                        replicates,
+                        sample_stages,
+                        protein,
+                        with_bugs
+                    )
+
 
         # if calculate_phospho_medians or calculate_all:
         #     phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
@@ -332,24 +346,6 @@ class Command(BaseCommand):
 
         run_result.save()
     
-    def _proteins(
-        self, project, replicates, sample_stages, with_bugs: bool
-    ):
-        logger.info("Processing proteins")
-
-        proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
-
-        for i, protein in enumerate(proteins):
-            if not i % 1000:
-                logger.info(f"Calculating protein {i} {protein.accession_number}")
-
-            self._calculate_abundances_metrics(
-                replicates,
-                sample_stages,
-                protein,
-                with_bugs
-            )
-
 
     # TODO - similar to other functionality, consolidate
     def _calculate_phosphorylation_abundances_q_values(self, run, replicates, sample_stages):
@@ -513,59 +509,109 @@ class Command(BaseCommand):
 
         return time_course_abundance_df
 
-    def _tp(self, stage_name, readings, replicates):
+    # TODO - is this really needed any more?
+    def _tp(self, abundances):
         """
         Creates a list of each abundance of a stage name across replicates
         """
         res = []
 
-        for replicate in replicates:
-            if stage_name in readings[replicate.name]:
-                reading = readings[replicate.name][stage_name]
+        for abundance in abundances:
+            if abundance.reading is not None:
+                res.append(abundance.reading)
 
-                if reading is not None:
-                    res.append(float(reading))
+        # for replicate in replicates:
+        #     if stage_name in readings[replicate.name]:
+        #         reading = readings[replicate.name][stage_name]
+
+        #         if reading is not None:
+        #             res.append(float(reading))
 
         return res
     
     # TODO - straight up lifted from ICR, simplify ideally using a library
-    def _calculate_ANOVA(self, readings: dict, replicates, sample_stages):
-        # Defaults if not enough replicate
-        # TODO - why these values?
+    def _calculate_ANOVA(self, statistic_type_name, protein, replicates, sample_stages):
+        # Defaults if not enough replicates
         p_value = 1
         f_statistic = 1
 
-        if readings:
-            #   Sometimes the first replicate might not even be 'One' or equaivalent,
-            #   as replicates are sometimes excluded by qc for being all None.
+        stat_log2_mean = self._get_statistic(
+            statistic_type_name,
+            protein=protein
+        )
 
-            stage_names = []
+        abundances = Abundance.objects.filter(
+            statistic=stat_log2_mean
+        ).order_by(
+            'sample_stage__rank'
+        )
 
-            try:
-                for stage in sample_stages:
-                    stage_names.append(self._tp(stage.name, readings, replicates))
+        # TODO - not a good name
+        stage_names = []
 
-                # Each entry must have at least two points for f_oneway to work    
-                timepoints = [x for x in stage_names if x != [] and len(x) > 1]
+        try:
+            for sample_stage in sample_stages:
+                stage_names.append(
+                    self._tp(
+                        abundances.filter(sample_stage=sample_stage),
+                    )
+                )
 
-                if len(timepoints) > 1:
-                    # TODO - study f_oneway
-                    one_way_anova = f_oneway(*timepoints)
+            # Each entry must have at least two points for f_oneway to work    
+            timepoints = [x for x in stage_names if x != [] and len(x) > 1]
 
-                    f_statistic = one_way_anova[0].item()
-                    p_value = one_way_anova[1].item()
+            if len(timepoints) > 1:
+                # TODO - study f_oneway
+                one_way_anova = f_oneway(*timepoints)
 
-                    if np.isnan(p_value):
-                        p_value = 1
+                f_statistic = one_way_anova[0].item()
+                p_value = one_way_anova[1].item()
 
-            except Exception as e:
-                logger.error("Error in _calculate_anova")
-                logger.error(e)
+                if np.isnan(p_value):
+                    p_value = 1
 
-        return {
-            P_VALUE: p_value,
-            F_STATISTICS: f_statistic
-        }
+            metrics = stat_log2_mean.metrics
+            metrics[ANOVA] = {
+                P_VALUE: p_value,
+                F_STATISTICS: f_statistic
+            }
+            stat_log2_mean.save()
+
+        except Exception as e:
+            logger.error("Error in _calculate_anova")
+            logger.error(e)
+        
+        # if readings:
+        #     #   Sometimes the first replicate might not even be 'One' or equaivalent,
+        #     #   as replicates are sometimes excluded by qc for being all None.
+
+        #     stage_names = []
+
+        #     try:
+        #         for stage in sample_stages:
+        #             stage_names.append(self._tp(stage.name, readings, replicates))
+
+        #         # Each entry must have at least two points for f_oneway to work    
+        #         timepoints = [x for x in stage_names if x != [] and len(x) > 1]
+
+        #         if len(timepoints) > 1:
+        #             # TODO - study f_oneway
+        #             one_way_anova = f_oneway(*timepoints)
+
+        #             f_statistic = one_way_anova[0].item()
+        #             p_value = one_way_anova[1].item()
+
+        #             if np.isnan(p_value):
+        #                 p_value = 1
+
+        #     except Exception as e:
+        #         logger.error("Error in _calculate_anova")
+        #         logger.error(e)
+
+        # return {
+        #     P_VALUE: p_value,
+        #     F_STATISTICS: f_statistic
+        # }
 
     # TODO - lifted from ICR, change names
     def _calculate_metrics(
@@ -578,7 +624,12 @@ class Command(BaseCommand):
         metrics = {}
 
         stat = self._get_statistic(statistic_type_name, protein=protein)
-        abundances_for_readings = Abundance.objects.filter(statistic=stat)
+        abundances_for_readings = Abundance.objects.filter(
+            statistic=stat
+        ).order_by(
+            "replicate__id",
+            "sample_stage__rank"
+        )
 
         # Clear previous metrics
         stat.metrics = {}
@@ -742,7 +793,6 @@ class Command(BaseCommand):
         if len(x) == len(y):
             p = np.poly1d(np.polyfit(x, y, 2))
             curve_abundances = p(x)
-
 
             # find the timepoint peak of the curve
             curve_index = x[list(curve_abundances).index(max(curve_abundances))]
@@ -1849,7 +1899,12 @@ class Command(BaseCommand):
             sample_stages,
         )
 
-        # anova = self._calculate_ANOVA(log2_readings, replicates, sample_stages)
+        anova = self._calculate_ANOVA(
+            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein,
+            replicates,
+            sample_stages
+        )
 
         # # TODO - this is needed in batch processing
         # # relative_log2_readings_by_protein[
