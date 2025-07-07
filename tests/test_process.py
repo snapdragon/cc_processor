@@ -263,7 +263,7 @@ def test_calculate_min_normalisation(basic_project_setup):
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
 
-    stat_type_normalised_median, stat_normalised_median = create_readings(
+    stat_type_log2_mean, stat_log2_mean = create_readings(
         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
         replicates,
         sample_stages,
@@ -333,8 +333,6 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
 
     abundances = Abundance.objects.filter(statistic=stat_zero)
 
-    print(abundances)
-
     # replicate one: min is 0, max is 10, so denominator is 10
     # replicate two: min is 0, max is 20, so denominator is 20
     replicate_num = 0
@@ -349,6 +347,41 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
             assert ab.reading == num / (replicate_num * 10)
 
     assert len(abundances) == 30
+
+
+
+
+@pytest.mark.django_db
+def test_calculate_metrics(basic_project_setup_ICR):
+    command = Command()
+
+    replicates = basic_project_setup_ICR["replicates"]
+    sample_stages = basic_project_setup_ICR["sample_stages"]
+    proteins = basic_project_setup_ICR["proteins"]
+
+    stat_type_log2_mean, stat_log2_mean = create_readings(
+        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
+
+    metrics = command._calculate_metrics(
+        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        proteins[0],
+        replicates,
+        sample_stages,
+    )
+
+    reload_stat = Statistic.objects.get(
+        statistic_type=stat_type_log2_mean,
+        protein=proteins[0]
+    )
+
+    print(reload_stat.metrics)
+
+    assert True == False
 
 
 
@@ -991,3 +1024,56 @@ def create_readings(
             Abundance.objects.create(statistic=stat, replicate=replicate, sample_stage=sample_stage, reading=reading)
 
     return stat_type, stat
+
+
+
+
+
+# TODO - keep this around for testing original metrics?
+# @pytest.mark.django_db
+# def test_calculate_metrics(basic_project_setup_ICR):
+#     command = Command()
+
+#     replicates = basic_project_setup_ICR["replicates"]
+#     sample_stages = basic_project_setup_ICR["sample_stages"]
+#     proteins = basic_project_setup_ICR["proteins"]
+
+#     stat_type_log2_mean, stat_log2_mean = create_readings(
+#         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+#         replicates,
+#         sample_stages,
+#         reading = 0,
+#         protein=proteins[0]
+#     )
+
+#     results_process = command._calculate_metrics(
+#         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+#         proteins[0],
+#         replicates,
+#         sample_stages,
+#     )
+
+#     readings = {}
+
+#     abundances = Abundance.objects.filter(statistic=stat_log2_mean)
+
+#     for abundance in abundances:
+#         if not readings.get(abundance.replicate.name):
+#             readings[abundance.replicate.name] = {}
+
+#         readings[abundance.replicate.name][abundance.sample_stage.name] = abundance.reading
+
+#     results_original = command.calcAbundanceMetrics(
+#         readings,
+#         proteins[0].accession_number
+#     )
+
+#     # abundance arrays are the same but in different order
+#     # std is the same
+#     # abundance_averages_list, aka norm_abundance_averages_list, are the same
+#     # residuals_array the same
+#     # residuals the same
+#     # max_fold_change the same
+#     # metrics the same
+#     # curve_fold_change, curve_peak the same (except original is np.float not float)
+#     # residuals_all, r_squared_all the same

@@ -567,16 +567,39 @@ class Command(BaseCommand):
             F_STATISTICS: f_statistic
         }
 
-    # TODO - tidy this up
     # TODO - lifted from ICR, change names
-    # TODO - tested
     def _calculate_metrics(
         self,
-        readings: dict,
-        readings_averages: dict,
+        statistic_type_name: str,
+        protein: Protein,
         replicates,
         sample_stages
     ):
+        metrics = {}
+
+        stat = self._get_statistic(statistic_type_name, protein=protein)
+        abundances_for_readings = Abundance.objects.filter(statistic=stat)
+
+        # Clear previous metrics
+        stat.metrics = {}
+        stat.save()
+
+        # TODO - converts abundances to the old format used by this function.
+        #   Refactor this function to use abundances directly.
+        readings = {}
+        readings_averages = {}
+
+        for abfr in abundances_for_readings:
+            if abfr.replicate.mean:
+                readings_averages[abfr.sample_stage.name] = abfr.reading
+
+            if not readings.get(abfr.replicate.name):
+                readings[abfr.replicate.name] = {}
+
+            readings[abfr.replicate.name][abfr.sample_stage.name] = abfr.reading
+
+
+        # TODO - all old code below. Tidy this.        
         metrics = {}
 
         abundances = []
@@ -592,7 +615,7 @@ class Command(BaseCommand):
             for sample_stage in sample_stages:
                 # Not all replicates are populated. The qc process removes any replicates
                 #   with sample stage values that are all None.
-                if readings.get(replicate.name):
+                if readings.get(replicate.name) and not replicate.mean:
                     if abundance := readings[replicate.name].get(sample_stage.name):
                         # TODO - sometimes the sample_stage.name isn't set. Why?
                         #   Is there something wrong with the populate script?
@@ -609,7 +632,7 @@ class Command(BaseCommand):
         #   to check the behaviour of its various parts.
         #   Almost all of the warnings output are from this function.
         if not len(abundance_averages_list):
-            return metrics
+            return
 
         try:
             residuals_array = np.polyfit(
@@ -620,14 +643,16 @@ class Command(BaseCommand):
             )[1]
 
             if len(residuals_array) == 0:
+                # TODO - what? And get rid of comment below.
                 # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
                 residuals = 5
             else:
                 residuals = np.polyfit(
-                range(0, len(abundance_averages)),
-                abundance_averages_list,
-                2,
-                full=True,)[1][0]
+                    range(0, len(abundance_averages)),
+                    abundance_averages_list,
+                    2,
+                    full=True,
+                )[1][0]
 
             r_squared = self._polyfit(
                 range(0, len(abundance_averages)), abundance_averages_list, 2
@@ -641,6 +666,7 @@ class Command(BaseCommand):
             max_fold_change = max(abundance_averages.values()) - min(
                 abundance_averages.values()
             )
+
             metrics = {
                 "variance": moment(abundance_averages_list, moment=2),
                 "skewness": moment(abundance_averages_list, moment=3),
@@ -652,7 +678,7 @@ class Command(BaseCommand):
             }
 
             # if we have info for the protein in at least 2 replicates
-            # TODO - why does it need to be two? Don't we just need the last one?
+            # TODO - why does it get the values for the second one?
             if len(readings) >= 2:
                 curve_fold_change, curve_peak = self._calculate_curve_fold_change(
                     readings, replicates
@@ -679,7 +705,9 @@ class Command(BaseCommand):
             logger.error("Error in _calculate_metrics")
             logger.error(e)
 
-        return metrics
+        stat.metrics = metrics
+        stat.save()
+
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
     # _calcResidualsR2All
@@ -715,6 +743,7 @@ class Command(BaseCommand):
             p = np.poly1d(np.polyfit(x, y, 2))
             curve_abundances = p(x)
 
+
             # find the timepoint peak of the curve
             curve_index = x[list(curve_abundances).index(max(curve_abundances))]
             for time_point, index in stage_names_map.items():
@@ -741,14 +770,78 @@ class Command(BaseCommand):
         r_squared = 1 - (ssres / sstot)
         return round(r_squared, 2)
 
+    # TODO - what is this for? Why does it work on PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX?
     def _impute(
         # TODO - all these pr types are wrong, and also probably bad variable names
         self,
-        readings: dict,
         protein: Protein,
         replicates: QuerySet[Replicate],
     ):
-        return
+        _, stat_imputed = self._clear_and_fetch_stats(
+            PROTEIN_ABUNDANCES_IMPUTED,
+            protein = protein
+        )
+
+        abundances = self._get_abundances(
+            PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+            protein = protein
+        ).order_by(
+            "sample_stage__rank"
+        )
+
+        abundances_by_rep = {}
+
+        for abundance in abundances:
+            if not abundances_by_rep.get(abundance.replicate):
+                abundances_by_rep[abundance.replicate] = []
+
+            abundances_by_rep[abundance.replicate].append(abundance)
+
+        for replicate in abundances_by_rep:
+            abs = abundances_by_rep[replicate]
+
+            for i, abundance in enumerate(abs):
+                reading = 0
+
+                if abundance.reading is not None:
+                    reading = abundance.reading
+                else:
+                    last = None
+                    next = None
+
+                    # Go backwards to find most recent non-None value
+                    for j in range(i - 1, -1, -1):
+                        prev_abundance = abs[j]
+
+                        if prev_abundance.reading is not None:
+                            last = (i - j, prev_abundance.reading)
+                            break
+
+                    # Go forward to find next value
+                    for j in range(i + 1, len(abs)):
+                        # TODO - is it right that it loops back to the beginning?
+                        #   Why doesn't going backwards loop too?
+                        next_abundance = abs[j % len(abs)]
+
+                        if next_abundance.reading is not None:
+                            next = (j, next_abundance.reading)
+                            break
+
+                    if last and next:
+                        # Linear imputation between nearest timepoints
+                        # TODO - find out why this calculation
+                        # TODO - name variables better
+                        last_offset, last_reading = last
+                        next_offset, next_reading = next
+                        step_height = (last_reading - next_reading) / (last_offset + next_offset)
+                        reading = next_offset * step_height + next_reading
+
+                Abundance.objects.create(
+                    statistic=stat_imputed,
+                    replicate=abundance.replicate,
+                    sample_stage=abundance.sample_stage,
+                    reading=reading
+                )
 
         # replicates_by_name: dict = {}
         # column_names_by_replicate: dict = {}
@@ -869,9 +962,11 @@ class Command(BaseCommand):
                 reading = ab.reading
 
                 if reading is None or denominator == 0:
+                    # TODO - why 0.5?
                     reading_normalised = 0.5
                 else:
-                    reading_normalised = (reading - min_value) / denominator
+                    # TODO - why rounded?
+                    reading_normalised = round((reading - min_value) / denominator, 4)
 
                 Abundance.objects.create(
                     statistic=stat,
@@ -1188,7 +1283,7 @@ class Command(BaseCommand):
 
             if not readings.get(sample_stage):
                 readings[sample_stage] = []
-            
+
             if with_bugs and not imputed:
                 # We throw away the second reading
                 # TODO - how will this behave towards None?
@@ -1268,25 +1363,24 @@ class Command(BaseCommand):
         return phospho_medians
 
     # TODO - think this could be tidied
-    # TODO - tested
     def _generate_xs_ys(self, readings, replicates):
-        # TODO - why do we use the last replicate? It's in ICR
-        final_replicate = list(replicates)[-1]
+        # TODO - why do we use the second replicate? It's in ICR
+        second_replicate = list(replicates)[1]
 
         stage_names_map = {}
 
         # TODO - change this to use samples_stages list
-        for i, stage_name in enumerate(readings[final_replicate.name].keys()):
+        for i, stage_name in enumerate(readings[second_replicate.name].keys()):
             stage_names_map[stage_name] = i
 
         x = []
-        for stage_name in readings.get(final_replicate.name, {}):
+        for stage_name in readings.get(second_replicate.name, {}):
             x.append(stage_names_map[stage_name])
         x.sort()
 
         y = []
         for stage_name in stage_names_map:
-            value = readings.get(final_replicate.name, {}).get(stage_name)
+            value = readings.get(second_replicate.name, {}).get(stage_name)
             if value is not None:
                 y.append(value)
 
@@ -1696,7 +1790,7 @@ class Command(BaseCommand):
         )
 
         imputed_readings = self._impute(
-            PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein, replicates
+            protein, replicates
         )
 
         raw_averages = (
@@ -1735,25 +1829,25 @@ class Command(BaseCommand):
             )
         )
 
-        # imputed_averages = (
-        #     self._calculate_means(
-        #         imputed_readings, imputed=True, with_bugs = with_bugs
-        #     )
-        # )
+        imputed_averages = (
+            self._calculate_means(
+                PROTEIN_ABUNDANCES_IMPUTED, protein, with_bugs, imputed=True
+            )
+        )
 
-        # log2_mean_metrics = self._calculate_metrics(
-        #     log2_readings,
-        #     log2_averages,
-        #     replicates,
-        #     sample_stages
-        # )
+        log2_mean_metrics = self._calculate_metrics(
+            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein,
+            replicates,
+            sample_stages,
+        )
 
-        # zero_max_mean_metrics = self._calculate_metrics(
-        #     zero_max_readings,
-        #     zero_max_averages,
-        #     replicates,
-        #     sample_stages
-        # )
+        zero_max_mean_metrics = self._calculate_metrics(
+            PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+            protein,
+            replicates,
+            sample_stages,
+        )
 
         # anova = self._calculate_ANOVA(log2_readings, replicates, sample_stages)
 

@@ -25,7 +25,24 @@ from process.constants import (
     PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
     PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
     PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+    PROTEIN_ABUNDANCES_IMPUTED,
 )
+
+# TODO - move to constants file
+METRICS_STRING_FIELDS = ['peak_average', 'curve_peak']
+
+METRICS_NUMBER_FIELDS = [
+    'standard_deviation',
+    'variance_average',
+    'skewness_average',
+    'kurtosis_average',
+    'max_fold_change_average',
+    'residuals_average',
+    'R_squared_average',
+    'residuals_all',
+    'R_squared_all',
+    'curve_fold_change'
+]
 
 logging.basicConfig(
     level=logging.INFO,
@@ -87,11 +104,58 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, 10)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
+        self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+
+
+
+    def _compare_metrics(
+        self,
+        statistic_type_name,
+        protein_original,
+        protein_process,
+        dps = 0
+    ):
+        _, stat_prot_original = self._fetch_stats_type_and_stats(
+            statistic_type_name,
+            protein=protein_original
+        )
+        _, stat_prot_process = self._fetch_stats_type_and_stats(
+            statistic_type_name,
+            protein=protein_process
+        )
+
+        metrics_original = stat_prot_original.metrics
+        metrics_process = stat_prot_process.metrics
+
+        # for field in METRICS_STRING_FIELDS:
+        #     if not metrics_process or not metrics_process.get(field):
+        #         print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+        #         continue
+
+        #     if metrics_original[field] != metrics_process[field]:
+        #         print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+        #     # else:
+        #     #     print(f"Match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+
+        for field in METRICS_NUMBER_FIELDS:
+            if not metrics_process or not metrics_process.get(field):
+                print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                continue
+
+            if round(metrics_original[field], dps) != round(metrics_process[field], dps):
+                print(f"NO METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+            # else:
+            #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+
+
+
+
 
     def _compare_protein_stat(
         self,
@@ -132,8 +196,8 @@ class Command(BaseCommand):
 
             if round(ab_original.reading, dps) != round(ab_process.reading, dps):
                 print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, dps)} vs {round(ab_process.reading, dps)}")
-            # else:
-            #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            else:
+                print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 
     # TODO - copied from import_original
     def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):

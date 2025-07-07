@@ -52,3 +52,24 @@ def basic_project_setup():
         "sample_stages": sample_stages,
         "proteins": proteins,
     }
+
+# TODO - get rid of this later
+@pytest.fixture
+def basic_project_setup_ICR():
+    project = Project.objects.get(name="ICR")
+    replicates = Replicate.objects.filter(project=project)
+    sample_stages = SampleStage.objects.filter(project=project)
+
+    # TODO - give proteins accession_numbers?
+    proteins = [
+        ProteinFactory(project=project),
+        ProteinFactory(project=project),
+        ProteinFactory(project=project),
+    ]
+
+    return {
+        "project": project,
+        "replicates": replicates,
+        "sample_stages": sample_stages,
+        "proteins": proteins,
+    }
