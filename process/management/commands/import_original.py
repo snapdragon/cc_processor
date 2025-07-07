@@ -187,6 +187,14 @@ class Command(BaseCommand):
                 else:
                     print(f"No log2 mean metrics {protein.accession_number}")
 
+                if pm.get(ZERO_MAX):
+                    self._import_metrics(
+                        protein,
+                        PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+                        pm[ZERO_MAX],
+                    )
+                else:
+                    print(f"No zero max metrics {protein.accession_number}")
 
 
     def _import_metrics(

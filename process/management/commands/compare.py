@@ -114,13 +114,13 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
-        # self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
-        # self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, False)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
+        self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, True)
         self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
 
 
