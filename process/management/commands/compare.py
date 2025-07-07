@@ -51,7 +51,7 @@ METRICS_NUMBER_FIELDS = [
 METRICS_ANOVA_FIELDS = [
     P_VALUE,
     F_STATISTICS,
-    Q_VALUE,
+    # Q_VALUE,
 ]
 
 logging.basicConfig(
@@ -114,13 +114,14 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
-        self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        # self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
+        # self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, False)
+        self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
 
 
 
@@ -129,6 +130,7 @@ class Command(BaseCommand):
         statistic_type_name,
         protein_original,
         protein_process,
+        with_anova = False,
         dps = 0
     ):
         _, stat_prot_original = self._fetch_stats_type_and_stats(
@@ -167,19 +169,19 @@ class Command(BaseCommand):
             # else:
             #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
-        # if not metrics_process.get(ANOVA):
-        #     print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
-        # else:
-        #     # Check ANOVA
-        #     for field in METRICS_ANOVA_FIELDS:
-        #         if not metrics_process[ANOVA].get(field):
-        #             print(f"No ANOVA reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
-        #             continue
+        if with_anova:
+            if not metrics_process.get(ANOVA):
+                print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
+            else:
+                for field in METRICS_ANOVA_FIELDS:
+                    if not metrics_process[ANOVA].get(field):
+                        print(f"No ANOVA reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                        continue
 
-        #         if round(metrics_original[ANOVA][field], dps) != round(metrics_process[ANOVA][field], dps):
-        #             print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
-        #         # else:
-        #         #     print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                    if round(metrics_original[ANOVA][field], dps) != round(metrics_process[ANOVA][field], dps):
+                        print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                    # else:
+                    #     print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
 
 
 

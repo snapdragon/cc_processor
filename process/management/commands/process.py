@@ -149,11 +149,6 @@ class Command(BaseCommand):
             action="store_true"
         )
         parser.add_argument(
-            "--merge-protein-phospho",
-            help="Merge the protein and phospho results",
-            action="store_true"
-        )
-        parser.add_argument(
             "--calculate-batch",
             help="Calculate and store batch values",
             action="store_true"
@@ -541,7 +536,8 @@ class Command(BaseCommand):
         )
 
         abundances = Abundance.objects.filter(
-            statistic=stat_log2_mean
+            statistic = stat_log2_mean,
+            replicate__mean = False
         ).order_by(
             'sample_stage__rank'
         )
@@ -580,38 +576,6 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error("Error in _calculate_anova")
             logger.error(e)
-        
-        # if readings:
-        #     #   Sometimes the first replicate might not even be 'One' or equaivalent,
-        #     #   as replicates are sometimes excluded by qc for being all None.
-
-        #     stage_names = []
-
-        #     try:
-        #         for stage in sample_stages:
-        #             stage_names.append(self._tp(stage.name, readings, replicates))
-
-        #         # Each entry must have at least two points for f_oneway to work    
-        #         timepoints = [x for x in stage_names if x != [] and len(x) > 1]
-
-        #         if len(timepoints) > 1:
-        #             # TODO - study f_oneway
-        #             one_way_anova = f_oneway(*timepoints)
-
-        #             f_statistic = one_way_anova[0].item()
-        #             p_value = one_way_anova[1].item()
-
-        #             if np.isnan(p_value):
-        #                 p_value = 1
-
-        #     except Exception as e:
-        #         logger.error("Error in _calculate_anova")
-        #         logger.error(e)
-
-        # return {
-        #     P_VALUE: p_value,
-        #     F_STATISTICS: f_statistic
-        # }
 
     # TODO - lifted from ICR, change names
     def _calculate_metrics(
@@ -1277,11 +1241,9 @@ class Command(BaseCommand):
     def _get_abundance(self, statistic, replicate, sample_stage):
         return Abundance.objects.get(statistic=statistic, replicate=replicate, sample_stage=sample_stage)
 
+    # TODO - only used once, remove
     def _delete_abundances(self, statistic):
         Abundance.objects.filter(statistic=statistic).delete()
-
-    def _output_abundances(self, statistic):
-        print(Abundance.objects.filter(statistic=statistic))
 
     def _calculate_normalised_medians(self, protein):
         _, stat_normalised_medians = self._clear_and_fetch_stats(
@@ -2183,7 +2145,7 @@ class Command(BaseCommand):
 
         for i, abundance in enumerate(abundances):
             if not i % 10000:
-                print(f"Processing abundance for median {i}")
+                logger.info(f"Processing abundance for median {i}")
 
             if not rep_stage_abundances.get(abundance.replicate):
                 rep_stage_abundances[abundance.replicate] = {}

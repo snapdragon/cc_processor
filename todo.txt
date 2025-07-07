@@ -22,6 +22,7 @@ Check all constraints
 
 
 
+Write unit tests for _calculate_metrics and _calculate_ANOVA
 Go through the code and make it work with no records created for empty values
     in import_protein and import_phospho
 Move fetching of gene_name and protein_name to import_protein
