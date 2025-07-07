@@ -222,19 +222,11 @@ class Command(BaseCommand):
                         with_bugs
                     )
 
-
         # if calculate_phospho_medians or calculate_all:
         #     phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
-        # else:
-        #     # TODO - if the script is run with only --process-protein-medians this will
-        #     #   raise an exception. How to make it not necessarily run? Check flags for
-        #     #   absence of flags that would require it?
-        #     phospho_medians = self._fetch_phospho_medians(run)
 
         # if calculate_phosphos or calculate_all:
         #     self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
-
-        # # By this point there should be a combined result for every protein
 
         # # Largely batch processing from now on
         # # TODO - some of the parts of the batch processing, e.g. protein oscillation
@@ -1873,32 +1865,6 @@ class Command(BaseCommand):
         # #     protein
         # # ] = log2_readings
 
-        # result[METRICS][LOG2_MEAN] = log2_mean_metrics
-        # result[METRICS][LOG2_MEAN][ANOVA] = anova
-        # result[METRICS][ZERO_MAX] = zero_max_mean_metrics
-
-        # result[location][RAW] = readings
-        # result[location][RAW][ABUNDANCE_AVERAGE] = raw_averages
-        # result[location][IMPUTED] = imputed_readings
-        # result[location][IMPUTED][ABUNDANCE_AVERAGE] = imputed_averages
-
-        # # TODO - confirm the output later calculations are as they should be after this
-        # result[location][NORMALISED][LOG2_MEAN] = copy.deepcopy(log2_readings)
-        # result[location][NORMALISED][LOG2_MEAN][ABUNDANCE_AVERAGE] = log2_averages
-
-        # result[location][NORMALISED][MIN_MAX] = min_max_readings
-        # result[location][NORMALISED][MIN_MAX][ABUNDANCE_AVERAGE] = min_max_averages
-
-        # result[location][NORMALISED][MEDIAN] = normalised_medians
-        # result[location][NORMALISED][MEDIAN][ABUNDANCE_AVERAGE] = normalised_averages
-
-        # result[location][NORMALISED][ZERO_MAX] = zero_max_readings
-        # result[location][NORMALISED][ZERO_MAX][ABUNDANCE_AVERAGE] = zero_max_averages
-
-        # result[location][NORMALISED][LOG2_ARREST] = arrest_readings
-        # result[location][NORMALISED][LOG2_ARREST][ABUNDANCE_AVERAGE] = arrest_averages
-
-
 
 
     # TODO - tested
@@ -2278,13 +2244,12 @@ class Command(BaseCommand):
         return statistic_type, stat
 
 
+    # TODO - not needed
     def _fetch_run_results(self, run):
         # Only get the necessary fields to save on memory usage
         return RunResult.objects.only("run", "protein", "combined_result").filter(run=run).iterator(chunk_size=100)
 
-    def _dump(self, obj):
-        print(json.dumps(obj, default=lambda o: o.item() if isinstance(o, np.generic) else str(o)))
-
+    # TODO - not needed
     def _count_logger(self, i: int, step: int, output: str):
         if i % step == 0:
             logger.info(output)
