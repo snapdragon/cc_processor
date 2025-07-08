@@ -1518,8 +1518,9 @@ class Command(BaseCommand):
 
         # TODO - why can't just have these two combined, with both protein and
         #   phospho? Why does it leave eight records?
-        if protein:
+
         # Clear any raw average abundances set by a previous run
+        if protein:
             Abundance.objects.filter(
                 statistic__statistic_type__name=ABUNDANCES_RAW,
                 statistic__protein=protein,

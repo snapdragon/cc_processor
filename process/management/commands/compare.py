@@ -116,15 +116,42 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_protein_stat(ABUNDANCES_RAW, protein_original, protein_process)
-        self._compare_protein_stat(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        self._compare_protein_stat(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        self._compare_protein_stat(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
-        self._compare_protein_stat(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
-        self._compare_protein_stat(ABUNDANCES_IMPUTED, protein_original, protein_process)
-        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, True)
-        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
+        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True)
+        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
 
+        # Compare phosphos
+        phosphos_original = Phospho.objects.filter(
+            protein = protein_original
+        )
+
+        for phospho_original in phosphos_original:
+            try:
+                phospho_process = Phospho.objects.get(
+                    protein__project = project_process,
+                    protein__accession_number = accession_number,
+                    mod = phospho_original.mod
+                )
+            except Exception as e:
+                # TODO - why would this happen?
+                print(f"Can't get process phospho {accession_number} {phospho_original.mod}")
+                print(e)
+                return
+
+            # Don't compare phospho medians as they're not stored in the ICR json
+            self._compare_numbers(ABUNDANCES_RAW, None, None, phospho_original, phospho_process)
+            self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, None, None, phospho_original, phospho_process)
+            self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process)
+            self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
+            self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
+            self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
+            self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True)
+            self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
 
 
     def _compare_metrics(
@@ -132,56 +159,98 @@ class Command(BaseCommand):
         statistic_type_name,
         protein_original,
         protein_process,
+        phospho_original,
+        phospho_process,
         with_anova = False,
         dps = 2
     ):
-        _, stat_prot_original = self._fetch_stats_type_and_stats(
-            statistic_type_name,
-            protein=protein_original
-        )
-        _, stat_prot_process = self._fetch_stats_type_and_stats(
-            statistic_type_name,
-            protein=protein_process
-        )
+        if protein_original and protein_process:
+            _, stat_original = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                protein=protein_original
+            )
+            _, stat_process = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                protein=protein_process
+            )
+        elif phospho_original and phospho_process:
+            _, stat_original = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                phospho = phospho_original
+            )
+            _, stat_process = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                phospho = phospho_process
+            )
+        else:
+            raise Exception("compare_metrics requires either a pair of proteins or a pair of phosphos")
 
-        metrics_original = stat_prot_original.metrics
-        metrics_process = stat_prot_process.metrics
+        metrics_original = stat_original.metrics
+        metrics_process = stat_process.metrics
 
         if not metrics_process:
-            print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
+            if protein_original:
+                print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
+            else:
+                print(f"NO PROCESS METRICS FOR {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod}")
+
             return
 
         for field in METRICS_STRING_FIELDS:
             if not metrics_process.get(field):
-                print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                if protein_original:
+                    print(f"No reading string for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                else:
+                    print(f"No reading string for METRICS for {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
+
                 continue
 
             if metrics_original[field] != metrics_process[field]:
-                print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                if protein_original:
+                    print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                else:
+                    print(f"NO MATCH {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+
             # else:
             #     print(f"Match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         for field in METRICS_NUMBER_FIELDS:
             if not metrics_process.get(field):
-                print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                if protein_original:
+                    print(f"No reading number for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                else:
+                    print(f"No reading number for METRICS for {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
+
                 continue
 
             if self._not_same(metrics_original[field], metrics_process[field], dps):
-                print(f"NO METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                if protein_original:
+                    print(f"NO METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                else:
+                    print(f"NO METRICS MATCH {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
             # else:
             #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         if with_anova:
             if not metrics_process.get(ANOVA):
-                print(f"NO PROCESS METRICS FOR {statistic_type_name} for {protein_original.accession_number}")
+                if protein_original:
+                    print(f"No ANOVA for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                else:
+                    print(f"No ANOVA for {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
             else:
                 for field in METRICS_ANOVA_FIELDS:
                     if not metrics_process[ANOVA].get(field):
-                        print(f"No ANOVA reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                        if protein_original:
+                            print(f"No ANOVA METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
+                        else:
+                            print(f"No ANOVA METRICS for {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
                         continue
 
                     if self._not_same(metrics_original[ANOVA][field], metrics_process[ANOVA][field], dps):
-                        print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                        if protein_original:
+                            print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                        else:
+                            print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
                     # else:
                     #     print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
 
@@ -189,35 +258,50 @@ class Command(BaseCommand):
     def _not_same(self, num1, num2, dps):
         return (round(num1, dps) != round(num2, dps)) and (abs(num1 - num2) > TOLERANCE * abs(num1))
 
-    def _compare_protein_stat(
+    def _compare_numbers(
         self,
         statistic_type_name,
         protein_original,
         protein_process,
+        phospho_original,
+        phospho_process,
         dps = 0
     ):
-        _, stat_prot_original = self._fetch_stats_type_and_stats(
-            statistic_type_name,
-            protein=protein_original
+        
+        if protein_original and protein_process:
+            _, stat_original = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                protein=protein_original
+            )
+            _, stat_process = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                protein=protein_process
+            )
+        elif phospho_original and phospho_process:
+            _, stat_original = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                phospho=phospho_original
+            )
+            _, stat_process = self._fetch_stats_type_and_stats(
+                statistic_type_name,
+                phospho=phospho_process
+            )
+        else:
+            raise Exception("compare_numbers requires either a pair of proteins or a pair of phosphos")
+
+        stat_abundances_original = Abundance.objects.filter(
+            statistic = stat_original
         )
-        _, stat_prot_process = self._fetch_stats_type_and_stats(
-            statistic_type_name,
-            protein=protein_process
+        stat_abundances_process = Abundance.objects.filter(
+            statistic = stat_process
         )
 
-        stat_prot_abundances_original = Abundance.objects.filter(
-            statistic = stat_prot_original
-        )
-        stat_prot_abundances_process = Abundance.objects.filter(
-            statistic = stat_prot_process
-        )
+        if len(stat_abundances_original) != len(stat_abundances_process):
+            print(f"Protein abundance lengths don't match for {protein_original.accession_number}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
 
-        if len(stat_prot_abundances_original) != len(stat_prot_abundances_process):
-            print(f"Protein abundance lengths don't match for {protein_original.accession_number}: {len(stat_prot_abundances_original)} vs {len(stat_prot_abundances_process)}")
-
-        for ab_original in stat_prot_abundances_original:
-            ab_process = stat_prot_abundances_process.filter(
-                statistic = stat_prot_process,
+        for ab_original in stat_abundances_original:
+            ab_process = stat_abundances_process.filter(
+                statistic = stat_process,
                 replicate__name = ab_original.replicate.name,
                 sample_stage__name = ab_original.sample_stage.name
             ).first()
@@ -227,7 +311,10 @@ class Command(BaseCommand):
                 continue
 
             if self._not_same(ab_original.reading, ab_process.reading, dps):
-                print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
+                if protein_original:
+                    print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
+                else:
+                    print(f"NO MATCH {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
             # else:
             #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 

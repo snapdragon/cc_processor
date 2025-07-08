@@ -114,12 +114,11 @@ class Command(BaseCommand):
                 )
 
                 if not gene_data.get(PHOSPHORYLATION_ABUNDANCES):
-                    print(f"No phosphorylation abundances for {protein.accession_number}")
+                    # print(f"No phosphorylation abundances for {protein.accession_number}")
                     continue
 
-                for mod, phospho_data in pm[PHOSPHORYLATION_ABUNDANCES]:
+                for mod, phospho_data in gene_data[PHOSPHORYLATION_ABUNDANCES].items():
                     phospho = Phospho.objects.create(
-                        project=project,
                         protein=protein,
                         mod=mod,
                         phosphosite=phospho_data[PHOSPHORYLATION_SITE]
@@ -278,6 +277,7 @@ class Command(BaseCommand):
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
+                phospho,
                 ABUNDANCES_NORMALISED_ZERO_MAX,
                 pa[NORMALISED][ZERO_MAX],
             )
@@ -289,6 +289,7 @@ class Command(BaseCommand):
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
+                phospho,
                 ABUNDANCES_IMPUTED,
                 pa[IMPUTED],
             )
