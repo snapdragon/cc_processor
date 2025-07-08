@@ -310,7 +310,11 @@ class Command(BaseCommand):
             ).first()
 
             if not ab_process:
-                print(f"No reading for {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading}")
+                if protein_original:
+                    print(f"No reading for {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading}")
+                else:
+                    print(f"No reading for {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading}")
+
                 continue
 
             if self._not_same(ab_original.reading, ab_process.reading, dps):
