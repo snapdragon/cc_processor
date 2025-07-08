@@ -72,8 +72,9 @@ from process.constants import (
     GENE_NAME,
     PROTEIN_NAME,
     PROTEIN_ABUNDANCES_RAW,
-    PHOSPHO_READINGS,
+    PHOSPHO_ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
+    PHOSPHO_MEDIAN,
 
     PROTEIN_ABUNDANCES_RAW,
     PROTEIN_ABUNDANCES_IMPUTED,
@@ -96,6 +97,9 @@ from process.constants import (
 
     PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
     PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+
+    ABUNDANCE_REP_1,
+    ABUNDANCE_REP_2,
 )
 
 logging.basicConfig(
@@ -222,8 +226,8 @@ class Command(BaseCommand):
                         with_bugs
                     )
 
-        # if calculate_phospho_medians or calculate_all:
-        #     phospho_medians = self._calculate_phospho_medians(phospho_readings, run)
+        if calculate_phospho_medians or calculate_all:
+            self._calculate_phospho_medians(project, with_bugs)
 
         # if calculate_phosphos or calculate_all:
         #     self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
@@ -1143,43 +1147,6 @@ class Command(BaseCommand):
                 )
 
 
-    def _format_phospho_readings_full(self, phospho_readings):
-        logger.info(
-            "Converting phospho_readings QuerySet into dict by protein, mod, replicate and stage name"
-        )
-
-        readings_by_rep_stage: dict = {}
-
-        mod_no = 0
-
-        for phospho_reading in phospho_readings:
-            mod_no += 1
-            self._count_logger(
-                mod_no,
-                10000,
-                f"Formatting phospho for {mod_no}, protein {phospho_reading.phospho.protein.accession_number} mod {phospho_reading.phospho.mod}",
-            )
-
-            # TODO - what about Nones? Will there be any here? Check the import script.
-            reading = phospho_reading.reading
-
-            protein = phospho_reading.phospho.protein
-            mod = phospho_reading.phospho.mod
-            replicate_name = phospho_reading.column_name.replicate.name
-            stage_name = phospho_reading.column_name.sample_stage.name
-
-            if not readings_by_rep_stage.get(protein):
-                readings_by_rep_stage[protein] = {}
-
-            if not readings_by_rep_stage[protein].get(mod):
-                readings_by_rep_stage[protein][mod] = {}
-
-            if not readings_by_rep_stage[protein][mod].get(replicate_name):
-                readings_by_rep_stage[protein][mod][replicate_name] = {}
-
-            readings_by_rep_stage[protein][mod][replicate_name][stage_name] = reading
-
-        return readings_by_rep_stage
 
     def _format_phospho_readings(self, phospho_readings):
         readings_by_rep_stage: dict = {}
@@ -1325,46 +1292,52 @@ class Command(BaseCommand):
 
     def _calculate_phospho_medians(
         self,
-        phospho_readings: dict,
-        run
+        project,
+        with_bugs,
     ):
-        # TODO - get rid of _format_phospho_readings, or at least put it in the loop
-        readings = self._format_phospho_readings_full(phospho_readings)
+        _, stat_phospho_med = self._clear_and_fetch_stats(PHOSPHO_MEDIAN, project=project)
 
-        phospho_medians = {}
+        abundances = Abundance.objects.filter(
+            statistic__protein__project=project,
+            statistic__statistic_type__name=PHOSPHO_ABUNDANCES_RAW
+        ).iterator(chunk_size=100)
 
-        for protein in readings.keys():
-            for mod in readings[protein].keys():
-                for replicate_name in readings[protein][mod].keys():
-                    if not phospho_medians.get(replicate_name):
-                        phospho_medians[replicate_name] = {}
+        rep_stage_abundances = {}
 
-                    for column_name in readings[protein][mod][replicate_name].keys():
-                        if not phospho_medians[replicate_name].get(column_name):
-                            phospho_medians[replicate_name][column_name] = []
+        for i, abundance in enumerate(abundances):
+            if not i % 10000:
+                logger.info(f"Processing phospho abundance for median {i}")
 
-                        reading = readings[protein][mod][replicate_name][column_name]
+            replicate = abundance.replicate
+            sample_stage = abundance.sample_stage
 
-                        if reading is None:
-                            continue
+            if not rep_stage_abundances.get(replicate):
+                rep_stage_abundances[replicate] = {}
 
-                        phospho_medians[replicate_name][column_name].append(reading)
+                if not rep_stage_abundances[replicate].get(abundance.sample_stage):
+                    rep_stage_abundances[replicate][sample_stage] = []
 
-        for replicate_name in phospho_medians.keys():
-            for column_name in phospho_medians[replicate_name].keys():
-                median = statistics.median(phospho_medians[replicate_name][column_name])
+                    rep_stage_abundances[replicate][sample_stage].append(abundance.reading)
 
-                phospho_medians[replicate_name][column_name] = median
+        if with_bugs:
+            replicate1 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_1)
+            replicate2 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_2)
 
-        run, _ = Run.objects.get_or_create(
-            project=run.project, with_bugs=run.with_bugs
-        )
+            rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 
-        run.phospho_medians = json.dumps(phospho_medians)
+        for replicate in rep_stage_abundances.keys():
+            for sample_stage in rep_stage_abundances[replicate].keys():
+                median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 
-        run.save()
+                Abundance.objects.create(
+                    statistic=stat_phospho_med,
+                    replicate=replicate,
+                    sample_stage=sample_stage,
+                    reading=median
+                )
 
-        return phospho_medians
+                
+
 
     # TODO - think this could be tidied
     def _generate_xs_ys(self, readings, replicates):
@@ -2111,7 +2084,7 @@ class Command(BaseCommand):
 
         for i, abundance in enumerate(abundances):
             if not i % 10000:
-                logger.info(f"Processing abundance for median {i}")
+                logger.info(f"Processing protein abundance for median {i}")
 
             if not rep_stage_abundances.get(abundance.replicate):
                 rep_stage_abundances[abundance.replicate] = {}
@@ -2122,8 +2095,8 @@ class Command(BaseCommand):
             rep_stage_abundances[abundance.replicate][abundance.sample_stage].append(abundance.reading)
 
         if with_bugs:
-            replicate1 = Replicate.objects.get(project=project, name="abundance_rep_1")
-            replicate2 = Replicate.objects.get(project=project, name="abundance_rep_2")
+            replicate1 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_1)
+            replicate2 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_2)
 
             rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 

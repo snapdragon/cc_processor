@@ -3,7 +3,7 @@
 from django.db import migrations
 
 from process.constants import (
-    PHOSPHO_READINGS,
+    PHOSPHO_ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
     PHOSPHO_MEDIAN,
 
@@ -40,7 +40,10 @@ from process.constants import (
     SL_SAMPLE_STAGE_NAME_7,
     SL_SAMPLE_STAGE_NAME_8,
     SL_SAMPLE_STAGE_NAME_9,
-    SL_SAMPLE_STAGE_NAME_10
+    SL_SAMPLE_STAGE_NAME_10,
+
+    ABUNDANCE_REP_1,
+    ABUNDANCE_REP_2
 )
 
 
@@ -255,10 +258,10 @@ class Migration(migrations.Migration):
         )
 
         replicate_ICR_1 = Replicate.objects.create(
-            name="abundance_rep_1", project=project_ICR, mean=False
+            name=ABUNDANCE_REP_1, project=project_ICR, mean=False
         )
         replicate_ICR_2 = Replicate.objects.create(
-            name="abundance_rep_2", project=project_ICR, mean=False
+            name=ABUNDANCE_REP_2, project=project_ICR, mean=False
         )
         replicate_ICR_3 = Replicate.objects.create(
             name="abundance_average", project=project_ICR, mean=True
@@ -383,10 +386,10 @@ class Migration(migrations.Migration):
         )
 
         replicate_original_1 = Replicate.objects.create(
-            name="abundance_rep_1", project=project_original, mean=False
+            name=ABUNDANCE_REP_1, project=project_original, mean=False
         )
         replicate_original_2 = Replicate.objects.create(
-            name="abundance_rep_2", project=project_original, mean=False
+            name=ABUNDANCE_REP_2, project=project_original, mean=False
         )
         replicate_original_3 = Replicate.objects.create(
             name="abundance_average", project=project_original, mean=True
@@ -425,7 +428,7 @@ class Migration(migrations.Migration):
         StatisticType = apps.get_model("process", "StatisticType")
 
         StatisticType.objects.create(
-            name=PHOSPHO_READINGS,
+            name=PHOSPHO_ABUNDANCES_RAW,
         )
         StatisticType.objects.create(
             name=PROTEIN_MEDIAN,

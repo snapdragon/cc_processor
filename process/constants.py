@@ -77,9 +77,7 @@ PROTEIN_INFO_FIELDS = [
 
 # StatisticTypes
 
-# TODO - fix names
-# TODO - change to PHOSPHO_READINGS_RAW?
-PHOSPHO_READINGS = "readings phospho"
+PHOSPHO_ABUNDANCES_RAW = "phospho_abundances raw"
 PROTEIN_MEDIAN = "protein median"
 PHOSPHO_MEDIAN = "phospho median"
 
@@ -117,3 +115,6 @@ SL_SAMPLE_STAGE_NAME_7 = "RO sample 5h"
 SL_SAMPLE_STAGE_NAME_8 = "Palb sample, 8h"
 SL_SAMPLE_STAGE_NAME_9 = "Palb sample, 10h"
 SL_SAMPLE_STAGE_NAME_10 = "Nocodozole"
+
+ABUNDANCE_REP_1 = "abundance_rep_1"
+ABUNDANCE_REP_2 = "abundance_rep_2"
