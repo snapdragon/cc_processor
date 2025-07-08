@@ -3,20 +3,19 @@
 from django.db import migrations
 
 from process.constants import (
-    PHOSPHO_ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
     PHOSPHO_MEDIAN,
 
     ZERO_MAX,
     LOG2_MEAN,
-    PROTEIN_ABUNDANCES_RAW,
-    PROTEIN_ABUNDANCES_IMPUTED,
+    ABUNDANCES_RAW,
+    ABUNDANCES_IMPUTED,
 
-    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_NORMALISED_MEDIAN,
+    ABUNDANCES_NORMALISED_MIN_MAX,
+    ABUNDANCES_NORMALISED_LOG2_MEAN,
+    ABUNDANCES_NORMALISED_LOG2_ARREST,
 
     PHOSPHO_REGRESSION_ZERO_MAX,
     PHOSPHO_REGRESSION_LOG2_MEAN,
@@ -428,7 +427,7 @@ class Migration(migrations.Migration):
         StatisticType = apps.get_model("process", "StatisticType")
 
         StatisticType.objects.create(
-            name=PHOSPHO_ABUNDANCES_RAW,
+            name=ABUNDANCES_RAW,
         )
         StatisticType.objects.create(
             name=PROTEIN_MEDIAN,
@@ -445,26 +444,23 @@ class Migration(migrations.Migration):
         )
 
         StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_RAW,
-        )
-        StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_IMPUTED,
+            name=ABUNDANCES_IMPUTED,
         )
 
         StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+            name=ABUNDANCES_NORMALISED_ZERO_MAX,
         )
         StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+            name=ABUNDANCES_NORMALISED_MEDIAN,
         )
         StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+            name=ABUNDANCES_NORMALISED_MIN_MAX,
         )
         StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            name=ABUNDANCES_NORMALISED_LOG2_MEAN,
         )
         StatisticType.objects.create(
-            name=PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+            name=ABUNDANCES_NORMALISED_LOG2_ARREST,
         )
 
         StatisticType.objects.create(

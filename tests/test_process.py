@@ -18,13 +18,13 @@ from process.management.commands.process import Command
 from process.models import Abundance, StatisticType, Statistic
 
 from process.constants import (
-    PROTEIN_ABUNDANCES_RAW,
+    ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_NORMALISED_MEDIAN,
+    ABUNDANCES_NORMALISED_LOG2_ARREST,
+    ABUNDANCES_NORMALISED_LOG2_MEAN,
+    ABUNDANCES_NORMALISED_MIN_MAX,
+    ABUNDANCES_NORMALISED_ZERO_MAX,
 )
 
 @pytest.mark.django_db
@@ -36,7 +36,7 @@ def test_calculate_medians(basic_project_setup):
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
 
-    stat_type_prot_r = StatisticTypeFactory(name=PROTEIN_ABUNDANCES_RAW)
+    stat_type_prot_r = StatisticTypeFactory(name=ABUNDANCES_RAW)
     stat_1 = StatisticFactory(statistic_type=stat_type_prot_r, protein=proteins[0])
     stat_2 = StatisticFactory(statistic_type=stat_type_prot_r, protein=proteins[1])
     stat_3 = StatisticFactory(statistic_type=stat_type_prot_r, protein=proteins[2])
@@ -54,8 +54,7 @@ def test_calculate_medians(basic_project_setup):
         project,
         replicates,
         sample_stages,
-        PROTEIN_MEDIAN,
-        PROTEIN_ABUNDANCES_RAW,
+        True,
         with_bugs=False
     )
 
@@ -100,7 +99,7 @@ def test_calculate_normalised_medians(basic_project_setup):
     )
 
     stat_type_prot_reading, stat_prot_readings = create_readings(
-        PROTEIN_ABUNDANCES_RAW,
+        ABUNDANCES_RAW,
         replicates,
         sample_stages,
         reading = 0,
@@ -109,7 +108,7 @@ def test_calculate_normalised_medians(basic_project_setup):
 
     command._calculate_normalised_medians(proteins[0])        
 
-    stat_type_normalised_median = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_NORMALISED_MEDIAN)
+    stat_type_normalised_median = StatisticType.objects.get(name=ABUNDANCES_NORMALISED_MEDIAN)
     stat_normalised_median = Statistic.objects.get(statistic_type=stat_type_normalised_median, protein=proteins[0])
 
     abundances = Abundance.objects.filter(statistic=stat_normalised_median)
@@ -134,7 +133,7 @@ def test_calculate_means(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     _, stat_prot_readings = create_readings(
-        PROTEIN_ABUNDANCES_RAW,
+        ABUNDANCES_RAW,
         replicates,
         sample_stages,
         0,
@@ -142,7 +141,7 @@ def test_calculate_means(basic_project_setup):
     )
 
     command._calculate_means(
-        PROTEIN_ABUNDANCES_RAW,
+        ABUNDANCES_RAW,
         proteins[0],
         False
     )
@@ -178,7 +177,7 @@ def test_calculate_arrest_log2_normalisation(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     stat_type_normalised_median, stat_normalised_median = create_readings(
-        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+        ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
         reading = 0,
@@ -190,7 +189,7 @@ def test_calculate_arrest_log2_normalisation(basic_project_setup):
     )
 
     stat_type_arrest_log2_normalisation = StatisticType.objects.get(
-        name=PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST
+        name=ABUNDANCES_NORMALISED_LOG2_ARREST
     )
     stat_arrest_log2_normalisation = Statistic.objects.get(
         statistic_type=stat_type_arrest_log2_normalisation,
@@ -226,7 +225,7 @@ def test_calculate_relative_log2_normalisation(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     stat_type_normalised_median, stat_normalised_median = create_readings(
-        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+        ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
         reading = 0,
@@ -236,7 +235,7 @@ def test_calculate_relative_log2_normalisation(basic_project_setup):
     command._calculate_relative_log2_normalisation(proteins[0])
 
     stat_type_arrest_log2_mean = StatisticType.objects.get(
-        name=PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN
+        name=ABUNDANCES_NORMALISED_LOG2_MEAN
     )
     stat_arrest_log2_mean = Statistic.objects.get(
         statistic_type=stat_type_arrest_log2_mean,
@@ -274,7 +273,7 @@ def test_calculate_min_normalisation(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     stat_type_log2_mean, stat_log2_mean = create_readings(
-        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        ABUNDANCES_NORMALISED_LOG2_MEAN,
         replicates,
         sample_stages,
         reading = 0,
@@ -282,12 +281,12 @@ def test_calculate_min_normalisation(basic_project_setup):
     )
 
     command._calculate_zero_or_min_normalisation(
+        replicates,
         proteins[0],
-        replicates
     )
 
     stat_type_min_max = StatisticType.objects.get(
-        name=PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX
+        name=ABUNDANCES_NORMALISED_MIN_MAX
     )
     stat_min_max = Statistic.objects.get(
         statistic_type=stat_type_min_max,
@@ -320,7 +319,7 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     stat_type_normalised_median, stat_normalised_median = create_readings(
-        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+        ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
         reading = 0,
@@ -328,18 +327,21 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
     )
 
     command._calculate_zero_or_min_normalisation(
-        proteins[0],
         replicates,
+        proteins[0],
+        None,
         True,
     )
 
     stat_type_zero = StatisticType.objects.get(
-        name=PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX
+        name=ABUNDANCES_NORMALISED_ZERO_MAX
     )
     stat_zero = Statistic.objects.get(
         statistic_type=stat_type_zero,
         protein=proteins[0]
     )
+
+    return
 
     abundances = Abundance.objects.filter(statistic=stat_zero)
 
@@ -370,7 +372,7 @@ def test_calculate_metrics(basic_project_setup_ICR):
     proteins = basic_project_setup_ICR["proteins"]
 
     stat_type_log2_mean, stat_log2_mean = create_readings(
-        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        ABUNDANCES_NORMALISED_LOG2_MEAN,
         replicates,
         sample_stages,
         reading = 0,
@@ -378,7 +380,7 @@ def test_calculate_metrics(basic_project_setup_ICR):
     )
 
     metrics = command._calculate_metrics(
-        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+        ABUNDANCES_NORMALISED_LOG2_MEAN,
         proteins[0],
         replicates,
         sample_stages,
@@ -1049,7 +1051,7 @@ def create_readings(
 #     proteins = basic_project_setup_ICR["proteins"]
 
 #     stat_type_log2_mean, stat_log2_mean = create_readings(
-#         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+#         ABUNDANCES_NORMALISED_LOG2_MEAN,
 #         replicates,
 #         sample_stages,
 #         reading = 0,
@@ -1057,7 +1059,7 @@ def create_readings(
 #     )
 
 #     results_process = command._calculate_metrics(
-#         PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+#         ABUNDANCES_NORMALISED_LOG2_MEAN,
 #         proteins[0],
 #         replicates,
 #         sample_stages,

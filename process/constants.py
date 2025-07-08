@@ -77,21 +77,20 @@ PROTEIN_INFO_FIELDS = [
 
 # StatisticTypes
 
-PHOSPHO_ABUNDANCES_RAW = "phospho_abundances raw"
 PROTEIN_MEDIAN = "protein median"
 PHOSPHO_MEDIAN = "phospho median"
 
 # 0-max and log2_mean already defined above
 # TODO - can probably shorten these names
 
-PROTEIN_ABUNDANCES_RAW = "protein_abundances raw"
-PROTEIN_ABUNDANCES_IMPUTED = "protein_abundances imputed"
+ABUNDANCES_RAW = "abundances raw"
+ABUNDANCES_IMPUTED = "abundances imputed"
 
-PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN = "protein_abundances normalised log2_mean"
-PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX = "protein_abundances normalised min-max"
-PROTEIN_ABUNDANCES_NORMALISED_MEDIAN = "protein_abundances normalised median"
-PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX = "protein_abundances normalised 0-max"
-PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST ="protein_abundances normalised log2 arrest"
+ABUNDANCES_NORMALISED_LOG2_MEAN = "abundances normalised log2_mean"
+ABUNDANCES_NORMALISED_MIN_MAX = "abundances normalised min-max"
+ABUNDANCES_NORMALISED_MEDIAN = "abundances normalised median"
+ABUNDANCES_NORMALISED_ZERO_MAX = "abundances normalised 0-max"
+ABUNDANCES_NORMALISED_LOG2_ARREST ="abundances normalised log2 arrest"
 
 PHOSPHO_REGRESSION_ZERO_MAX = "phospho_regression 0-max"
 PHOSPHO_REGRESSION_LOG2_MEAN = "phospho_regression log2_mean"

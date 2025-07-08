@@ -11,7 +11,7 @@ from process.models import ColumnName, Project, Protein, Phospho, StatisticType,
 from static_mapping import time_points, data_files, data_files_datakeys, time_points_mapping
 
 from process.constants import (
-    PHOSPHO_ABUNDANCES_RAW
+    ABUNDANCES_RAW
 )
 
 logging.basicConfig(
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         logger.info(f"Importing phospho spreadsheet for {project_name}")
 
         project = Project.objects.get(name=project_name)
-        stats_type_rpho = StatisticType.objects.get(name=PHOSPHO_ABUNDANCES_RAW)
+        stats_type_rpho = StatisticType.objects.get(name=ABUNDANCES_RAW)
 
         file_path = f"data/{project.phosphoproteome_file}"
 
@@ -71,11 +71,12 @@ class Command(BaseCommand):
 
                 cns_by_name[cn_short.group()] = cn
 
-            file_path = f"data/{project.phosphoproteome_file}"
+            # file_path = f"data/{project.phosphoproteome_file}"
 
             excel_file = pd.ExcelFile(file_path)
 
-            df = pd.read_excel(excel_file, sheet_name=0)
+            # Sheet two is the phosphoproteome sheet, apparently
+            df = pd.read_excel(excel_file, sheet_name=1)
 
             row_no = 0
 

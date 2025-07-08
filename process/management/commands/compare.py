@@ -17,15 +17,15 @@ from process.models import (
 )
 
 from process.constants import (
-    PROTEIN_ABUNDANCES_RAW,
+    ABUNDANCES_RAW,
     RAW,
     PROTEIN_ABUNDANCES,
-    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
-    PROTEIN_ABUNDANCES_IMPUTED,
+    ABUNDANCES_NORMALISED_MEDIAN,
+    ABUNDANCES_NORMALISED_LOG2_ARREST,
+    ABUNDANCES_NORMALISED_LOG2_MEAN,
+    ABUNDANCES_NORMALISED_MIN_MAX,
+    ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_IMPUTED,
     P_VALUE,
     F_STATISTICS,
     Q_VALUE,
@@ -114,14 +114,14 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_RAW, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
-        self._compare_protein_stat(PROTEIN_ABUNDANCES_IMPUTED, protein_original, protein_process)
-        self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, True)
-        self._compare_metrics(PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        self._compare_protein_stat(ABUNDANCES_RAW, protein_original, protein_process)
+        self._compare_protein_stat(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process)
+        self._compare_protein_stat(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process)
+        self._compare_protein_stat(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process)
+        self._compare_protein_stat(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
+        self._compare_protein_stat(ABUNDANCES_IMPUTED, protein_original, protein_process)
+        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, True)
+        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process)
 
 
 

@@ -71,19 +71,18 @@ from process.constants import (
     PROTEIN_INFO_FIELDS,
     GENE_NAME,
     PROTEIN_NAME,
-    PROTEIN_ABUNDANCES_RAW,
-    PHOSPHO_ABUNDANCES_RAW,
+    ABUNDANCES_RAW,
     PROTEIN_MEDIAN,
     PHOSPHO_MEDIAN,
 
-    PROTEIN_ABUNDANCES_RAW,
-    PROTEIN_ABUNDANCES_IMPUTED,
+    ABUNDANCES_RAW,
+    ABUNDANCES_IMPUTED,
 
-    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_NORMALISED_MEDIAN,
+    ABUNDANCES_NORMALISED_MIN_MAX,
+    ABUNDANCES_NORMALISED_LOG2_MEAN,
+    ABUNDANCES_NORMALISED_LOG2_ARREST,
 
     PHOSPHO_REGRESSION_ZERO_MAX,
     PHOSPHO_REGRESSION_LOG2_MEAN,
@@ -196,8 +195,7 @@ class Command(BaseCommand):
                 project,
                 replicates,
                 sample_stages,
-                PROTEIN_MEDIAN,
-                PROTEIN_ABUNDANCES_RAW,
+                True,
                 with_bugs
             )
 
@@ -214,8 +212,9 @@ class Command(BaseCommand):
                 self._calculate_abundances_metrics(
                     replicates,
                     sample_stages,
-                    protein,
-                    with_bugs
+                    protein = protein,
+                    phospho = None,
+                    with_bugs = with_bugs,
                 )
             else:
                 logger.info("Processing all proteins")
@@ -229,8 +228,9 @@ class Command(BaseCommand):
                     self._calculate_abundances_metrics(
                         replicates,
                         sample_stages,
-                        protein,
-                        with_bugs
+                        protein = protein,
+                        phospho = None,
+                        with_bugs = with_bugs,
                     )
 
         if calculate_phospho_medians or calculate_all:
@@ -238,13 +238,41 @@ class Command(BaseCommand):
                 project,
                 replicates,
                 sample_stages,
-                PHOSPHO_MEDIAN,
-                PHOSPHO_ABUNDANCES_RAW,
+                False,
                 with_bugs
             )
 
-        # if calculate_phosphos or calculate_all:
-        #     self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
+        if calculate_phosphos or calculate_all:
+            if accession_number:
+                logger.info(f"Processing phospho protein {accession_number}")
+
+                protein = Protein.objects.get(
+                    project=project,
+                    accession_number=accession_number
+                )
+
+                self._calculate_phosphos(
+                    replicates,
+                    sample_stages,
+                    protein,
+                    with_bugs,
+                )
+
+            else:
+                logger.info("Processing all phosphos")
+
+                proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
+
+                for i, protein in enumerate(proteins):
+                    if not i % 1000:
+                        logger.info(f"Calculating protein {i} {protein.accession_number}")
+
+                    self._calculate_phosphos(
+                        replicates,
+                        sample_stages,
+                        protein,
+                        with_bugs,
+                    )
 
         # # Largely batch processing from now on
         # # TODO - some of the parts of the batch processing, e.g. protein oscillation
@@ -267,90 +295,17 @@ class Command(BaseCommand):
         #     self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
 
+    def _calculate_phosphos(self, replicates, sample_stages, protein, with_bugs):
+        phosphos = Phospho.objects.filter(phospho__protein = protein)
 
-    def _phospho(self, project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs: bool):
-        logger.info("Processing phosphoproteome")
-
-        # Remove any earlier phospho_result values for this project
-        RunResult.objects.filter(run=run).update(phospho_result=None)
-
-        num_processed = 0
-
-        for pr in proteins:
-            result = {}
-            num_mods = 0
-
-            phospho_readings_filtered = phospho_readings.filter(phospho__protein = pr)
-
-            if not phospho_readings_filtered:
-                self._update_phospho_result(run, pr, {})
-
-                continue
-
-            readings = self._format_phospho_readings(phospho_readings_filtered)
-
-            for mod, readings in readings.items():
-                num_mods += 1
-
-                self._count_logger(
-                    num_mods,
-                    10,
-                    f"Processing phosphos for {pr.accession_number}, {num_mods}",
-                )
-
-                # TODO - is there a more efficient way of doing this?
-                #   Maybe prepopulate a dict of phosphos
-                phospho = Phospho.objects.get(protein = pr, mod = mod)
-                phosphosite = phospho.phosphosite
-
-                result[mod] = {
-                    PHOSPHORYLATION_SITE: phosphosite,
-                    POSITION_ABUNDANCES: {
-                        RAW: {},
-                        NORMALISED: {},
-                        IMPUTED: {}
-                    },
-                    METRICS: {}
-                }
-
-                self._calculate_abundances_metrics(
-                    result[mod],
-                    project,
-                    replicates,
-                    readings,
-                    column_names,
-                    sample_stages,
-                    phospho_medians,
-                    POSITION_ABUNDANCES,
-                    with_bugs
-                )
-
-            run_result, _ = RunResult.objects.get_or_create(
-                run=run,
-                protein=pr
+        for phospho in phosphos:
+            self._calculate_abundances_metrics(
+                replicates,
+                sample_stages,
+                None,
+                phospho,
+                with_bugs
             )
-
-            run_result.phospho_result = result
-
-            run_result.save()
-
-            num_processed += 1
-
-        logger.info(f"Number of proteins with phospho readings: {num_processed}")
-
-        return result
-
-
-    def _update_phospho_result(self, run, protein, result):
-        run_result, _ = RunResult.objects.get_or_create(
-            run=run,
-            protein=protein
-        )
-
-        run_result.phospho_result = result
-
-        run_result.save()
-    
 
     # TODO - similar to other functionality, consolidate
     def _calculate_phosphorylation_abundances_q_values(self, run, replicates, sample_stages):
@@ -535,7 +490,7 @@ class Command(BaseCommand):
         return res
     
     # TODO - straight up lifted from ICR, simplify ideally using a library
-    def _calculate_ANOVA(self, statistic_type_name, protein, replicates, sample_stages):
+    def _calculate_ANOVA(self, statistic_type_name, sample_stages, protein = None, phospho = None):
         # Defaults if not enough replicates
         p_value = 1
         f_statistic = 1
@@ -591,9 +546,10 @@ class Command(BaseCommand):
     def _calculate_metrics(
         self,
         statistic_type_name: str,
-        protein: Protein,
         replicates,
-        sample_stages
+        sample_stages,
+        protein = None,
+        phospho = None,
     ):
         metrics = {}
 
@@ -794,21 +750,24 @@ class Command(BaseCommand):
         r_squared = 1 - (ssres / sstot)
         return round(r_squared, 2)
 
-    # TODO - what is this for? Why does it work on PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX?
+    # TODO - what is this for? Why does it work on ABUNDANCES_NORMALISED_MIN_MAX?
     def _impute(
         # TODO - all these pr types are wrong, and also probably bad variable names
         self,
-        protein: Protein,
         replicates: QuerySet[Replicate],
+        protein = None,
+        phospho = None,
     ):
         _, stat_imputed = self._clear_and_fetch_stats(
-            PROTEIN_ABUNDANCES_IMPUTED,
-            protein = protein
+            ABUNDANCES_IMPUTED,
+            protein = protein,
+            phospho = phospho
         )
 
         abundances = self._get_abundances(
-            PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-            protein = protein
+            ABUNDANCES_NORMALISED_MIN_MAX,
+            protein = protein,
+            phospho = phospho,
         ).order_by(
             "sample_stage__rank"
         )
@@ -867,100 +826,37 @@ class Command(BaseCommand):
                     reading=reading
                 )
 
-        # replicates_by_name: dict = {}
-        # column_names_by_replicate: dict = {}
-
-        # # TODO - is this needed now we no longer use Replicate objects as keys?
-        # for replicate in replicates:
-        #     replicates_by_name[replicate.name] = replicate
-        #     column_names_by_replicate[replicate.name] = []
-
-        # # TODO - and this?
-        # for column_name in column_names:
-        #     column_names_by_replicate[column_name.replicate.name].append(
-        #         column_name.sample_stage.name
-        #     )
-
-        # imputed_readings: dict = {}
-
-        # for replicate_name in readings.keys():
-        #     imputed_readings[replicate_name] = {}
-
-        #     abundances_dict = readings[replicate_name]
-        #     abundances = list(abundances_dict.values())
-
-        #     stage_names = column_names_by_replicate[replicate_name]
-
-        #     for idx, stage_name in enumerate(stage_names):
-        #         # Default value, should never be used
-        #         value = 0
-
-        #         if abundances_dict.get(stage_name) is not None:
-        #             value = abundances_dict[stage_name]
-        #         else:
-        #             last = None
-        #             next = None
-
-        #             # TODO - isn't there a better way to iterate?
-        #             for offset in range(1, len(stage_names)):
-        #                 prev_idx = idx - offset
-        #                 if prev_idx < 0:
-        #                     # Gone before the beginning of the list, give up
-        #                     break
-
-        #                 prev_stage_name = stage_names[prev_idx]
-
-        #                 if abundances_dict.get(prev_stage_name) is not None:
-        #                     last = (offset, abundances_dict[prev_stage_name])
-        #                     # last = abundances_dict[prev_stage_name]
-        #                     break
-
-        #             for offset in range(1, len(abundances)):
-        #                 # Look forward
-        #                 # TODO - this seems to loop back to the beginning. Is that right?
-        #                 next_idx = (idx + offset) % len(abundances)
-        #                 next_stage_name = stage_names[next_idx]
-
-        #                 if abundances_dict.get(stage_name) is not None:
-        #                     next = (offset, abundances[next_stage_name])
-        #                     # next = abundances[next_stage_name]
-        #                     break
-
-        #             if last and next:
-        #                 # Linear imputation between nearest timepoints
-        #                 # TODO - find out why this calculation
-        #                 # TODO - name variables better
-        #                 d1, a1 = last
-        #                 d2, a2 = next
-        #                 step_height = (a1 - a2) / (d1 + d2)
-        #                 value = d2 * step_height + a2
-
-        #         # imputed_protein_readings[protein][replicate_name][stage_name] = self._round(float(value))
-        #         # TODO - for some reason ICR rounds to 2, not 4. What to do?
-        #         imputed_readings[replicate_name][stage_name] = round(float(value), 2)
-
-        # return imputed_readings
-
-    def _calculate_zero_or_min_normalisation(self, protein: Protein, replicates, zero_min=False):
+    def _calculate_zero_or_min_normalisation(
+        self,
+        replicates,
+        protein = None,
+        phospho = None,
+        zero_min = False
+    ):
+        # TODO - can be tidied, only constants are different
         if zero_min:
             _, stat = self._clear_and_fetch_stats(
-                PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
-                protein = protein
+                ABUNDANCES_NORMALISED_ZERO_MAX,
+                protein = protein,
+                phospho = phospho
             )
 
             abundances = self._get_abundances(
-                PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-                protein = protein
+                ABUNDANCES_NORMALISED_MEDIAN,
+                protein = protein,
+                phospho = phospho
             )
         else:
             _, stat = self._clear_and_fetch_stats(
-                PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
-                protein = protein
+                ABUNDANCES_NORMALISED_MIN_MAX,
+                protein = protein,
+                phospho = phospho
             )
 
             abundances = self._get_abundances(
-                PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-                protein = protein
+                ABUNDANCES_NORMALISED_LOG2_MEAN,
+                protein = protein,
+                phospho = phospho
             )
     
         for replicate in replicates:
@@ -999,53 +895,20 @@ class Command(BaseCommand):
                     reading=reading_normalised
                 )
 
-        #         level_two_normalised_readings[replicate_name][stage_name] = self._round(
-        #             abundance_normalised
-        #         )
-
-        # level_two_normalised_readings: dict = {}
-
-        # for replicate_name in readings:
-        #     level_two_normalised_readings[replicate_name] = {}
-
-        #     min_value = 0
-        #     max_value = 0
-
-        #     abundances = readings[replicate_name]
-
-        #     abundance_values_non_null = [
-        #         val for val in abundances.values() if val is not None
-        #     ]
-
-        #     if len(abundance_values_non_null) != 0:
-        #         if not zero_min:
-        #             min_value = min(abundance_values_non_null)
-
-        #         max_value = max(abundance_values_non_null)
-
-        #     for stage_name, abundance in abundances.items():
-        #         denominator = max_value - min_value
-        #         if abundance is None or denominator == 0:
-        #             abundance_normalised = 0.5
-        #         else:
-        #             abundance_normalised = (abundance - min_value) / denominator
-
-        #         level_two_normalised_readings[replicate_name][stage_name] = self._round(
-        #             abundance_normalised
-        #         )
-
-        # return level_two_normalised_readings
 
     # calclog2RelativeAbundance
-    def _calculate_relative_log2_normalisation(self, protein: Protein):
+    def _calculate_relative_log2_normalisation(self, protein = None, phospho = None):
         _, stat_normalised_log2_mean = self._clear_and_fetch_stats(
-            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-            protein = protein
+            ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein = protein,
+            phospho = phospho
         )
 
+
         abundances = self._get_abundances(
-            PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-            protein = protein
+            ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein,
+            phospho = phospho,
         )
 
         total_abundances = 0
@@ -1071,70 +934,30 @@ class Command(BaseCommand):
                 reading=normalised_abundance
             )
 
-        # for replicate_name in readings:
-        #     log2_abundances[replicate_name] = {}
 
-        #     for stage_name in readings[replicate_name]:
-        #         log2 = None
-        #         reading = readings[replicate_name][stage_name]
-
-        #         if reading is not None:
-        #             log2 = math.log2(reading)
-
-        #         log2_abundances[replicate_name][stage_name] = log2
-
-        # total_abundances = 0
-        # total_lengths = 0
-
-        # log2_normalised_readings: dict = {}
-
-        # for replicate_name in log2_abundances:
-        #     for stage_name in log2_abundances[replicate_name]:
-        #         if log2_abundances[replicate_name][stage_name] is not None:
-        #             total_abundances += log2_abundances[replicate_name][stage_name]
-        #             total_lengths += 1
-
-        #     mean = None
-
-        #     if total_lengths != 0:
-        #         mean = total_abundances / total_lengths
-        #     # TODO - is mean is None then the loop below can be simplified
-
-        #     log2_normalised_readings = {}
-
-        #     for replicate_name in readings:
-        #         log2_normalised_readings[replicate_name] = {}
-
-        #         for stage_name in readings[replicate_name]:
-        #             normalised_abundance = None
-
-        #             if log2_abundances[replicate_name].get(stage_name) is not None and mean is not None:
-        #                 normalised_abundance = self._round(
-        #                     log2_abundances[replicate_name][stage_name] - mean
-        #                 )
-
-        #             log2_normalised_readings[replicate_name][
-        #                 stage_name
-        #             ] = normalised_abundance
-
-        # return log2_normalised_readings
-
-    def _calculate_arrest_log2_normalisation(self, protein: Protein):
+    def _calculate_arrest_log2_normalisation(self, protein = None, phospho = None):
         # TODO - is ARRESTING_AGENT the wrong name?
         ARRESTING_AGENT = "Nocodozole"
 
-        # TODO - this is a hack, maybe add the field to the Project model?
-        if protein.project.name == "ICR":
-            ARRESTING_AGENT = "Palbo"
-
         _, stat_normalised_log2_arrest = self._clear_and_fetch_stats(
-            PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
-            protein = protein
+            ABUNDANCES_NORMALISED_LOG2_ARREST,
+            protein = protein,
+            phospho = phospho
         )
 
+        if protein:
+            # TODO - this is a hack, maybe add the field to the Project model?
+            if protein.project.name == "ICR":
+                ARRESTING_AGENT = "Palbo"
+        else:
+            # TODO - this is a hack, maybe add the field to the Project model?
+            if phospho.protein.project.name == "ICR":
+                ARRESTING_AGENT = "Palbo"
+
         abundances = self._get_abundances(
-            PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-            protein = protein
+            ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein,
+            phospho = phospho
         )
 
         for abundance in abundances:
@@ -1161,28 +984,6 @@ class Command(BaseCommand):
                 )
 
 
-
-    def _format_phospho_readings(self, phospho_readings):
-        readings_by_rep_stage: dict = {}
-
-        for phospho_reading in phospho_readings:
-            # TODO - what about Nones? Will there be any here? Check the import script.
-            reading = phospho_reading.reading
-
-            mod = phospho_reading.phospho.mod
-            replicate_name = phospho_reading.column_name.replicate.name
-            stage_name = phospho_reading.column_name.sample_stage.name
-
-            if not readings_by_rep_stage.get(mod):
-                readings_by_rep_stage[mod] = {}
-
-            if not readings_by_rep_stage[mod].get(replicate_name):
-                readings_by_rep_stage[mod][replicate_name] = {}
-
-            readings_by_rep_stage[mod][replicate_name][stage_name] = reading
-
-        return readings_by_rep_stage
-
     def _get_statistic_type(self, name):
         return StatisticType.objects.get(name=name)
 
@@ -1201,7 +1002,7 @@ class Command(BaseCommand):
         return stat
 
     def _get_protein_readings(self, protein):
-        return self._get_abundances(PROTEIN_ABUNDANCES_RAW, protein=protein)
+        return self._get_abundances(ABUNDANCES_RAW, protein=protein)
 
     def _get_protein_medians(self, project):
         return self._get_abundances(PROTEIN_MEDIAN, project=project)
@@ -1218,24 +1019,29 @@ class Command(BaseCommand):
     def _delete_abundances(self, statistic):
         Abundance.objects.filter(statistic=statistic).delete()
 
-    def _calculate_normalised_medians(self, protein):
+    def _calculate_normalised_medians(self, protein = None, phospho = None):
         _, stat_normalised_medians = self._clear_and_fetch_stats(
-            PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
-            protein = protein
+            ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein,
+            phospho = phospho
         )
 
-        stat_protein_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
+        if protein:
+            stat_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
+        else:
+            stat_medians = self._get_statistic(PHOSPHO_MEDIAN, project = protein.project)
+
+        readings = self._get_abundances(ABUNDANCES_RAW, protein=protein, phospho=phospho)
 
         # TODO - get rid of _get_protein_readings? It may not be that useful
-        protein_reading = self._get_protein_readings(protein=protein)
 
-        for prr in protein_reading:
+        for prr in readings:
             reading = prr.reading
 
             # TODO - is this if statement needed?
             if reading is not None:
                 median = self._get_abundance(
-                    stat_protein_medians, 
+                    stat_medians, 
                     prr.replicate,
                     prr.sample_stage
                 )
@@ -1255,13 +1061,18 @@ class Command(BaseCommand):
     def _calculate_means(
         self,
         statistic_type_name: str,
-        protein: Protein,
-        with_bugs: bool,
+        protein = None,
+        phospho = None,
+        with_bugs: bool = False,
         imputed: bool = False,
     ):
         readings: dict = {}
 
-        abundances = self._get_abundances(statistic_type_name, protein=protein)
+        abundances = self._get_abundances(
+            statistic_type_name,
+            protein = protein,
+            phospho = phospho
+        )
 
         for abundance in abundances:
             sample_stage = abundance.sample_stage
@@ -1278,12 +1089,18 @@ class Command(BaseCommand):
             if abundance.reading is not None:
                 readings[sample_stage].append(abundance.reading)
 
-        stat = self._get_statistic(statistic_type_name, protein=protein)
+        if protein:
+            stat = self._get_statistic(statistic_type_name, protein=protein)
+        else:
+            stat = self._get_statistic(statistic_type_name, phospho=phospho)
 
         # Delete all mean abundances for this statistic
         Abundance.objects.filter(statistic=stat, replicate__mean=True).delete()
 
-        mean_replicate = Replicate.objects.get(project=protein.project, mean=True)
+        if protein:
+            mean_replicate = Replicate.objects.get(project=protein.project, mean=True)
+        else:
+            mean_replicate = Replicate.objects.get(project=phospho.protein.project, mean=True)
 
         for sample_stage in readings:
             reading_list = readings[sample_stage]
@@ -1301,56 +1118,6 @@ class Command(BaseCommand):
                 sample_stage=sample_stage,
                 reading=mean
             )
-
-
-    # TODO - delete
-    # def _calculate_phospho_medians(
-    #     self,
-    #     project,
-    #     with_bugs,
-    # ):
-    #     _, stat_phospho_med = self._clear_and_fetch_stats(PHOSPHO_MEDIAN, project=project)
-
-    #     abundances = Abundance.objects.filter(
-    #         statistic__protein__project=project,
-    #         statistic__statistic_type__name=PHOSPHO_ABUNDANCES_RAW
-    #     ).iterator(chunk_size=100)
-
-    #     rep_stage_abundances = {}
-
-    #     for i, abundance in enumerate(abundances):
-    #         if not i % 10000:
-    #             logger.info(f"Processing phospho abundance for median {i}")
-
-    #         replicate = abundance.replicate
-    #         sample_stage = abundance.sample_stage
-
-    #         if not rep_stage_abundances.get(replicate):
-    #             rep_stage_abundances[replicate] = {}
-
-    #             if not rep_stage_abundances[replicate].get(abundance.sample_stage):
-    #                 rep_stage_abundances[replicate][sample_stage] = []
-
-    #                 rep_stage_abundances[replicate][sample_stage].append(abundance.reading)
-
-    #     if with_bugs:
-    #         replicate1 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_1)
-    #         replicate2 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_2)
-
-    #         rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
-
-    #     for replicate in rep_stage_abundances.keys():
-    #         for sample_stage in rep_stage_abundances[replicate].keys():
-    #             median = statistics.median(rep_stage_abundances[replicate][sample_stage])
-
-    #             Abundance.objects.create(
-    #                 statistic=stat_phospho_med,
-    #                 replicate=replicate,
-    #                 sample_stage=sample_stage,
-    #                 reading=median
-    #             )
-
-                
 
 
     # TODO - think this could be tidied
@@ -1548,15 +1315,12 @@ class Command(BaseCommand):
         num_proteins = 0
 
         for rr in run_results:
-            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-            self._count_logger(
-                num_proteins,
-                1000,
-                f"Calculating protein oscillation {num_proteins} {rr.protein.accession_number}",
-            )
-
+            if not num_proteins % 1000:
+                print(f"Calculating protein oscillation {num_proteins} {rr.protein.accession_number}")
+ 
             num_proteins += 1
+
+            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             for mod in pprpa:
                 if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES):
@@ -1633,11 +1397,8 @@ class Command(BaseCommand):
 
         # TODO - looks very close to the code in protein oscillation. Make a function?
         for rr in run_results:
-            self._count_logger(
-                num_proteins,
-                1000,
-                f"Adding phospho regression {num_proteins} for {rr.protein.accession_number}",
-            )
+            if not num_proteins % 1000:
+                print(f"Adding phospho regression {num_proteins} for {rr.protein.accession_number}")
 
             num_proteins += 1
 
@@ -1743,108 +1504,145 @@ class Command(BaseCommand):
         self,
         replicates,
         sample_stages,
-        protein,
-        with_bugs
+        protein = None,
+        phospho = None,
+        with_bugs = False
     ):
+        if not protein and not phospho:
+            logger.error("Either a protein or a phospho must be provided.")
+
+        # TODO - why can't just have these two combined, with both protein and
+        #   phospho? Why does it leave eight records?
+        if protein:
         # Clear any raw average abundances set by a previous run
-        Abundance.objects.filter(
-            statistic__statistic_type__name=PROTEIN_ABUNDANCES_RAW,
-            statistic__protein=protein,
-            replicate__mean = True
-        ).delete()
+            Abundance.objects.filter(
+                statistic__statistic_type__name=ABUNDANCES_RAW,
+                statistic__protein=protein,
+                replicate__mean = True
+            ).delete()
+        else:
+            Abundance.objects.filter(
+                statistic__statistic_type__name=ABUNDANCES_RAW,
+                statistic__phospho=phospho,
+                replicate__mean = True
+            ).delete()
 
         # firstLevelNormalisationProteomics
         # firstLevelNormalisationPhospho
         # TODO - remove all returned values, e.g. normalised_medians
         normalised_medians = self._calculate_normalised_medians(
-            protein
+            protein, phospho
         )
 
         # calclog2PalboNormalisation
         arrest_readings = self._calculate_arrest_log2_normalisation(
-            protein
+            protein, phospho
         )
 
         # calclog2RelativeAbundance
-        log2_readings = (
-            self._calculate_relative_log2_normalisation(protein)
+        log2_readings = self._calculate_relative_log2_normalisation(
+            protein, phospho
         )
 
         # normaliseData
         min_max_readings = self._calculate_zero_or_min_normalisation(
-            protein, replicates
+            replicates, protein, phospho, False
         )
 
         # normaliseData
         zero_max_readings = self._calculate_zero_or_min_normalisation(
-            protein, replicates, True
+            replicates, protein, phospho, True
         )
 
         imputed_readings = self._impute(
-            protein, replicates
+            replicates, protein, phospho, 
         )
 
         raw_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_RAW, protein, with_bugs
+                ABUNDANCES_RAW,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs
             )
         )
 
         normalised_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_NORMALISED_MEDIAN, protein, with_bugs
+                ABUNDANCES_NORMALISED_MEDIAN,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs
             )
         )
 
         min_max_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX, protein, with_bugs
+                ABUNDANCES_NORMALISED_MIN_MAX,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs
             )
         )
 
         zero_max_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX, protein, with_bugs
+                ABUNDANCES_NORMALISED_ZERO_MAX,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs
             )
         )
 
         log2_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN, protein, with_bugs
+                ABUNDANCES_NORMALISED_LOG2_MEAN,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs
             )
         )
 
         arrest_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST, protein, with_bugs
+                ABUNDANCES_NORMALISED_LOG2_ARREST,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs
             )
         )
 
         imputed_averages = (
             self._calculate_means(
-                PROTEIN_ABUNDANCES_IMPUTED, protein, with_bugs, imputed=True
+                ABUNDANCES_IMPUTED,
+                protein = protein,
+                phospho = phospho,
+                with_bugs = with_bugs,
+                imputed = True,
             )
         )
 
         log2_mean_metrics = self._calculate_metrics(
-            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
-            protein,
+            ABUNDANCES_NORMALISED_LOG2_MEAN,
             replicates,
             sample_stages,
+            protein,
+            phospho,
         )
 
         zero_max_mean_metrics = self._calculate_metrics(
-            PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
-            protein,
+            ABUNDANCES_NORMALISED_ZERO_MAX,
             replicates,
             sample_stages,
+            protein,
+            phospho,
         )
 
         anova = self._calculate_ANOVA(
-            PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            ABUNDANCES_NORMALISED_LOG2_MEAN,
+            sample_stages,
             protein,
-            replicates,
-            sample_stages
+            phospho
         )
 
         # # TODO - this is needed in batch processing
@@ -2089,18 +1887,28 @@ class Command(BaseCommand):
         project,
         replicates,
         sample_stages,
-        statistic_type_name_median,
-        statistic_type_name_raw,
+        is_protein,
         with_bugs
     ):
-        logger.info("Calculating protein medians")
+        if is_protein:
+            logger.info("Calculating protein medians")
+        else:
+            logger.info("Calculating phospho medians")
 
-        _, stat_prot_med = self._clear_and_fetch_stats(statistic_type_name_median, project=project)
+        if is_protein:
+            _, stat_prot_med = self._clear_and_fetch_stats(PROTEIN_MEDIAN, project=project)
 
-        abundances = Abundance.objects.filter(
-            statistic__protein__project=project,
-            statistic__statistic_type__name=statistic_type_name_raw
-        ).iterator(chunk_size=100)
+            abundances = Abundance.objects.filter(
+                statistic__protein__project=project,
+                statistic__statistic_type__name=ABUNDANCES_RAW
+            ).iterator(chunk_size=100)
+        else:
+            _, stat_prot_med = self._clear_and_fetch_stats(PHOSPHO_MEDIAN, project=project)
+
+            abundances = Abundance.objects.filter(
+                statistic__phospho__protein__project=project,
+                statistic__statistic_type__name=ABUNDANCES_RAW
+            ).iterator(chunk_size=100)
 
         rep_stage_abundances = {}
 
@@ -2138,6 +1946,7 @@ class Command(BaseCommand):
                     sample_stage=sample_stage,
                     reading=median
                 )
+
 
 
     # TODO - rename
@@ -2183,11 +1992,8 @@ class Command(BaseCommand):
         num_proteins = 0
 
         for rr in run_results:
-            self._count_logger(
-                num_proteins,
-                1000,
-                f"Adding annotation {num_proteins} {rr.protein.accession_number}",
-            )
+            if not num_proteins % 1000:
+                print(f"Adding annotation {num_proteins} {rr.protein.accession_number}")
 
             num_proteins += 1
 
@@ -2248,11 +2054,6 @@ class Command(BaseCommand):
     def _fetch_run_results(self, run):
         # Only get the necessary fields to save on memory usage
         return RunResult.objects.only("run", "protein", "combined_result").filter(run=run).iterator(chunk_size=100)
-
-    # TODO - not needed
-    def _count_logger(self, i: int, step: int, output: str):
-        if i % step == 0:
-            logger.info(output)
 
     def _round(self, value):
         return round(value, 4)

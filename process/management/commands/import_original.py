@@ -17,21 +17,20 @@ from process.models import (
 )
 
 from process.constants import (
-    PROTEIN_ABUNDANCES_RAW,
+    ABUNDANCES_RAW,
     RAW,
     PROTEIN_ABUNDANCES,
-    PROTEIN_ABUNDANCES_RAW,
-    PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+    ABUNDANCES_NORMALISED_MEDIAN,
     NORMALISED,
     MEDIAN,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
-    PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    ABUNDANCES_NORMALISED_LOG2_ARREST,
+    ABUNDANCES_NORMALISED_LOG2_MEAN,
     LOG2_MEAN,
-    PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+    ABUNDANCES_NORMALISED_MIN_MAX,
     MIN_MAX,
-    PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_NORMALISED_ZERO_MAX,
     ZERO_MAX,
-    PROTEIN_ABUNDANCES_IMPUTED,
+    ABUNDANCES_IMPUTED,
     IMPUTED,
     METRICS,
 )
@@ -52,7 +51,7 @@ class Command(BaseCommand):
         logger.info(f"Importing original output")
 
         project = Project.objects.get(name=PROJECT_NAME)
-        stats_type_rp = StatisticType.objects.get(name=PROTEIN_ABUNDANCES_RAW)
+        stats_type_rp = StatisticType.objects.get(name=ABUNDANCES_RAW)
 
         file_path = f"data/ICR/TimeCourse_Full_info_full_indented.json"
 
@@ -106,7 +105,7 @@ class Command(BaseCommand):
                     replicates_by_name,
                     sample_stages_by_name,
                     protein,
-                    PROTEIN_ABUNDANCES_RAW,
+                    ABUNDANCES_RAW,
                     pa[RAW],
                 )
 
@@ -117,7 +116,7 @@ class Command(BaseCommand):
                         replicates_by_name,
                         sample_stages_by_name,
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_MEDIAN,
+                        ABUNDANCES_NORMALISED_MEDIAN,
                         pa[NORMALISED][MEDIAN],
                     )
                 else:
@@ -128,7 +127,7 @@ class Command(BaseCommand):
                         replicates_by_name,
                         sample_stages_by_name,
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_LOG2_ARREST,
+                        ABUNDANCES_NORMALISED_LOG2_ARREST,
                         pa[NORMALISED]["log2_palbo"],
                     )
                 else:
@@ -139,7 +138,7 @@ class Command(BaseCommand):
                         replicates_by_name,
                         sample_stages_by_name,
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+                        ABUNDANCES_NORMALISED_LOG2_MEAN,
                         pa[NORMALISED][LOG2_MEAN],
                     )
                 else:
@@ -150,7 +149,7 @@ class Command(BaseCommand):
                         replicates_by_name,
                         sample_stages_by_name,
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_MIN_MAX,
+                        ABUNDANCES_NORMALISED_MIN_MAX,
                         pa[NORMALISED][MIN_MAX],
                     )
                 else:
@@ -161,7 +160,7 @@ class Command(BaseCommand):
                         replicates_by_name,
                         sample_stages_by_name,
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+                        ABUNDANCES_NORMALISED_ZERO_MAX,
                         pa[NORMALISED][ZERO_MAX],
                     )
                 else:
@@ -172,7 +171,7 @@ class Command(BaseCommand):
                         replicates_by_name,
                         sample_stages_by_name,
                         protein,
-                        PROTEIN_ABUNDANCES_IMPUTED,
+                        ABUNDANCES_IMPUTED,
                         pa[IMPUTED],
                     )
                 else:
@@ -181,7 +180,7 @@ class Command(BaseCommand):
                 if pm.get(LOG2_MEAN):
                     self._import_metrics(
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_LOG2_MEAN,
+                        ABUNDANCES_NORMALISED_LOG2_MEAN,
                         pm[LOG2_MEAN],
                     )
                 else:
@@ -190,7 +189,7 @@ class Command(BaseCommand):
                 if pm.get(ZERO_MAX):
                     self._import_metrics(
                         protein,
-                        PROTEIN_ABUNDANCES_NORMALISED_ZERO_MAX,
+                        ABUNDANCES_NORMALISED_ZERO_MAX,
                         pm[ZERO_MAX],
                     )
                 else:
@@ -224,7 +223,7 @@ class Command(BaseCommand):
         for replicate_name, readings in obj.items():
             for sample_stage_name, reading in readings.items():
                 # Strip out 'status' string for imputed values
-                if statistic_type_name == PROTEIN_ABUNDANCES_IMPUTED:
+                if statistic_type_name == ABUNDANCES_IMPUTED:
                     reading = reading['value']
 
                 replicate = replicates_by_name[replicate_name]
