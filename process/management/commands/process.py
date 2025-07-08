@@ -702,7 +702,7 @@ class Command(BaseCommand):
                 "R_squared": r_squared,
             }
 
-            # if we have info for the protein in at least 2 replicates
+            # if we have info for at least 2 replicates
             # TODO - why does it get the values for the second one?
             if len(readings) >= 2:
                 curve_fold_change, curve_peak = self._calculate_curve_fold_change(
