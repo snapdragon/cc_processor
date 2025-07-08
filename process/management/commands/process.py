@@ -265,7 +265,7 @@ class Command(BaseCommand):
 
                 for i, protein in enumerate(proteins):
                     if not i % 1000:
-                        logger.info(f"Calculating protein {i} {protein.accession_number}")
+                        logger.info(f"Calculating phospho protein {i} {protein.accession_number}")
 
                     self._calculate_phosphos(
                         replicates,
@@ -296,7 +296,7 @@ class Command(BaseCommand):
 
 
     def _calculate_phosphos(self, replicates, sample_stages, protein, with_bugs):
-        phosphos = Phospho.objects.filter(phospho__protein = protein)
+        phosphos = Phospho.objects.filter(protein = protein)
 
         for phospho in phosphos:
             self._calculate_abundances_metrics(
@@ -497,7 +497,8 @@ class Command(BaseCommand):
 
         stat_log2_mean = self._get_statistic(
             statistic_type_name,
-            protein=protein
+            protein = protein,
+            phospho = phospho,
         )
 
         abundances = Abundance.objects.filter(
@@ -553,7 +554,11 @@ class Command(BaseCommand):
     ):
         metrics = {}
 
-        stat = self._get_statistic(statistic_type_name, protein=protein)
+        if protein:
+            stat = self._get_statistic(statistic_type_name, protein = protein)
+        else:
+            stat = self._get_statistic(statistic_type_name, phospho = phospho)
+
         abundances_for_readings = Abundance.objects.filter(
             statistic=stat
         ).order_by(
@@ -1029,7 +1034,7 @@ class Command(BaseCommand):
         if protein:
             stat_medians = self._get_statistic(PROTEIN_MEDIAN, project = protein.project)
         else:
-            stat_medians = self._get_statistic(PHOSPHO_MEDIAN, project = protein.project)
+            stat_medians = self._get_statistic(PHOSPHO_MEDIAN, project = phospho.protein.project)
 
         readings = self._get_abundances(ABUNDANCES_RAW, protein=protein, phospho=phospho)
 

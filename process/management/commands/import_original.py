@@ -169,7 +169,7 @@ class Command(BaseCommand):
         stat_prot_raw.metrics = self._convert_decimals(obj)
         stat_prot_raw.save()
 
-    def _import_protein_readings(
+    def _import_readings(
         self,
         replicates_by_name,
         sample_stages_by_name,
@@ -214,7 +214,7 @@ class Command(BaseCommand):
         pa,
         pm,
     ):
-        self._import_protein_readings(
+        self._import_readings(
             replicates_by_name,
             sample_stages_by_name,
             protein,
@@ -226,7 +226,7 @@ class Command(BaseCommand):
         # Apparently not all originals have normalised medians
         #   Phospho-only imports maybe?
         if pa.get(NORMALISED) and pa[NORMALISED].get(MEDIAN):
-            self._import_protein_readings(
+            self._import_readings(
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
@@ -238,7 +238,7 @@ class Command(BaseCommand):
             print(f"No normalised medians for protein {protein.accession_number}")
 
         if pa.get(NORMALISED) and pa[NORMALISED].get("log2_palbo"):
-            self._import_protein_readings(
+            self._import_readings(
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
@@ -250,7 +250,7 @@ class Command(BaseCommand):
             print(f"No normalised log2 arrest for protein {protein.accession_number}")
 
         if pa.get(NORMALISED) and pa[NORMALISED].get(LOG2_MEAN):
-            self._import_protein_readings(
+            self._import_readings(
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
@@ -262,7 +262,7 @@ class Command(BaseCommand):
             print(f"No normalised log2 mean for protein {protein.accession_number}")
                 
         if pa.get(NORMALISED) and pa[NORMALISED].get(MIN_MAX):
-            self._import_protein_readings(
+            self._import_readings(
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
@@ -274,7 +274,7 @@ class Command(BaseCommand):
             print(f"No normalised min max for protein {protein.accession_number}")
 
         if pa.get(NORMALISED) and pa[NORMALISED].get(ZERO_MAX):
-            self._import_protein_readings(
+            self._import_readings(
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
@@ -285,7 +285,7 @@ class Command(BaseCommand):
             print(f"No normalised zero max for protein {protein.accession_number}")
 
         if pa.get(IMPUTED):
-            self._import_protein_readings(
+            self._import_readings(
                 replicates_by_name,
                 sample_stages_by_name,
                 protein,
