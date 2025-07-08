@@ -76,7 +76,7 @@ class Command(BaseCommand):
             excel_file = pd.ExcelFile(file_path)
 
             # Sheet two is the phosphoproteome sheet, apparently
-            df = pd.read_excel(excel_file, sheet_name=1)
+            df = pd.read_excel(excel_file, sheet_name = 1)
 
             row_no = 0
 

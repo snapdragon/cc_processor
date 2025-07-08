@@ -25,6 +25,7 @@ Check all constraints
 Look for divide by zero errors, e.g.
     log2_reading = self._round(math.log2(reading / arrest_reading))
 
+Make _not_same compare to within 10%
 Add code to return a message if no flags are supplied
 Study and get rid of total_protein_index.json? It seems to be a mishmash of various
     sources downloaded. Probably not all of it is required.

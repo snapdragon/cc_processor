@@ -54,6 +54,8 @@ METRICS_ANOVA_FIELDS = [
     # Q_VALUE,
 ]
 
+TOLERANCE = 0.1
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s - %(message)s",
@@ -131,7 +133,7 @@ class Command(BaseCommand):
         protein_original,
         protein_process,
         with_anova = False,
-        dps = 0
+        dps = 2
     ):
         _, stat_prot_original = self._fetch_stats_type_and_stats(
             statistic_type_name,
@@ -164,7 +166,7 @@ class Command(BaseCommand):
                 print(f"No reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
                 continue
 
-            if round(metrics_original[field], dps) != round(metrics_process[field], dps):
+            if self._not_same(metrics_original[field], metrics_process[field], dps):
                 print(f"NO METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
             # else:
             #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
@@ -178,12 +180,14 @@ class Command(BaseCommand):
                         print(f"No ANOVA reading for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
                         continue
 
-                    if round(metrics_original[ANOVA][field], dps) != round(metrics_process[ANOVA][field], dps):
+                    if self._not_same(metrics_original[ANOVA][field], metrics_process[ANOVA][field], dps):
                         print(f"NO ANOVA METRICS MATCH {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
                     # else:
                     #     print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
 
 
+    def _not_same(self, num1, num2, dps):
+        return (round(num1, dps) != round(num2, dps)) and (abs(num1 - num2) > TOLERANCE * abs(num1))
 
     def _compare_protein_stat(
         self,
@@ -222,8 +226,8 @@ class Command(BaseCommand):
                 print(f"No reading for {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading}")
                 continue
 
-            if round(ab_original.reading, dps) != round(ab_process.reading, dps):
-                print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, dps)} vs {round(ab_process.reading, dps)}")
+            if self._not_same(ab_original.reading, ab_process.reading, dps):
+                print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
             # else:
             #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 
