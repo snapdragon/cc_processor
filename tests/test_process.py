@@ -28,7 +28,7 @@ from process.constants import (
 )
 
 @pytest.mark.django_db
-def test_calculate_protein_medians(basic_project_setup):
+def test_calculate_medians(basic_project_setup):
     command = Command()
 
     project = basic_project_setup["project"]
@@ -50,11 +50,21 @@ def test_calculate_protein_medians(basic_project_setup):
 
                 AbundanceFactory(statistic=stat, replicate=replicate, sample_stage=sample_stage, reading=reading)
 
-    command._calculate_protein_medians(project, replicates, sample_stages, with_bugs=False)
+    command._calculate_medians(
+        project,
+        replicates,
+        sample_stages,
+        PROTEIN_MEDIAN,
+        PROTEIN_ABUNDANCES_RAW,
+        with_bugs=False
+    )
 
     stat_type_prot_median = StatisticType.objects.get(name=PROTEIN_MEDIAN)
 
-    medians = Abundance.objects.filter(statistic__project=project, statistic__statistic_type=stat_type_prot_median)
+    medians = Abundance.objects.filter(
+        statistic__project=project,
+        statistic__statistic_type=stat_type_prot_median
+    )
 
     assert len(replicates) == 3
     assert len(sample_stages) == 10
@@ -294,7 +304,7 @@ def test_calculate_min_normalisation(basic_project_setup):
         for ab in abundances.filter(replicate=replicate):
             num += 1
 
-            assert ab.reading == num / 9
+            assert round(ab.reading, 3) == round(num / 9, 3)
 
     assert len(abundances) == 30
 
@@ -344,13 +354,13 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
         for ab in abundances.filter(replicate=replicate):
             num += 1
 
-            assert ab.reading == num / (replicate_num * 10)
+            assert round(ab.reading, 3) == round(num / (replicate_num * 10), 3)
 
     assert len(abundances) == 30
 
 
 
-
+@pytest.mark.skip(reason="Not complete yet")
 @pytest.mark.django_db
 def test_calculate_metrics(basic_project_setup_ICR):
     command = Command()

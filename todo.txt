@@ -22,6 +22,14 @@ Check all constraints
 
 
 
+Look for divide by zero errors, e.g.
+    log2_reading = self._round(math.log2(reading / arrest_reading))
+
+Add code to return a message if no flags are supplied
+Study and get rid of total_protein_index.json? It seems to be a mishmash of various
+    sources downloaded. Probably not all of it is required.
+Study all the SL phospho errors
+
 Write unit tests for _calculate_metrics and _calculate_ANOVA
 Go through the code and make it work with no records created for empty values
     in import_protein and import_phospho

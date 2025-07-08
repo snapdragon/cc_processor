@@ -192,7 +192,14 @@ class Command(BaseCommand):
         project.save()
 
         if calculate_protein_medians or calculate_all:
-            self._calculate_protein_medians(project, replicates, sample_stages, with_bugs)
+            self._calculate_medians(
+                project,
+                replicates,
+                sample_stages,
+                PROTEIN_MEDIAN,
+                PROTEIN_ABUNDANCES_RAW,
+                with_bugs
+            )
 
         # N.B. there must be protein medians for this to run
         if calculate_proteins or calculate_all:
@@ -227,7 +234,14 @@ class Command(BaseCommand):
                     )
 
         if calculate_phospho_medians or calculate_all:
-            self._calculate_phospho_medians(project, with_bugs)
+            self._calculate_medians(
+                project,
+                replicates,
+                sample_stages,
+                PHOSPHO_MEDIAN,
+                PHOSPHO_ABUNDANCES_RAW,
+                with_bugs
+            )
 
         # if calculate_phosphos or calculate_all:
         #     self._phospho(project, replicates, phospho_readings, phospho_medians, column_names, phosphos, sample_stages, run, proteins, with_bugs)
@@ -1289,52 +1303,52 @@ class Command(BaseCommand):
             )
 
 
+    # TODO - delete
+    # def _calculate_phospho_medians(
+    #     self,
+    #     project,
+    #     with_bugs,
+    # ):
+    #     _, stat_phospho_med = self._clear_and_fetch_stats(PHOSPHO_MEDIAN, project=project)
 
-    def _calculate_phospho_medians(
-        self,
-        project,
-        with_bugs,
-    ):
-        _, stat_phospho_med = self._clear_and_fetch_stats(PHOSPHO_MEDIAN, project=project)
+    #     abundances = Abundance.objects.filter(
+    #         statistic__protein__project=project,
+    #         statistic__statistic_type__name=PHOSPHO_ABUNDANCES_RAW
+    #     ).iterator(chunk_size=100)
 
-        abundances = Abundance.objects.filter(
-            statistic__protein__project=project,
-            statistic__statistic_type__name=PHOSPHO_ABUNDANCES_RAW
-        ).iterator(chunk_size=100)
+    #     rep_stage_abundances = {}
 
-        rep_stage_abundances = {}
+    #     for i, abundance in enumerate(abundances):
+    #         if not i % 10000:
+    #             logger.info(f"Processing phospho abundance for median {i}")
 
-        for i, abundance in enumerate(abundances):
-            if not i % 10000:
-                logger.info(f"Processing phospho abundance for median {i}")
+    #         replicate = abundance.replicate
+    #         sample_stage = abundance.sample_stage
 
-            replicate = abundance.replicate
-            sample_stage = abundance.sample_stage
+    #         if not rep_stage_abundances.get(replicate):
+    #             rep_stage_abundances[replicate] = {}
 
-            if not rep_stage_abundances.get(replicate):
-                rep_stage_abundances[replicate] = {}
+    #             if not rep_stage_abundances[replicate].get(abundance.sample_stage):
+    #                 rep_stage_abundances[replicate][sample_stage] = []
 
-                if not rep_stage_abundances[replicate].get(abundance.sample_stage):
-                    rep_stage_abundances[replicate][sample_stage] = []
+    #                 rep_stage_abundances[replicate][sample_stage].append(abundance.reading)
 
-                    rep_stage_abundances[replicate][sample_stage].append(abundance.reading)
+    #     if with_bugs:
+    #         replicate1 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_1)
+    #         replicate2 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_2)
 
-        if with_bugs:
-            replicate1 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_1)
-            replicate2 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_2)
+    #         rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 
-            rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
+    #     for replicate in rep_stage_abundances.keys():
+    #         for sample_stage in rep_stage_abundances[replicate].keys():
+    #             median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 
-        for replicate in rep_stage_abundances.keys():
-            for sample_stage in rep_stage_abundances[replicate].keys():
-                median = statistics.median(rep_stage_abundances[replicate][sample_stage])
-
-                Abundance.objects.create(
-                    statistic=stat_phospho_med,
-                    replicate=replicate,
-                    sample_stage=sample_stage,
-                    reading=median
-                )
+    #             Abundance.objects.create(
+    #                 statistic=stat_phospho_med,
+    #                 replicate=replicate,
+    #                 sample_stage=sample_stage,
+    #                 reading=median
+    #             )
 
                 
 
@@ -2070,14 +2084,22 @@ class Command(BaseCommand):
 
             rr.save()
 
-    def _calculate_protein_medians(self, project, replicates, sample_stages, with_bugs):
+    def _calculate_medians(
+        self,
+        project,
+        replicates,
+        sample_stages,
+        statistic_type_name_median,
+        statistic_type_name_raw,
+        with_bugs
+    ):
         logger.info("Calculating protein medians")
 
-        _, stat_prot_med = self._clear_and_fetch_stats(PROTEIN_MEDIAN, project=project)
+        _, stat_prot_med = self._clear_and_fetch_stats(statistic_type_name_median, project=project)
 
         abundances = Abundance.objects.filter(
             statistic__protein__project=project,
-            statistic__statistic_type__name=PROTEIN_ABUNDANCES_RAW
+            statistic__statistic_type__name=statistic_type_name_raw
         ).iterator(chunk_size=100)
 
         rep_stage_abundances = {}
@@ -2110,7 +2132,12 @@ class Command(BaseCommand):
 
                 median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 
-                Abundance.objects.create(statistic=stat_prot_med, replicate=replicate, sample_stage=sample_stage, reading=median)
+                Abundance.objects.create(
+                    statistic=stat_prot_med,
+                    replicate=replicate,
+                    sample_stage=sample_stage,
+                    reading=median
+                )
 
 
     # TODO - rename
