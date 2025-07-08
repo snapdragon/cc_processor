@@ -1060,8 +1060,6 @@ class Command(BaseCommand):
                     reading=normalised_reading
                 )
 
-
-
     # calculateAverageRepAbundance
     def _calculate_means(
         self,
