@@ -430,7 +430,7 @@ class Command(BaseCommand):
                     self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
             else:
                 # Not all proteins have protein results, some are phospho only
-                if not rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED].get(LOG2_MEAN):
+                if rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED].get(LOG2_MEAN) is None:
                     continue
 
                 pprpanlm = rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]
@@ -439,7 +439,7 @@ class Command(BaseCommand):
 
                 for replicate in replicates:
                     for stage in sample_stages:
-                        if not pprpanlm[replicate.name].get(stage.name):
+                        if pprpanlm[replicate.name].get(stage.name) is None:
                             continue
 
                         rep_stage_name = f"{replicate.name}_{stage.name}"
@@ -579,7 +579,7 @@ class Command(BaseCommand):
             if abfr.replicate.mean:
                 readings_averages[abfr.sample_stage.name] = abfr.reading
 
-            if not readings.get(abfr.replicate.name):
+            if readings.get(abfr.replicate.name) is None:
                 readings[abfr.replicate.name] = {}
 
             readings[abfr.replicate.name][abfr.sample_stage.name] = abfr.reading
@@ -780,7 +780,7 @@ class Command(BaseCommand):
         abundances_by_rep = {}
 
         for abundance in abundances:
-            if not abundances_by_rep.get(abundance.replicate):
+            if abundances_by_rep.get(abundance.replicate) is None:
                 abundances_by_rep[abundance.replicate] = []
 
             abundances_by_rep[abundance.replicate].append(abundance)
@@ -1080,7 +1080,7 @@ class Command(BaseCommand):
         for abundance in abundances:
             sample_stage = abundance.sample_stage
 
-            if not readings.get(sample_stage):
+            if readings.get(sample_stage) is None:
                 readings[sample_stage] = []
 
             if with_bugs and not imputed:
@@ -1348,7 +1348,7 @@ class Command(BaseCommand):
                 continue
 
             for mod in pprpa:
-                if not pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES):
+                if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES) is None:
                     continue
 
                 mod_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
@@ -1485,7 +1485,7 @@ class Command(BaseCommand):
 
                 try:
                     for sample_stage in sample_stages:
-                        if not protein_normed.get(sample_stage.name) or not phospho_normed.get(sample_stage.name):
+                        if protein_normed.get(sample_stage.name) is None or phospho_normed.get(sample_stage.name) is None:
                             continue
 
                         protein_oscillation_abundances[sample_stage.name] = (
@@ -1682,7 +1682,7 @@ class Command(BaseCommand):
                     rep_phosphos = []
 
                     for replicate in replicates:
-                        if not pappan[LOG2_MEAN].get(replicate.name):
+                        if pappan[LOG2_MEAN].get(replicate.name) is None:
                             continue
 
                         rep_proteo = {}
@@ -1831,17 +1831,16 @@ class Command(BaseCommand):
     # TODO - is this worth being a function at all?
     def _build_phospho_abundance_table(self, abundance_table, replicates, sample_stages, protein_abundances, mod_key):
         for replicate in replicates:
-            if not abundance_table.get(mod_key):
+            if abundance_table.get(mod_key) is None:
                 abundance_table[mod_key] = {}
 
             # TODO - not in original, why here?
-            if not protein_abundances.get(replicate.name):
+            if protein_abundances.get(replicate.name) is None:
                 continue
 
             # TODO - check all these loops have the same variable name
             for sample_stage in sample_stages:
-                # rep = "_".join(abundance_rep.split("_", 1)[1].split("_")[:2])
-                if not protein_abundances[replicate.name].get(sample_stage.name):
+                if protein_abundances[replicate.name].get(sample_stage.name) is None:
                     continue
 
                 rep_timepoint = f"{replicate.name}_{sample_stage.name}"
@@ -1920,15 +1919,15 @@ class Command(BaseCommand):
             if not i % 10000:
                 logger.info(f"Processing protein abundance for median {i}")
 
-            if not rep_stage_abundances.get(abundance.replicate):
+            if rep_stage_abundances.get(abundance.replicate) is None:
                 rep_stage_abundances[abundance.replicate] = {}
 
-            if not rep_stage_abundances[abundance.replicate].get(abundance.sample_stage):
+            if rep_stage_abundances[abundance.replicate].get(abundance.sample_stage) is None:
                 rep_stage_abundances[abundance.replicate][abundance.sample_stage]  = []
 
             rep_stage_abundances[abundance.replicate][abundance.sample_stage].append(abundance.reading)
 
-        if with_bugs:
+        if is_protein and with_bugs:
             replicate1 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_1)
             replicate2 = Replicate.objects.get(project=project, name=ABUNDANCE_REP_2)
 
@@ -1936,7 +1935,7 @@ class Command(BaseCommand):
 
         for replicate in replicates:
             for sample_stage in sample_stages:
-                if not rep_stage_abundances[replicate].get(sample_stage):
+                if rep_stage_abundances[replicate].get(sample_stage) is None:
                     logger.error(f"Median with no sample stage (??) {replicate.name} {sample_stage.name}")
 
                 if not len(rep_stage_abundances[replicate][sample_stage]):
@@ -2003,7 +2002,7 @@ class Command(BaseCommand):
 
             pan = rr.protein.accession_number
 
-            if not index_protein_names.get(pan):
+            if index_protein_names.get(pan) is None:
                 # TODO - fetch protein info remotely
                 # basic_localisation, localisation_keyword = getProteinLocalisation(pan)
                 continue

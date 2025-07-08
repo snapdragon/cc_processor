@@ -116,14 +116,14 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        # self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
-        # self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
-        # self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
-        # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
-        # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
-        # self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
-        # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True)
-        # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
+        self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
+        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True)
+        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
 
         # Compare phosphos
         phosphos_original = Phospho.objects.filter(
@@ -215,7 +215,7 @@ class Command(BaseCommand):
             #     print(f"Match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         for field in METRICS_NUMBER_FIELDS:
-            if not metrics_process.get(field):
+            if metrics_process.get(field) is None:
                 if protein_original:
                     print(f"No reading number for METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
                 else:
@@ -232,14 +232,14 @@ class Command(BaseCommand):
             #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         if with_anova:
-            if not metrics_process.get(ANOVA):
+            if metrics_process.get(ANOVA) is None:
                 if protein_original:
                     print(f"No ANOVA for {statistic_type_name} for {protein_original.accession_number} for {field}")
                 else:
                     print(f"No ANOVA for {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
             else:
                 for field in METRICS_ANOVA_FIELDS:
-                    if not metrics_process[ANOVA].get(field):
+                    if metrics_process[ANOVA].get(field) is None:
                         if protein_original:
                             print(f"No ANOVA METRICS for {statistic_type_name} for {protein_original.accession_number} for {field}")
                         else:
@@ -297,7 +297,10 @@ class Command(BaseCommand):
         )
 
         if len(stat_abundances_original) != len(stat_abundances_process):
-            print(f"Protein abundance lengths don't match for {protein_original.accession_number}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
+            if protein_original:
+                print(f"Protein abundance lengths don't match for {protein_original.accession_number}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
+            else:
+                print(f"Protein abundance lengths don't match for {phospho_original.protein.accession_number}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
 
         for ab_original in stat_abundances_original:
             ab_process = stat_abundances_process.filter(
@@ -315,8 +318,8 @@ class Command(BaseCommand):
                     print(f"NO MATCH {statistic_type_name} for {protein_original.accession_number} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
                 else:
                     print(f"NO MATCH {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
-            else:
-                print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            # else:
+            #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 
 
     # TODO - copied from import_original
