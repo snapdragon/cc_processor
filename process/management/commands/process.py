@@ -246,6 +246,12 @@ class Command(BaseCommand):
             if accession_number:
                 logger.info(f"Processing phospho protein {accession_number}")
 
+                # stat = self._get_statistic(PHOSPHO_MEDIAN, project=project)
+                # for abundance in Abundance.objects.filter(statistic=stat):
+                #     print(f"rep: {abundance.replicate} ss: {abundance.sample_stage} reading: {abundance.reading}")
+
+                # exit()
+
                 protein = Protein.objects.get(
                     project=project,
                     accession_number=accession_number
@@ -939,6 +945,17 @@ class Command(BaseCommand):
                 reading=normalised_abundance
             )
 
+        # if phospho.mod == "185":
+        #     print("++++ NORM")
+        #     print("++++ NORM")
+        #     print("++++ NORM")
+        #     print("++++ NORM")
+        #     for abundance in Abundance.objects.filter(statistic=stat_normalised_log2_mean):
+        #         print(f"rep: {abundance.replicate} ss: {abundance.sample_stage} reading: {abundance.reading}")
+
+        #     exit()
+
+
 
     def _calculate_arrest_log2_normalisation(self, protein = None, phospho = None):
         # TODO - is ARRESTING_AGENT the wrong name?
@@ -1059,6 +1076,16 @@ class Command(BaseCommand):
                     sample_stage=prr.sample_stage,
                     reading=normalised_reading
                 )
+
+        # if phospho.protein.accession_number == "Q6ZRS2" and phospho.mod == "274":
+        #     print("++++ NORM")
+        #     print("++++ NORM")
+        #     print("++++ NORM")
+        #     print("++++ NORM")
+        #     for abundance in Abundance.objects.filter(statistic=stat_normalised_medians):
+        #         print(f"rep: {abundance.replicate} ss: {abundance.sample_stage} reading: {abundance.reading}")
+
+        #     exit()
 
     # calculateAverageRepAbundance
     def _calculate_means(
@@ -1514,17 +1541,26 @@ class Command(BaseCommand):
         if not protein and not phospho:
             logger.error("Either a protein or a phospho must be provided.")
 
-        # TODO - why can't just have these two combined, with both protein and
-        #   phospho? Why does it leave eight records?
-
-        # Clear any raw average abundances set by a previous run
+        # Clear all abundances other than non-average raw
         if protein:
+            # Abundance.objects.exclude(
+            #     statistic__statistic_type__name=ABUNDANCES_RAW,
+            # ).filter(
+            #     statistic__protein=protein
+            # ).delete()
+
             Abundance.objects.filter(
                 statistic__statistic_type__name=ABUNDANCES_RAW,
                 statistic__protein=protein,
                 replicate__mean = True
             ).delete()
         else:
+            # Abundance.objects.exclude(
+            #     statistic__statistic_type__name=ABUNDANCES_RAW
+            # ).filter(
+            #     statistic__phospho=phospho
+            # ).delete()
+
             Abundance.objects.filter(
                 statistic__statistic_type__name=ABUNDANCES_RAW,
                 statistic__phospho=phospho,
@@ -2036,6 +2072,8 @@ class Command(BaseCommand):
             # TODO - consider adding bulk updating
             rr.save()
 
+    # TODO - all records are cleared at the top of _calcualte_abundance_metrics, this is no
+    #   longer needed
     def _clear_and_fetch_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
         statistic_type = self._get_statistic_type(statistic_type_name)
 

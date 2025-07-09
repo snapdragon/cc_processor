@@ -1,0 +1,730 @@
+No phospho metrics number match abundances normalised log2_mean for Q15149 mode 2039 for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P21333 mode S/T[1965-1993] for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9Y490 mode 729 for R_squared_all reading 0.03 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q9Y490 mode 2162 for curve_fold_change reading -0.06291666666666848 vs -0.06992857142857176
+No phospho metrics number match abundances normalised log2_mean for O75369 mode 519 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for O75369 mode 1916 for curve_fold_change reading -0.06708333333333177 vs -0.05966666666666632
+No phospho metrics number match abundances normalised log2_mean for P08670 mode 430 for variance_average reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for P35580 mode 1952 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised 0-max for P18206 mode 97 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for P46821 mode 831 for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised 0-max for P46821 mode 832 for R_squared_all reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised 0-max for Q02952 mode S/T[1388-1409] for R_squared_average reading 0.040000000000000036 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q8WWI1 mode 956 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q8WWI1 mode S/T/Y[1524-1556] for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q8WWI1 mode 751 for curve_fold_change reading -0.006083333333332605 vs 0.002083333333332955
+No phospho metrics number match abundances normalised log2_mean for Q8WWI1 mode 1187 for variance_average reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for P60709 mode 234 for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised 0-max for P60709 mode 234 for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q14980 mode 1225 for variance_average reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised 0-max for Q14980 mode 1969 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised 0-max for P46013 mode S/T[1857-1874] for curve_fold_change reading 10.618774381441735 vs 8.802241111182115
+No phospho metrics number match abundances normalised log2_mean for P15924 mode 2821 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P15924 mode 2825 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P49792 mode 2290 for R_squared_all reading 0.05 vs 0.06
+No protein metrics number match abundances normalised 0-max for P07814 for R_squared_all reading 0.02 vs 0.01
+No protein metrics number match abundances normalised log2_mean for P11717 for R_squared_all reading 0.05 vs 0.06
+No protein metrics number match abundances normalised 0-max for P11717 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q00341 mode 31 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q00341 mode 31 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q15746 mode 1760 for curve_fold_change reading 0.021119047619045928 vs 0.012678571428570429
+No phospho metrics number match abundances normalised 0-max for Q12888 mode S/T[1751-1773] for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for P30622 mode 348 for curve_fold_change reading -0.021059523809525138 vs -0.029500000000001192
+No phospho metrics number match abundances normalised 0-max for P05783 mode 420 for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q5SW79 mode S/T/Y[1233-1253] for variance_average reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q08378 mode 315 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q08378 mode S/T[387-412] for R_squared_average reading 0.020000000000000018 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P37802 mode 163 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for P78559 mode 2030 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q9NR09 mode 2955 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q9NR09 mode 2955 for R_squared_average reading 0.08999999999999997 vs 0.1
+No protein metrics number match abundances normalised log2_mean for P68032 for R_squared_all reading 0.1 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q15021 mode 1333 for R_squared_average reading 0.06999999999999995 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q9UQ35 mode 2449 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9UQ35 mode 2272 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q9UQ35 mode S[1457-1467] for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q9UQ35 mode 1124 for curve_fold_change reading -0.030916666666667286 vs -0.038809523809524016
+No phospho metrics number match abundances normalised 0-max for Q9UQ35 mode 1124 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q9UQ35 mode 499 for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for O94979 mode 799 for curve_fold_change reading 0.05191666666666655 vs 0.06008333333333362
+No phospho metrics number match abundances normalised 0-max for Q07157 mode 912 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q07157 mode 1278 for curve_fold_change reading -0.012500000000000844 vs -0.017142857142858486
+No phospho metrics number match abundances normalised 0-max for Q9P0K7 mode 296 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for O43491 mode 39 for R_squared_all reading 0.1 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q9Y613 mode 357 for curve_fold_change reading -0.0015000000000000777 vs -0.006321428571429109
+No protein metrics number match abundances normalised 0-max for P06748 for R_squared_all reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for P06748 mode 219 for residuals_all reading 2.220680297579695 vs 1.983440415714287
+No phospho ANOVA metrics match abundances normalised log2_mean for P06748 mode 219 for F_statistics reading 26.800435125729475 vs 29.705389405307322
+No phospho metrics number match abundances normalised 0-max for P06748 mode 219 for residuals_all reading 0.0800921516607635 vs 0.053584115238095316
+No phospho ANOVA metrics match abundances normalised log2_mean for P19338 mode 113 for F_statistics reading 13.431608893404977 vs 14.833206368435134
+No phospho metrics number match abundances normalised 0-max for P19338 mode 113 for residuals_all reading 0.07997724612357342 vs 0.05363467000000006
+No phospho metrics number match abundances normalised 0-max for Q14839 mode 1308 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for P55884 mode 119 for curve_fold_change reading 0.038011904761904754 vs 0.03101190476190535
+No protein metrics number match abundances normalised log2_mean for O60763 for R_squared_all reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q13263 mode 41 for R_squared_all reading 0.08 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q6XZF7 mode 324 for R_squared_average reading 0.020000000000000018 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q14573 mode 2670 for variance_average reading 0.03 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q14157 mode T/S[619-644] for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P20700 mode 19 for residuals_all reading 1.022737819712712 vs 0.8369478423809533
+No phospho metrics number match abundances normalised 0-max for P20700 mode 19 for residuals_all reading 0.07897434176702084 vs 0.05358910809523815
+No phospho metrics number match abundances normalised log2_mean for P20700 mode 25 for residuals_all reading 1.022737819712712 vs 0.8369478423809533
+No phospho metrics number match abundances normalised 0-max for P20700 mode 25 for residuals_all reading 0.07897434176702084 vs 0.05358910809523815
+No protein metrics number match abundances normalised 0-max for P43243 for R_squared_all reading 0.03 vs 0.04
+No protein metrics number match abundances normalised 0-max for Q16531 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P52701 mode 137 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q86UU1 mode 404 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q86UU1 mode 404 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for O60271 mode 217 for R_squared_average reading 0.06000000000000005 vs 0.05
+No protein metrics number match abundances normalised log2_mean for Q7L2E3 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for O75691 mode 2064 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q8N1F7 mode 364 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q7Z460 mode 684 for R_squared_average reading 0.050000000000000044 vs 0.04
+No protein metrics number match abundances normalised 0-max for P31946 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q14160 mode S[492-513] for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q14160 mode 1378 for variance_average reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q14160 mode S[1219-1238] for curve_fold_change reading 0.04673809523808914 vs 0.03986904761904997
+No phospho metrics number match abundances normalised log2_mean for Q8WXH0 mode S/T[6347-6371] for R_squared_average reading 0.050000000000000044 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q7L014 mode 928 for residuals_all reading 0.48602058380165325 vs 0.3785280957142859
+No phospho ANOVA metrics match abundances normalised log2_mean for Q7L014 mode 928 for F_statistics reading 51.59876265720515 vs 56.828184034766245
+No phospho metrics number match abundances normalised 0-max for Q7L014 mode 928 for residuals_all reading 0.08066389523809518 vs 0.0536730023809524
+No protein metrics number match abundances normalised 0-max for P07195 for R_squared_all reading 0.04 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q9UDY2 mode 978 for R_squared_all reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q13620 mode 78 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for P11137 mode 881 for R_squared_average reading 0.040000000000000036 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q86V48 mode 932 for curve_fold_change reading 0.05824999999999952 vs 0.06616666666666633
+No phospho metrics number match abundances normalised 0-max for Q9H0B6 mode 589 for variance_average reading 0.05 vs 0.04
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9HBL0 mode 849 for p_value reading 0.49160414024869253 vs 0.21576134185366927
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9HBL0 mode 849 for F_statistics reading 1.1738387549425282 vs 2.6697386587785767
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9HBL0 mode T/S[813-851] for p_value reading 0.49160414024869253 vs 0.21576134185366927
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9HBL0 mode T/S[813-851] for F_statistics reading 1.1738387549425282 vs 2.6697386587785767
+No phospho metrics number match abundances normalised 0-max for Q9HBL0 mode 756 for residuals_average reading 0.04532275672619039 vs 0.06381390005952382
+No phospho metrics number match abundances normalised log2_mean for O15027 mode 569 for variance_average reading 0.03 vs 0.02
+No phospho ANOVA metrics match abundances normalised log2_mean for Q8IWE2 mode T/S[162-206] for p_value reading 0.3559174970516512 vs 0.29701705950492296
+No phospho ANOVA metrics match abundances normalised log2_mean for Q8IWE2 mode T/S[162-206] for F_statistics reading 1.3362122700065557 vs 1.5192852367050835
+No phospho metrics number match abundances normalised log2_mean for Q9UPU5 mode 1143 for R_squared_average reading 0.010000000000000009 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q8NE71 mode 108 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q8NE71 mode 108 for R_squared_average reading 0.040000000000000036 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q52LW3 mode 589 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q14C86 mode 902 for variance_average reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised log2_mean for P45880 mode 118 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised log2_mean for O14976 mode 780 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for O95425 mode 472 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q13557 mode S/T[323-344] for variance_average reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised 0-max for O00505 mode S[50-67] for R_squared_average reading 0.020000000000000018 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q5JSH3 mode 561 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q5JSH3 mode 561 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for O14964 mode S/Y[292-328] for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q99575 mode 367 for variance_average reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for P27824 mode 564 for variance_average reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised 0-max for Q05209 mode 449 for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised 0-max for O75410 mode 504 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised 0-max for Q70E73 mode 1154 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q70E73 mode T/S[1133-1156] for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised 0-max for Q8WWM7 mode 634 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q8NEY1 mode 760 for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q8NEY1 mode 760 for R_squared_all reading 0.06 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9NR12 mode 217 for R_squared_average reading 0.030000000000000027 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q96BY6 mode 1440 for variance_average reading 0.1 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q9NRY4 mode 970 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q9NRY4 mode 1106 for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q9NRY4 mode 1106 for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q9NRY4 mode 770 for R_squared_all reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for P30419 mode 69 for R_squared_average reading 0.010000000000000009 vs 0.0
+No phospho metrics number match abundances normalised log2_mean for O15357 mode 132 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q9UEW8 mode S[536-545] for R_squared_all reading 0.04 vs 0.05
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UEW8 mode S[536-545] for p_value reading 0.4271332702519399 vs 0.5917636402928953
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UEW8 mode S[536-545] for F_statistics reading 1.1548126520522597 vs 0.812806257868467
+Protein abundance lengths don't match abundances raw for P04264: 24 vs 0
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for Palbo reading 187.3
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for Late G1_1 reading 291.1
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for G1/S reading 78.2
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for S reading 134.6
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for S/G2 reading 132.9
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for G2_2 reading 76.0
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for G2/M_1 reading 444.9
+No process protein reading for abundances raw for P04264 for abundance_rep_1 for M/Early G1 reading 260.8
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for Palbo reading 125.1
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for Late G1_1 reading 186.8
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for G1/S reading 1882.5
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for S reading 148.1
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for S/G2 reading 86.7
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for G2_2 reading 306.7
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for G2/M_1 reading 2336.2
+No process protein reading for abundances raw for P04264 for abundance_rep_2 for M/Early G1 reading 233.6
+No process protein reading for abundances raw for P04264 for abundance_average for Palbo reading 187.3
+No process protein reading for abundances raw for P04264 for abundance_average for Late G1_1 reading 291.1
+No process protein reading for abundances raw for P04264 for abundance_average for G1/S reading 78.2
+No process protein reading for abundances raw for P04264 for abundance_average for S reading 134.6
+No process protein reading for abundances raw for P04264 for abundance_average for S/G2 reading 132.9
+No process protein reading for abundances raw for P04264 for abundance_average for G2_2 reading 76.0
+No process protein reading for abundances raw for P04264 for abundance_average for G2/M_1 reading 444.9
+No process protein reading for abundances raw for P04264 for abundance_average for M/Early G1 reading 260.8
+Protein abundance lengths don't match abundances normalised median for P04264: 24 vs 0
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for Palbo reading 0.17978498752159724
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for Late G1_1 reading 0.3982760979614175
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for G1/S reading 0.06867480460173883
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for S reading 0.1854377626231315
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for S/G2 reading 0.15587614356087262
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for G2_2 reading 0.06945079045965458
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for G2/M_1 reading 0.40807154322403116
+No process protein reading for abundances normalised median for P04264 for abundance_rep_1 for M/Early G1 reading 0.2580645161290323
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for Palbo reading 0.12008062967940103
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for Late G1_1 reading 0.25557531810097145
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for G1/S reading 1.6532010187055413
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for S reading 0.20403664669008748
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for S/G2 reading 0.10168895144264603
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for G2_2 reading 0.28027049255231656
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for G2/M_1 reading 2.142811281816097
+No process protein reading for abundances normalised median for P04264 for abundance_rep_2 for M/Early G1 reading 0.23114981199287554
+No process protein reading for abundances normalised median for P04264 for abundance_average for Palbo reading 0.1798
+No process protein reading for abundances normalised median for P04264 for abundance_average for Late G1_1 reading 0.3983
+No process protein reading for abundances normalised median for P04264 for abundance_average for G1/S reading 0.0687
+No process protein reading for abundances normalised median for P04264 for abundance_average for S reading 0.1854
+No process protein reading for abundances normalised median for P04264 for abundance_average for S/G2 reading 0.1559
+No process protein reading for abundances normalised median for P04264 for abundance_average for G2_2 reading 0.0695
+No process protein reading for abundances normalised median for P04264 for abundance_average for G2/M_1 reading 0.4081
+No process protein reading for abundances normalised median for P04264 for abundance_average for M/Early G1 reading 0.2581
+Protein abundance lengths don't match abundances normalised log2_mean for P04264: 24 vs 0
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for Palbo reading -0.4372
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for Late G1_1 reading 0.7103
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for G1/S reading -1.8256
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for S reading -0.3925
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for S/G2 reading -0.643
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for G2_2 reading -1.8094
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for G2/M_1 reading 0.7454
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_1 for M/Early G1 reading 0.0843
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for Palbo reading -1.0194
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for Late G1_1 reading 0.0703
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for G1/S reading 2.7638
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for S reading -0.2546
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for S/G2 reading -1.2593
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for G2_2 reading 0.2034
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for G2/M_1 reading 3.138
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_rep_2 for M/Early G1 reading -0.0746
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for Palbo reading -0.4372
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for Late G1_1 reading 0.7103
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for G1/S reading -1.8256
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for S reading -0.3925
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for S/G2 reading -0.643
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for G2_2 reading -1.8094
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for G2/M_1 reading 0.7454
+No process protein reading for abundances normalised log2_mean for P04264 for abundance_average for M/Early G1 reading 0.0843
+Protein abundance lengths don't match abundances normalised min-max for P04264: 24 vs 0
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for Palbo reading 0.54
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for Late G1_1 reading 0.9863
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for G1/S reading 0.0
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for S reading 0.5574
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for S/G2 reading 0.46
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for G2_2 reading 0.0063
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for G2/M_1 reading 1.0
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_1 for M/Early G1 reading 0.7429
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for Palbo reading 0.0546
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for Late G1_1 reading 0.3024
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for G1/S reading 0.9149
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for S reading 0.2285
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for S/G2 reading 0.0
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for G2_2 reading 0.3326
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for G2/M_1 reading 1.0
+No process protein reading for abundances normalised min-max for P04264 for abundance_rep_2 for M/Early G1 reading 0.2694
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for Palbo reading 0.54
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for Late G1_1 reading 0.9863
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for G1/S reading 0.0
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for S reading 0.5574
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for S/G2 reading 0.46
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for G2_2 reading 0.0063
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for G2/M_1 reading 1.0
+No process protein reading for abundances normalised min-max for P04264 for abundance_average for M/Early G1 reading 0.7429
+Protein abundance lengths don't match abundances normalised 0-max for P04264: 24 vs 0
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for Palbo reading 0.4406
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for Late G1_1 reading 0.976
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for G1/S reading 0.1683
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for S reading 0.4544
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for S/G2 reading 0.382
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for G2_2 reading 0.1702
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for G2/M_1 reading 1.0
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_1 for M/Early G1 reading 0.6324
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for Palbo reading 0.056
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for Late G1_1 reading 0.1193
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for G1/S reading 0.7715
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for S reading 0.0952
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for S/G2 reading 0.0475
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for G2_2 reading 0.1308
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for G2/M_1 reading 1.0
+No process protein reading for abundances normalised 0-max for P04264 for abundance_rep_2 for M/Early G1 reading 0.1079
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for Palbo reading 0.4406
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for Late G1_1 reading 0.976
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for G1/S reading 0.1683
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for S reading 0.4544
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for S/G2 reading 0.382
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for G2_2 reading 0.1702
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for G2/M_1 reading 1.0
+No process protein reading for abundances normalised 0-max for P04264 for abundance_average for M/Early G1 reading 0.6324
+Protein abundance lengths don't match abundances imputed for P04264: 24 vs 0
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for Palbo reading 0.54
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for Late G1_1 reading 0.99
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for G1/S reading 0.0
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for S reading 0.56
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for S/G2 reading 0.46
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for G2_2 reading 0.01
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for G2/M_1 reading 1.0
+No process protein reading for abundances imputed for P04264 for abundance_rep_1 for M/Early G1 reading 0.74
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for Palbo reading 0.05
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for Late G1_1 reading 0.3
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for G1/S reading 0.91
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for S reading 0.23
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for S/G2 reading 0.0
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for G2_2 reading 0.33
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for G2/M_1 reading 1.0
+No process protein reading for abundances imputed for P04264 for abundance_rep_2 for M/Early G1 reading 0.27
+No process protein reading for abundances imputed for P04264 for abundance_average for Palbo reading 0.295
+No process protein reading for abundances imputed for P04264 for abundance_average for Late G1_1 reading 0.645
+No process protein reading for abundances imputed for P04264 for abundance_average for G1/S reading 0.455
+No process protein reading for abundances imputed for P04264 for abundance_average for S reading 0.395
+No process protein reading for abundances imputed for P04264 for abundance_average for S/G2 reading 0.23
+No process protein reading for abundances imputed for P04264 for abundance_average for G2_2 reading 0.17
+No process protein reading for abundances imputed for P04264 for abundance_average for G2/M_1 reading 1.0
+No process protein reading for abundances imputed for P04264 for abundance_average for M/Early G1 reading 0.505
+No process protein metrics string abundances normalised log2_mean for P04264 for peak_average
+No process protein metrics string abundances normalised log2_mean for P04264 for curve_peak
+No process protein metrics number abundances normalised log2_mean for P04264 for standard_deviation
+No process protein metrics number abundances normalised log2_mean for P04264 for variance_average
+No process protein metrics number abundances normalised log2_mean for P04264 for skewness_average
+No process protein metrics number abundances normalised log2_mean for P04264 for kurtosis_average
+No process protein metrics number abundances normalised log2_mean for P04264 for max_fold_change_average
+No process protein metrics number abundances normalised log2_mean for P04264 for residuals_average
+No process protein metrics number abundances normalised log2_mean for P04264 for R_squared_average
+No process protein metrics number abundances normalised log2_mean for P04264 for residuals_all
+No process protein metrics number abundances normalised log2_mean for P04264 for R_squared_all
+No process protein metrics number abundances normalised log2_mean for P04264 for curve_fold_change
+No protein ANOVA metrics match abundances normalised log2_mean for P04264 for p_value reading 0.546685129601137 vs 1
+No protein ANOVA metrics match abundances normalised log2_mean for P04264 for F_statistics reading 0.9035729155504671 vs 1
+No process protein metrics abundances normalised 0-max for P04264
+No phospho metrics number match abundances normalised log2_mean for Q9UNZ2 mode 99 for curve_fold_change reading -0.005999999999999587 vs 0.0017499999999999972
+No phospho metrics number match abundances normalised log2_mean for Q9NUU7 mode 92 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q69YQ0 mode 54 for curve_fold_change reading 0.056988095238095504 vs 0.04972619047619087
+No phospho metrics number match abundances normalised log2_mean for Q69YQ0 mode S/T[830-842] for curve_fold_change reading -0.059404761904762286 vs -0.066916666666667
+No phospho metrics number match abundances normalised 0-max for Q9Y3P9 mode 42 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q9Y3P9 mode T/S[31-50] for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q8IY17 mode 464 for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for P18085 mode 147 for curve_fold_change reading 0.029333333333332847 vs 0.03699999999999981
+No phospho metrics number match abundances normalised 0-max for P18085 mode 147 for R_squared_all reading 0.05 vs 0.06
+No protein metrics number match abundances normalised 0-max for P61201 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q15642 mode 296 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q15785 mode 186 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for O43150 mode S[820-835] for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q15678 mode 314 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q8IZL8 mode 658 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q8N3R9 mode 243 for R_squared_all reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q15424 mode 601 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised log2_mean for Q63ZY3 mode 141 for residuals_all reading 0.5311442511176704 vs 0.656299619523809
+No phospho metrics number match abundances normalised log2_mean for Q63ZY3 mode 141 for R_squared_all reading 0.51 vs 0.4
+No phospho metrics number match abundances normalised log2_mean for Q63ZY3 mode 141 for curve_fold_change reading 11.080085399449043 vs 8.38309523809524
+No phospho ANOVA metrics match abundances normalised log2_mean for Q63ZY3 mode 141 for p_value reading 0.7454893587572218 vs 0.8652120128799726
+No phospho ANOVA metrics match abundances normalised log2_mean for Q63ZY3 mode 141 for F_statistics reading 0.5930230020818215 vs 0.3502016500400438
+No phospho metrics number match abundances normalised 0-max for Q63ZY3 mode 141 for residuals_all reading 0.08524532680834306 vs 0.11626751714285691
+No phospho metrics number match abundances normalised 0-max for Q63ZY3 mode 141 for R_squared_all reading 0.63 vs 0.5
+No phospho metrics number match abundances normalised log2_mean for Q63ZY3 mode S/T[135-170] for residuals_all reading 0.5311442511176704 vs 0.656299619523809
+No phospho metrics number match abundances normalised log2_mean for Q63ZY3 mode S/T[135-170] for R_squared_all reading 0.51 vs 0.4
+No phospho metrics number match abundances normalised log2_mean for Q63ZY3 mode S/T[135-170] for curve_fold_change reading 11.080085399449043 vs 8.38309523809524
+No phospho ANOVA metrics match abundances normalised log2_mean for Q63ZY3 mode S/T[135-170] for p_value reading 0.7454893587572218 vs 0.8652120128799726
+No phospho ANOVA metrics match abundances normalised log2_mean for Q63ZY3 mode S/T[135-170] for F_statistics reading 0.5930230020818215 vs 0.3502016500400438
+No phospho metrics number match abundances normalised 0-max for Q63ZY3 mode S/T[135-170] for residuals_all reading 0.08524532680834306 vs 0.11626751714285691
+No phospho metrics number match abundances normalised 0-max for Q63ZY3 mode S/T[135-170] for R_squared_all reading 0.63 vs 0.5
+No protein metrics number match abundances normalised log2_mean for P48449 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised 0-max for P48449 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q96PU5 mode 342 for R_squared_average reading 0.06000000000000005 vs 0.07
+No protein metrics number match abundances normalised log2_mean for P28370 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q9UJU6 mode 269 for curve_fold_change reading -0.03235714285714286 vs -0.04041666666666721
+No phospho metrics number match abundances normalised 0-max for Q12802 mode 2398 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q9Y4K4 mode 400 for R_squared_average reading 0.010000000000000009 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q8NFC6 mode 2986 for R_squared_all reading 0.04 vs 0.05
+No protein metrics number match abundances normalised 0-max for O15143 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9UDT6 mode 352 for curve_fold_change reading -0.021059523809525138 vs -0.029500000000001192
+No phospho metrics number match abundances normalised log2_mean for Q9Y2W1 mode 207 for R_squared_average reading 0.030000000000000027 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q9Y2W1 mode 207 for R_squared_all reading 0.03 vs 0.04
+No phospho metrics number match abundances normalised 0-max for Q9Y2W1 mode 207 for R_squared_all reading 0.03 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q92995 mode 122 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q71RC2 mode 583 for R_squared_all reading 0.05 vs 0.04
+No protein metrics number match abundances normalised log2_mean for Q9GZS3 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised 0-max for Q9GZS3 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q3KQU3 mode 442 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for P35611 mode 586 for curve_fold_change reading -0.005833333333332691 vs -0.004000000000008441
+No protein metrics number match abundances normalised log2_mean for Q9ULH0 for R_squared_all reading 0.04 vs 0.03
+No protein metrics number match abundances normalised 0-max for Q9ULH0 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for O76021 mode 361 for curve_fold_change reading 0.007202380952379822 vs 0.00011904761904810157
+No phospho metrics number match abundances normalised 0-max for P28290 mode T/S[1151-1191] for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P28290 mode 704 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised 0-max for P28290 mode 704 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for P28290 mode 737 for curve_fold_change reading 0.012166666666666309 vs 0.01874999999999885
+No protein metrics number match abundances normalised log2_mean for P13861 for R_squared_all reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q5JSZ5 mode S[1420-1430] for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q9UJF2 mode S/T[798-813] for R_squared_average reading 0.06999999999999995 vs 0.06
+No protein metrics number match abundances normalised log2_mean for Q32P44 for R_squared_all reading 0.04 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q8NHV4 mode 396 for curve_fold_change reading 0.015428571428571236 vs 0.011238095238094714
+No phospho metrics number match abundances normalised log2_mean for Q9H1A4 mode 60 for variance_average reading 0.06 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q9UEY8 mode 650 for variance_average reading 0.04 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q9Y2X3 mode 34 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P35251 mode 105 for R_squared_all reading 0.1 vs 0.09
+No protein metrics number match abundances normalised 0-max for Q9HC35 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q6PJT7 mode 343 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for O60216 mode 175 for R_squared_all reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q9NZ56 mode 747 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q15276 mode 407 for curve_fold_change reading -0.027999999999999244 vs -0.02033333333333255
+No phospho ANOVA metrics match abundances normalised log2_mean for Q6ZS17 mode 728 for p_value reading 0.41472422099479317 vs 0.34152792626878936
+No phospho ANOVA metrics match abundances normalised log2_mean for Q6ZS17 mode 728 for F_statistics reading 1.2562714250884017 vs 1.4504220425388568
+No protein metrics number match abundances normalised log2_mean for P40925 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised 0-max for P40925 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q8TF72 mode 1497 for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q8TF72 mode 721 for curve_fold_change reading -0.013690476190477141 vs -0.01713095238095208
+No phospho metrics number match abundances normalised 0-max for Q8TF72 mode T/S[425-449] for R_squared_all reading 0.08 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q8IWR0 mode 210 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised 0-max for Q15811 mode 315 for R_squared_average reading 0.050000000000000044 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q6PL18 mode 1233 for residuals_all reading 0.7051395261511209 vs 0.6157006823809523
+No protein metrics number match abundances normalised 0-max for P23193 for R_squared_all reading 0.1 vs 0.09
+No protein metrics number match abundances normalised 0-max for P78357 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q86VM9 mode 534 for R_squared_all reading 0.08 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q8IWC1 mode 229 for curve_fold_change reading -0.05910714285714436 vs -0.06596428571428503
+No phospho metrics number match abundances normalised log2_mean for P46100 mode 849 for curve_fold_change reading 0.0667738095238074 vs 0.059988095238093786
+No phospho metrics number match abundances normalised log2_mean for P46100 mode 850 for curve_fold_change reading 0.0667738095238074 vs 0.059988095238093786
+No phospho metrics number match abundances normalised log2_mean for Q9Y4G8 mode 1116 for variance_average reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q9Y4G8 mode 1120 for variance_average reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q92734 mode 197 for variance_average reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for O00273 mode 232 for R_squared_all reading 0.09 vs 0.1
+No phospho metrics number match abundances normalised 0-max for O00273 mode 232 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q8IYB3 mode 846 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for P10412 mode 27 for residuals_all reading 1.5691020546359706 vs 1.396558699523811
+No phospho metrics number match abundances normalised 0-max for P10412 mode 27 for residuals_all reading 0.0838048261511216 vs 0.053966775714285764
+No phospho metrics number match abundances normalised log2_mean for Q16576 mode T/S/Y[143-155] for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q9NVD7 mode 19 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for O15061 mode 653 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q96EB6 mode 719 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9C0E8 mode 177 for R_squared_average reading 0.050000000000000044 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q99590 mode 405 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q00537 mode 180 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9NYF8 mode 714 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q9NYF8 mode 717 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q9NYF8 mode 119 for curve_fold_change reading 0.02350000000000058 vs 0.02974999999999929
+No protein metrics number match abundances normalised log2_mean for Q8IXB1 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q8TER5 mode 1474 for curve_fold_change reading 0.02053571428571349 vs 0.013928571428571124
+No phospho metrics number match abundances normalised 0-max for Q96JM3 mode 542 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q96JM3 mode 632 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q96JM3 mode S/Y[622-638] for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for O60566 mode 1043 for residuals_all reading 0.34799124832349515 vs 0.4027062838095246
+No phospho ANOVA metrics match abundances normalised log2_mean for O60566 mode 1043 for F_statistics reading 98.98205752240193 vs 115.53697878533201
+No phospho metrics number match abundances normalised 0-max for O60566 mode 1043 for residuals_all reading 0.04027455680834315 vs 0.028543274285714314
+No phospho metrics number match abundances normalised 0-max for O60566 mode 1043 for curve_fold_change reading 18.116157024793385 vs 12.548238012709382
+No phospho metrics number match abundances normalised log2_mean for Q6VY07 mode 28 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q6VY07 mode 430 for variance_average reading 0.08 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q6VY07 mode 519 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q14BN4 mode 235 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q9UN86 mode 149 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q7Z3K3 mode 707 for R_squared_all reading 0.32 vs 0.36
+No phospho ANOVA metrics match abundances normalised log2_mean for Q7Z3K3 mode 707 for p_value reading 0.3382334870984562 vs 0.27332955157698097
+No phospho ANOVA metrics match abundances normalised log2_mean for Q7Z3K3 mode 707 for F_statistics reading 1.3875945659174258 vs 1.6085420418069145
+No phospho metrics number match abundances normalised 0-max for Q7Z3K3 mode 707 for R_squared_all reading 0.31 vs 0.35
+No phospho metrics number match abundances normalised log2_mean for O75376 mode 2315 for variance_average reading 0.03 vs 0.02
+No protein metrics number match abundances normalised 0-max for P61088 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q7Z6E9 mode 780 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q7Z6E9 mode 780 for curve_fold_change reading -0.045750000000001345 vs -0.03783333333333346
+No protein metrics number match abundances normalised 0-max for P18615 for R_squared_all reading 0.03 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q02543 mode 123 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for O75427 mode 513 for R_squared_all reading 0.04 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q3YEC7 mode 454 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised log2_mean for Q13625 mode 737 for variance_average reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q66K74 mode 809 for R_squared_all reading 0.1 vs 0.09
+No protein metrics number match abundances normalised log2_mean for Q13151 for R_squared_all reading 0.04 vs 0.03
+No protein metrics number match abundances normalised 0-max for Q13151 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9Y5P4 mode 126 for variance_average reading 0.06 vs 0.05
+No protein metrics number match abundances normalised log2_mean for Q9NP97 for R_squared_all reading 0.09 vs 0.08
+No protein metrics number match abundances normalised 0-max for Q9NP97 for R_squared_all reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q8TEW0 mode 383 for variance_average reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised log2_mean for Q92917 mode 42 for R_squared_all reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q92917 mode 42 for curve_fold_change reading -0.030499999999998903 vs -0.02425000000000074
+No phospho metrics number match abundances normalised log2_mean for Q92870 mode 160 for curve_fold_change reading 0.05060714285714252 vs 0.04367857142857062
+No phospho metrics number match abundances normalised log2_mean for Q9Y4F5 mode S/T[984-1004] for R_squared_all reading 0.1 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q9Y4F5 mode 1179 for variance_average reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9Y6M7 mode 84 for curve_fold_change reading 0.011916666666667115 vs 0.018833333333333643
+No phospho metrics number match abundances normalised log2_mean for Q8TEM1 mode 1874 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9H8Y8 mode S/T[429-452] for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q9H8Y8 mode S/T[429-452] for R_squared_average reading 0.050000000000000044 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for P16104 mode 122 for residuals_all reading 0.2886525199488386 vs 0.13080093857142813
+No phospho metrics number match abundances normalised 0-max for P16104 mode 122 for residuals_all reading 0.006701849842581662 vs 0.00397311857142858
+No phospho metrics number match abundances normalised log2_mean for Q9NUQ3 mode 105 for variance_average reading 0.02 vs 0.03
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UPQ9 mode 1488-1523 for p_value reading 0.30973721941113236 vs 0.3457788575184808
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UPQ9 mode 1488-1523 for F_statistics reading 1.6119107268015498 vs 1.4338026279061258
+No phospho metrics number match abundances normalised log2_mean for Q8IZ21 mode S[173-187] for variance_average reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q86Y82 mode 142 for variance_average reading 0.04 vs 0.03
+No protein metrics number match abundances normalised log2_mean for Q9NNW7 for R_squared_all reading 0.03 vs 0.02
+No protein metrics number match abundances normalised 0-max for Q9NNW7 for R_squared_all reading 0.03 vs 0.02
+No protein metrics number match abundances normalised 0-max for Q8NC56 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9NSK0 mode 611 for R_squared_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q9NSK0 mode 611 for R_squared_average reading 0.0 vs 0.01
+No protein metrics number match abundances normalised 0-max for P50148 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q9Y487 mode 142-168 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised 0-max for A0JNW5 mode 774 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9P270 mode 160 for variance_average reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q9P270 mode 234 for variance_average reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for O75152 mode 485-506 for residuals_all reading 0.2608949248524204 vs 0.2891258471428572
+No phospho metrics number match abundances normalised log2_mean for O75152 mode 485-506 for R_squared_all reading 0.48 vs 0.42
+No phospho ANOVA metrics match abundances normalised log2_mean for O75152 mode 485-506 for p_value reading 0.08889322210685346 vs 0.07165694538337161
+No phospho ANOVA metrics match abundances normalised log2_mean for O75152 mode 485-506 for F_statistics reading 2.9425689289721473 vs 3.3029996707797893
+No phospho metrics number match abundances normalised 0-max for O75152 mode 485-506 for residuals_all reading 0.0682021363360881 vs 0.07612306999999986
+No phospho metrics number match abundances normalised 0-max for O75152 mode 485-506 for R_squared_all reading 0.5 vs 0.44
+No phospho metrics number match abundances normalised log2_mean for P25490 mode S/Y/T[231-258] for R_squared_all reading 0.03 vs 0.04
+No phospho ANOVA metrics match abundances normalised log2_mean for P17252 mode S/Y[633-672] for p_value reading 0.061142151123000504 vs 0.045718057448836454
+No phospho ANOVA metrics match abundances normalised log2_mean for P17252 mode S/Y[633-672] for F_statistics reading 3.477016764663699 vs 4.014715167370323
+No phospho metrics number match abundances normalised log2_mean for O43493 mode 351 for curve_fold_change reading 0.006464285714285478 vs -0.0019523809523835922
+No phospho metrics number match abundances normalised log2_mean for Q9H6F5 mode 110 for variance_average reading 0.03 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q93100 mode 27 for R_squared_all reading 0.04 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q9UK76 mode 92 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q9UH62 mode 110 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho ANOVA metrics match abundances normalised log2_mean for Q99436 mode T/S[259-277] for F_statistics reading 0.6235914459672051 vs 0.6939088850517524
+No phospho metrics number match abundances normalised log2_mean for P29218 mode S/T[37-49] for curve_fold_change reading 0.019869047619047453 vs 0.012607142857142262
+No phospho metrics number match abundances normalised log2_mean for Q09028 mode T/S/Y[144-156] for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q9H792 mode 1217 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q9H792 mode 1217 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q96ST2 mode 300 for curve_fold_change reading 0.014833333333333434 vs 0.016333333333333408
+No phospho ANOVA metrics match abundances normalised log2_mean for Q6IN85 mode T/S[104-139] for p_value reading 0.05701576222495133 vs 0.043907844801358946
+No phospho ANOVA metrics match abundances normalised log2_mean for Q6IN85 mode T/S[104-139] for F_statistics reading 3.58280515656072 vs 4.083031064386847
+No phospho metrics number match abundances normalised log2_mean for Q9NRA8 mode 564 for variance_average reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q9Y2I7 mode 307 for variance_average reading 0.03 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q9H8Y5 mode 607 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q9UK61 mode 1552 for variance_average reading 0.06 vs 0.07
+No phospho metrics number match abundances normalised 0-max for P40189 mode 782 for R_squared_all reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q96L91 mode T/S[1714-1742] for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for O43164 mode 216 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9Y5T5 mode 552 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q9UBL6 mode 632 for curve_fold_change reading 0.02896428571428522 vs 0.021547619047619093
+No phospho metrics number match abundances normalised 0-max for Q9UBL6 mode 628 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UJX2 mode 562 for p_value reading 0.5021872094678456 vs 0.4399038857526378
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UJX2 mode 562 for F_statistics reading 0.9957146097528313 vs 1.112616387392281
+No phospho metrics number match abundances normalised log2_mean for Q15555 mode 232 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q03164 mode 1056 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q6ZW31 mode 159 for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for O95571 mode 19 for curve_fold_change reading -0.02890476190476332 vs -0.037369047619049134
+No protein metrics number match abundances normalised log2_mean for Q7Z4I7 for R_squared_all reading 0.07 vs 0.08
+No protein metrics number match abundances normalised 0-max for Q8N4C8 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised 0-max for O75381 mode 232 for variance_average reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised log2_mean for Q96BY7 mode 1579 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q96BY7 mode 1585 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9H7N4 mode 612 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q9H7N4 mode 614 for R_squared_average reading 0.08999999999999997 vs 0.08
+No protein metrics number match abundances normalised 0-max for Q9H9B1 for R_squared_all reading 0.02 vs 0.03
+No phospho ANOVA metrics match abundances normalised log2_mean for O14647 mode 1213 for F_statistics reading 62.43949695350059 vs 68.77966684476074
+No phospho metrics number match abundances normalised 0-max for O14647 mode 1213 for residuals_all reading 0.06579959056670599 vs 0.045618558571428616
+No phospho metrics number match abundances normalised log2_mean for A6ND36 mode 760 for R_squared_average reading 0.06999999999999995 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q13017 mode T/S[1209-1226] for curve_fold_change reading 0.06724999999999925 vs 0.06024999999999947
+No phospho metrics number match abundances normalised log2_mean for Q8IVL0 mode 1245 for R_squared_average reading 0.010000000000000009 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q9NYV4 mode S[381-401] for R_squared_all reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q6P5R6 mode 120 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for O14646 mode 90 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q96RE7 mode 123-165 for R_squared_all reading 0.09 vs 0.13
+No phospho metrics number match abundances normalised log2_mean for Q96RE7 mode 123-165 for curve_fold_change reading 1.5403719008264496 vs 0.6381428571428555
+No phospho ANOVA metrics match abundances normalised log2_mean for Q96RE7 mode 123-165 for p_value reading 0.3635986144935219 vs 0.46987881682100247
+No phospho ANOVA metrics match abundances normalised log2_mean for Q96RE7 mode 123-165 for F_statistics reading 1.3548926159454595 vs 1.0449399609492092
+No phospho metrics number match abundances normalised 0-max for Q96RE7 mode 123-165 for R_squared_all reading 0.09 vs 0.15
+No phospho metrics number match abundances normalised log2_mean for Q8IWW6 mode 201 for R_squared_average reading 0.030000000000000027 vs 0.04
+No protein metrics number match abundances normalised log2_mean for Q92692 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q92692 mode 513 for R_squared_average reading 0.06999999999999995 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for O15211 mode 409 for variance_average reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q96CX2 mode 185 for curve_fold_change reading 0.0030833333333339817 vs 0.011000000000001061
+No protein metrics number match abundances normalised log2_mean for Q9NTJ4 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q8IWB9 mode 266 for curve_fold_change reading 0.07316666666666571 vs 0.08091666666666672
+No phospho metrics number match abundances normalised log2_mean for Q9C0B5 mode 636 for curve_fold_change reading 0.02116666666666668 vs 0.02666666666666672
+No phospho metrics number match abundances normalised 0-max for Q9C0B5 mode 636 for R_squared_all reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q9Y6N7 mode 1240 for R_squared_average reading 0.06999999999999995 vs 0.06
+No protein metrics number match abundances normalised 0-max for P49137 for variance_average reading 0.04 vs 0.03
+No phospho ANOVA metrics match abundances normalised log2_mean for Q16566 mode 10 for p_value reading 0.13474386530139457 vs 0.10777081954651556
+No phospho ANOVA metrics match abundances normalised log2_mean for Q16566 mode 10 for F_statistics reading 2.406050596954404 vs 2.726128626650082
+No protein metrics number match abundances normalised 0-max for P24539 for R_squared_all reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised 0-max for O75494 mode 209 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UBB5 mode 44 for p_value reading 0.3732097198308186 vs 0.3113684977171989
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9UBB5 mode 44 for F_statistics reading 1.288687014543593 vs 1.4691937696461228
+No protein metrics number match abundances normalised 0-max for P17535 for variance_average reading 0.04 vs 0.03
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9NRS6 mode S/T[166-204] for F_statistics reading 0.38583900112165015 vs 0.2804586548913083
+No phospho metrics number match abundances normalised 0-max for Q8NFA0 mode 1416 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q15056 mode 21 for variance_average reading 0.01 vs 0.0
+No phospho metrics number match abundances normalised 0-max for Q86TC9 mode 644 for R_squared_all reading 0.04 vs 0.03
+No phospho ANOVA metrics match abundances normalised log2_mean for P17302 mode 282 for F_statistics reading 0.25057976751942884 vs 0.2915378696869091
+No phospho metrics number match abundances normalised 0-max for P17302 mode 372 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised 0-max for P17302 mode 373 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q5T5U3 mode 1566 for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for O75167 mode 443 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised 0-max for O75167 mode 443 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for O75167 mode 445 for R_squared_average reading 0.06000000000000005 vs 0.07
+No phospho metrics number match abundances normalised 0-max for O75167 mode 445 for R_squared_average reading 0.050000000000000044 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q99717 mode 133 for R_squared_all reading 0.04 vs 0.03
+No protein metrics number match abundances normalised log2_mean for Q5T200 for R_squared_all reading 0.03 vs 0.02
+No protein metrics number match abundances normalised log2_mean for Q9H334 for R_squared_all reading 0.08 vs 0.09
+No protein metrics number match abundances normalised 0-max for Q9H3F6 for R_squared_all reading 0.06 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q8TEP8 mode 2110 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised log2_mean for Q5VUA4 mode 1267 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9C0C7 mode T/S[1191-1212] for F_statistics reading 0.5313265036806708 vs 0.4498619258628061
+No phospho metrics number match abundances normalised log2_mean for Q8WXE0 mode 403 for variance_average reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised 0-max for P78368 mode 366 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q9Y6M4 mode 344 for R_squared_all reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for P28715 mode 526 for R_squared_average reading 0.020000000000000018 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q96QZ7 mode 1427 for curve_fold_change reading 0.01240476190476153 vs 0.003797619047616607
+No phospho metrics number match abundances normalised log2_mean for Q9ULL5 mode 709 for curve_fold_change reading -0.07599999999999887 vs -0.06824999999999885
+No phospho metrics number match abundances normalised 0-max for Q8TAA9 mode S/T[518-524] for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q96EV2 mode S/T/Y[827-867] for R_squared_average reading 0.06999999999999995 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q15652 mode 376 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q15652 mode 505 for R_squared_all reading 0.07 vs 0.06
+No protein metrics number match abundances normalised 0-max for Q14554 for R_squared_all reading 0.08 vs 0.07
+No protein metrics number match abundances normalised 0-max for Q8N612 for R_squared_all reading 0.03 vs 0.02
+No protein metrics number match abundances normalised 0-max for Q9HBH1 for R_squared_all reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q9UER7 mode S/T[143-180] for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q96B54 mode 108 for R_squared_average reading 0.08999999999999997 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q8TF74 mode 235 for R_squared_average reading 0.06000000000000005 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q04726 mode 240 for variance_average reading 0.01 vs 0.02
+No protein metrics number match abundances normalised log2_mean for Q9NRK6 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q8TDJ6 mode 2399 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q9ULV3 mode 225 for variance_average reading 0.04 vs 0.05
+No protein metrics number match abundances normalised 0-max for Q9NVS2 for R_squared_all reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for P42694 mode 1741 for R_squared_all reading 0.08 vs 0.09
+No protein metrics number match abundances normalised 0-max for Q9ULQ0 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q8TBZ3 mode 357 for R_squared_average reading 0.020000000000000018 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q96F63 mode 337 for variance_average reading 0.08 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for Q9NWZ5 mode S/T[8-21] for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q9NPG3 mode 173 for R_squared_average reading 0.030000000000000027 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q9BSQ5 mode 181 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q9BST9 mode 520 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q9Y3E2 mode 122 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q96A57 mode 23 for variance_average reading 0.0 vs 0.01
+No protein metrics number match abundances normalised log2_mean for Q9NQ66 for R_squared_all reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised 0-max for Q96A19 mode T/S[527-550] for variance_average reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q9HB58 mode 380 for variance_average reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q7L804 mode 388 for variance_average reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q9HAN9 mode 117 for R_squared_all reading 0.07 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q9P1Y6 mode 991 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised log2_mean for Q9H8G2 mode 312 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q9H8G2 mode 312 for R_squared_all reading 0.08 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q5SW96 mode 14 for R_squared_average reading 0.040000000000000036 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q0VG06 mode 667 for curve_fold_change reading 0.002000000000000037 vs 0.009916666666666133
+No phospho metrics number match abundances normalised 0-max for Q01196 mode 212 for R_squared_average reading 0.06999999999999995 vs 0.06
+No protein metrics number match abundances normalised 0-max for Q96DX4 for R_squared_all reading 0.1 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for Q8NHZ8 mode 82 for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised log2_mean for O60315 mode 353 for R_squared_all reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q8NCF5 mode 198 for R_squared_average reading 0.09999999999999998 vs 0.11
+No protein metrics number match abundances normalised 0-max for P54278 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for O75420 mode 368 for curve_fold_change reading -0.030071428571430414 vs -0.038214285714285035
+No phospho metrics number match abundances normalised log2_mean for O75420 mode S/T[366-391] for R_squared_average reading 0.050000000000000044 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q8N0Y2 mode S/T[158-186] for variance_average reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q76I76 mode 899 for R_squared_all reading 0.03 vs 0.04
+No phospho metrics number match abundances normalised 0-max for O94827 mode 193 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q2TBE0 mode 479 for R_squared_average reading 0.040000000000000036 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q8IWI9 mode 56 for variance_average reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q15742 mode 171 for variance_average reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised 0-max for Q9HC52 mode 256 for R_squared_average reading 0.07999999999999996 vs 0.09
+No phospho metrics number match abundances normalised 0-max for Q8NI77 mode 674 for variance_average reading 0.06 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for P15336 mode 328 for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised 0-max for P15336 mode 71 for R_squared_average reading 0.020000000000000018 vs 0.01
+No protein metrics number match abundances normalised 0-max for Q17R98 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised log2_mean for A0JLT2 for R_squared_all reading 0.1 vs 0.09
+No protein metrics number match abundances normalised log2_mean for Q86V87 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised 0-max for Q8IYK4 mode 154 for R_squared_all reading 0.07 vs 0.06
+No protein metrics number match abundances normalised 0-max for Q58WW2 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q9BRD0 mode 159 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q9BRD0 mode 163 for R_squared_average reading 0.08999999999999997 vs 0.1
+No phospho metrics number match abundances normalised 0-max for Q9BRD0 mode 271 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9BRD0 mode 248 for R_squared_all reading 0.09 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q9BRD0 mode 214 for curve_fold_change reading 0.06099999999999977 vs 0.06874999999999987
+No phospho metrics number match abundances normalised log2_mean for Q9HCH0 mode 440 for R_squared_average reading 0.07999999999999996 vs 0.07
+No phospho ANOVA metrics match abundances normalised log2_mean for Q96G74 mode 177 for p_value reading 0.07596061770596596 vs 0.056385318626379806
+No phospho ANOVA metrics match abundances normalised log2_mean for Q96G74 mode 177 for F_statistics reading 3.160712367392887 vs 3.6718728250650154
+No phospho ANOVA metrics match abundances normalised log2_mean for Q96G74 mode S/Y[154-187] for p_value reading 0.07596061770596596 vs 0.056385318626379806
+No phospho ANOVA metrics match abundances normalised log2_mean for Q96G74 mode S/Y[154-187] for F_statistics reading 3.160712367392887 vs 3.6718728250650154
+No phospho metrics number match abundances normalised log2_mean for Q8TEW8 mode 746 for R_squared_all reading 0.09 vs 0.08
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9Y4H2 mode 932 for p_value reading 0.5097414320927207 vs 0.3795368627941222
+No phospho ANOVA metrics match abundances normalised log2_mean for Q9Y4H2 mode 932 for F_statistics reading 0.9968369586353892 vs 1.2846328182683988
+No phospho metrics number match abundances normalised log2_mean for Q8WUA7 mode 132 for R_squared_all reading 0.08 vs 0.07
+No phospho metrics number match abundances normalised 0-max for Q969X1 mode 83 for variance_average reading 0.02 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q5SYE7 mode 1089 for R_squared_all reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for P54132 mode Y/T/S[286-317] for residuals_all reading 0.6686556709523805 vs 0.42080613095238123
+No phospho metrics number match abundances normalised log2_mean for P54132 mode Y/T/S[286-317] for R_squared_all reading 0.68 vs 0.8
+No phospho metrics number match abundances normalised log2_mean for P54132 mode Y/T/S[286-317] for curve_fold_change reading 11.583285714285715 vs 13.853047619047597
+No phospho metrics number match abundances normalised 0-max for P54132 mode Y/T/S[286-317] for residuals_all reading 0.14791781971271145 vs 0.10400308809523814
+No phospho metrics number match abundances normalised 0-max for P54132 mode Y/T/S[286-317] for R_squared_all reading 0.57 vs 0.7
+No phospho metrics number match abundances normalised log2_mean for Q6P0Q8 mode 900 for curve_fold_change reading -0.011142857142857482 vs -0.017761904761903896
+No phospho metrics number match abundances normalised log2_mean for Q6P0Q8 mode 1407 for variance_average reading 0.01 vs 0.02
+No protein metrics number match abundances normalised 0-max for Q9H9S4 for R_squared_all reading 0.06 vs 0.07
+No protein metrics number match abundances normalised 0-max for Q8IV50 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q9HB09 mode 195 for curve_fold_change reading -0.018785714285714794 vs -0.025642857142857967
+No protein metrics number match abundances normalised 0-max for Q9P031 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q08050 mode 704 for residuals_all reading 0.871556825238096 vs 0.3374074280952389
+No phospho ANOVA metrics match abundances normalised log2_mean for Q08050 mode 704 for F_statistics reading 47.6465731489296 vs 42.14179910428146
+No phospho metrics number match abundances normalised 0-max for Q08050 mode 704 for residuals_all reading 0.1196570847540338 vs 0.05507672523809516
+No phospho metrics number match abundances normalised 0-max for Q08050 mode 704 for R_squared_all reading 0.82 vs 0.92
+No phospho metrics number match abundances normalised log2_mean for Q9Y3X0 mode 521 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised 0-max for Q9Y3X0 mode 521 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho metrics number match abundances normalised 0-max for Q6P1R3 mode S/T[20-45] for variance_average reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q96PN7 mode 491 for variance_average reading 0.01 vs 0.0
+No protein metrics number match abundances normalised log2_mean for Q8WV07 for R_squared_all reading 0.06 vs 0.05
+No phospho metrics number match abundances normalised log2_mean for Q66K89 mode 50 for residuals_all reading 0.03311239916115704 vs 0.0366623851428571
+No phospho metrics number match abundances normalised log2_mean for Q66K89 mode 50 for curve_fold_change reading 1.018479338842977 vs 1.670800000000005
+No phospho ANOVA metrics match abundances normalised log2_mean for Q66K89 mode 50 for p_value reading 0.43420394989748035 vs 0.741843934913359
+No phospho ANOVA metrics match abundances normalised log2_mean for Q66K89 mode 50 for F_statistics reading 1.20275883300841 vs 0.49571632440154434
+No protein metrics number match abundances normalised 0-max for Q8N8E3 for variance_average reading 0.05 vs 0.04
+No protein metrics number match abundances normalised 0-max for Q6UWS5 for variance_average reading 0.05 vs 0.04
+No protein metrics number match abundances normalised log2_mean for Q9NQ92 for R_squared_all reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for O15014 mode 1285 for R_squared_all reading 0.09 vs 0.08
+No protein metrics number match abundances normalised 0-max for O15264 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised 0-max for Q9NQ11 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for P21675 mode 1680 for R_squared_all reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q96JA1 mode T/S/Y[1028-1049] for R_squared_all reading 0.01 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for P51513 mode 154 for R_squared_all reading 0.07 vs 0.08
+No phospho metrics number match abundances normalised log2_mean for Q96QT4 mode 1476 for R_squared_all reading 0.06 vs 0.07
+No phospho metrics number match abundances normalised log2_mean for O15169 mode 77 for R_squared_average reading 0.010000000000000009 vs 0.02
+No protein metrics number match abundances normalised 0-max for P98179 for R_squared_all reading 0.05 vs 0.06
+No protein metrics number match abundances normalised log2_mean for Q499Z4 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q9H7P9 mode S/T[1041-1057] for R_squared_all reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q969S2 mode S/T[56-76] for curve_fold_change reading -0.05799999999999913 vs -0.05125000000000006
+No phospho metrics number match abundances normalised log2_mean for Q9HCM3 mode 1349 for variance_average reading 0.06 vs 0.07
+No protein metrics number match abundances normalised 0-max for P82921 for variance_average reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q6T4R5 mode 332 for variance_average reading 0.01 vs 0.02
+No protein metrics number match abundances normalised log2_mean for Q9P2J9 for R_squared_all reading 0.03 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q2KHR2 mode 467 for R_squared_all reading 0.04 vs 0.03
+No phospho metrics number match abundances normalised 0-max for Q2KHR2 mode 565 for R_squared_average reading 0.020000000000000018 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q2M3G4 mode 49 for R_squared_all reading 0.04 vs 0.05
+No phospho metrics number match abundances normalised 0-max for Q2M3G4 mode 49 for R_squared_all reading 0.05 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q7Z3B3 mode 1045 for R_squared_average reading 0.06999999999999995 vs 0.06
+No phospho metrics number match abundances normalised 0-max for Q7Z3B3 mode 1045 for R_squared_average reading 0.06999999999999995 vs 0.06
+No phospho metrics number match abundances normalised log2_mean for Q9NS56 mode 567 for variance_average reading 0.02 vs 0.01
+No protein metrics number match abundances normalised 0-max for Q7Z699 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised 0-max for O15151 for variance_average reading 0.03 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for O60669 mode 452 for variance_average reading 0.02 vs 0.03
+No phospho metrics number match abundances normalised log2_mean for Q86VQ0 mode 7 for variance_average reading 0.03 vs 0.02
+No phospho metrics number match abundances normalised log2_mean for Q86VQ0 mode 547 for R_squared_all reading 0.31 vs 0.38
+No phospho ANOVA metrics match abundances normalised log2_mean for Q86VQ0 mode 547 for p_value reading 0.29258819683543663 vs 0.24864957960925718
+No phospho ANOVA metrics match abundances normalised log2_mean for Q86VQ0 mode 547 for F_statistics reading 1.5359289643275216 vs 1.7118997384138726
+No phospho metrics number match abundances normalised 0-max for Q86VQ0 mode 547 for residuals_all reading 0.10593810567493106 vs 0.09445972952380936
+No phospho metrics number match abundances normalised 0-max for Q86VQ0 mode 547 for R_squared_all reading 0.36 vs 0.43
+No protein metrics number match abundances normalised log2_mean for Q2YD98 for R_squared_all reading 0.05 vs 0.04
+No phospho metrics number match abundances normalised log2_mean for Q9NRR8 mode 74 for R_squared_all reading 0.04 vs 0.03
+No protein metrics number match abundances normalised 0-max for Q9UHC9 for R_squared_all reading 0.09 vs 0.1
+No protein metrics number match abundances normalised 0-max for P46091 for R_squared_all reading 0.08 vs 0.07
+No protein metrics number match abundances normalised log2_mean for Q9BUB4 for R_squared_all reading 0.06 vs 0.05
+No protein metrics number match abundances normalised 0-max for O60437 for R_squared_all reading 0.0 vs 0.01
+No phospho metrics number match abundances normalised log2_mean for Q8N9M1 mode S/T[116-133] for R_squared_average reading 0.06999999999999995 vs 0.08
+Protein abundance lengths don't match abundances imputed for P51160: 24 vs 23
+No process protein reading for abundances imputed for P51160 for abundance_rep_2 for S/G2 reading 0.5557
+No protein metrics number match abundances normalised log2_mean for P51160 for residuals_all reading 0.37382607540338464 vs 0.41126357714285694
+No protein ANOVA metrics match abundances normalised log2_mean for P51160 for p_value reading 0.2056718214519098 vs 0.16007077951089216
+No protein ANOVA metrics match abundances normalised log2_mean for P51160 for F_statistics reading 1.9133839091627887 vs 2.22127045278552
+No protein metrics number match abundances normalised 0-max for P51160 for residuals_all reading 0.08233190797717442 vs 0.0909759966666666
+No phospho metrics number match abundances normalised 0-max for O14544 mode 311 for R_squared_average reading 0.09999999999999998 vs 0.11
+No phospho ANOVA metrics match abundances normalised log2_mean for Q6RI45 mode 1763 for p_value reading 0.4715289431978746 vs 0.40754384961584805
+No phospho ANOVA metrics match abundances normalised log2_mean for Q6RI45 mode 1763 for F_statistics reading 1.0575488641661777 vs 1.1902168560083872
+No protein metrics number match abundances normalised log2_mean for Q96C00 for R_squared_all reading 0.02 vs 0.03
+Protein abundance lengths don't match abundances imputed for Q9NPC7: 24 vs 23
+No process protein reading for abundances imputed for Q9NPC7 for abundance_rep_2 for G2_2 reading 0.5599
+No protein ANOVA metrics match abundances normalised log2_mean for Q9NPC7 for p_value reading 0.5067587442779684 vs 0.439185540983704
+No protein ANOVA metrics match abundances normalised log2_mean for Q9NPC7 for F_statistics reading 0.9868162322325837 vs 1.1142713286301553
+No protein metrics number match abundances normalised log2_mean for Q9BXI2 for R_squared_all reading 0.07 vs 0.08
+No protein metrics number match abundances normalised 0-max for P00488 for R_squared_all reading 0.07 vs 0.06
+Protein abundance lengths don't match abundances imputed for Q16348: 24 vs 21
+No process protein reading for abundances imputed for Q16348 for abundance_rep_1 for Palbo reading 0.7859
+No process protein reading for abundances imputed for Q16348 for abundance_rep_1 for Late G1_1 reading 0.5719
+No process protein reading for abundances imputed for Q16348 for abundance_rep_1 for G2/M_1 reading 0.5
+No protein ANOVA metrics match abundances normalised log2_mean for Q16348 for p_value reading 0.4815700984515069 vs 0.2774113583225629
+No protein ANOVA metrics match abundances normalised log2_mean for Q16348 for F_statistics reading 1.0839358915563189 vs 1.739992347591792
