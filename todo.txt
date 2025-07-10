@@ -25,7 +25,9 @@ Check all constraints
 Look for divide by zero errors, e.g.
     log2_reading = self._round(math.log2(reading / arrest_reading))
 
-Make _not_same compare to within 10%
+Lots of protein q value matches like this:
+ANOVA metrics match for abundances normalised log2_mean for Q13505 for q_value reading 0.6462170052202973 vs 0.7023935403984614
+
 Add code to return a message if no flags are supplied
 Study and get rid of total_protein_index.json? It seems to be a mishmash of various
     sources downloaded. Probably not all of it is required.

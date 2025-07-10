@@ -53,7 +53,7 @@ METRICS_NUMBER_FIELDS = [
 METRICS_ANOVA_FIELDS = [
     P_VALUE,
     F_STATISTICS,
-    # Q_VALUE,
+    Q_VALUE,
 ]
 
 TOLERANCE = 0.1
@@ -118,45 +118,45 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
         self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True)
-        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
+        # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
 
-        # Compare phosphos
-        phosphos_original = Phospho.objects.filter(
-            protein = protein_original
-        )
+        # # Compare phosphos
+        # phosphos_original = Phospho.objects.filter(
+        #     protein = protein_original
+        # )
 
-        print(f"Comparing phosphos {len(list(phosphos_original))} for protein {accession_number}")
+        # print(f"Comparing phosphos {len(list(phosphos_original))} for protein {accession_number}")
 
-        for phospho_original in phosphos_original:
-            try:
-                phospho_process = Phospho.objects.get(
-                    protein__project = project_process,
-                    protein__accession_number = accession_number,
-                    mod = phospho_original.mod
-                )
-            except Exception as e:
-                # TODO - why would this happen?
-                print(f"Can't get process phospho {accession_number} {phospho_original.mod}")
-                print(e)
-                return
+        # for phospho_original in phosphos_original:
+        #     try:
+        #         phospho_process = Phospho.objects.get(
+        #             protein__project = project_process,
+        #             protein__accession_number = accession_number,
+        #             mod = phospho_original.mod
+        #         )
+        #     except Exception as e:
+        #         # TODO - why would this happen?
+        #         print(f"Can't get process phospho {accession_number} {phospho_original.mod}")
+        #         print(e)
+        #         return
 
-            # Don't compare phospho medians as they're not stored in the ICR json
-            # Don't compare min-max and imputed for phospho as they're calculated differently
-            self._compare_numbers(ABUNDANCES_RAW, None, None, phospho_original, phospho_process)
-            self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, None, None, phospho_original, phospho_process)
-            self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process)
-            # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
-            self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
-            # self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
-            self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True)
-            self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
+        #     # Don't compare phospho medians as they're not stored in the ICR json
+        #     # Don't compare min-max and imputed for phospho as they're calculated differently
+        #     self._compare_numbers(ABUNDANCES_RAW, None, None, phospho_original, phospho_process)
+        #     self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, None, None, phospho_original, phospho_process)
+        #     self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process)
+        #     # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
+        #     self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
+        #     # self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
+        #     self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True)
+        #     self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
 
 
     def _compare_metrics(
@@ -259,9 +259,9 @@ class Command(BaseCommand):
                 for field in METRICS_ANOVA_FIELDS:
                     if metrics_process[ANOVA].get(field) is None:
                         if protein_original:
-                            print(f"No original protein ANOVA metrics field {statistic_type_name} for {protein_original.accession_number} for {field}")
+                            print(f"No process protein ANOVA metrics field {statistic_type_name} for {protein_original.accession_number} for {field}")
                         else:
-                            print(f"No original phospho ANOVA metrics field {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
+                            print(f"No process phospho ANOVA metrics field {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {field}")
                         continue
 
                     if self._not_same(metrics_original[ANOVA][field], metrics_process[ANOVA][field], dps):

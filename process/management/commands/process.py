@@ -294,7 +294,7 @@ class Command(BaseCommand):
         #     #   P04264 somehow
         #     # self._generate_kinase_predictions(run)
 
-            self._calculate_batch_q_value_fisher(project, replicates, sample_stages)
+            self._calculate_protein_q_and_fisher(project, replicates, sample_stages)
 
         #     self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
@@ -362,21 +362,18 @@ class Command(BaseCommand):
 
 
 
-    def _calculate_batch_q_value_fisher(self, project, replicates, sample_stages):
+    def _calculate_protein_q_and_fisher(self, project, replicates, sample_stages):
         logger.info("Calculating q and fisher G values for proteins.")
 
         # TODO - blank all q_values in DB?
-
-        # Only get the necessary fields to save on memory usage
-        # run_results_with_log2_mean = RunResult.objects.only("run", "protein", "combined_result").filter(run=run, combined_result__metrics__has_key = "log2_mean")
 
         # Get all protein abundances for this project
         statistics = Statistic.objects.filter(
             statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
             protein__project = project
-        ).iterator(chunk_size=100)
+        )
 
-        # fisher_stats = self.calcFisherG(run, replicates, sample_stages)
+        # fisher_stats = self.calcFisherG(project, replicates, sample_stages)
 
         # TODO - rename this
         prot_anova_info: dict = {}
@@ -385,15 +382,7 @@ class Command(BaseCommand):
             prot_anova_info[statistic.protein] = {}
             prot_anova_info[statistic.protein][P_VALUE] = statistic.metrics[ANOVA][P_VALUE]
 
-        # prot_anova_info_df = pd.DataFrame(prot_anova_info).T
-        # prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
-
-        # prot_anova_info = prot_anova_info_df.to_dict("index")
-
         prot_anova_info = self._add_q_value(prot_anova_info)
-
-        print(prot_anova_info)
-        exit()
 
         for statistic in statistics:
             statistic.metrics[ANOVA][Q_VALUE] = prot_anova_info[statistic.protein][Q_VALUE]
@@ -405,7 +394,7 @@ class Command(BaseCommand):
 
             # rr.combined_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_output
 
-            # statistic.save()
+            statistic.save()
 
 
 
@@ -1900,9 +1889,23 @@ class Command(BaseCommand):
         info_df = pd.DataFrame(info)
         info_df = info_df.T
 
-        info_df[Q_VALUE] = stats.false_discovery_control(p)
+        info_df[Q_VALUE] = stats.false_discovery_control(info_df[P_VALUE])
+        # info_df[Q_VALUE] = self.p_adjust_bh(info_df[P_VALUE])
 
         return info_df.to_dict('index')
+
+    # TODO - lifted from ICR, rewrite
+    # TODO - does it really need to be a dataframe? Write tests and change if possible.
+    def p_adjust_bh(self, p):
+        """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
+        p = np.asarray(p, dtype=float)
+        by_descend = p.argsort()[::-1]
+        by_orig = by_descend.argsort()
+        steps = float(len(p)) / np.arange(len(p), 0, -1)
+        q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
+
+        return q[by_orig]
+
 
     # getConsensusKinasePred
     def _generate_kinase_predictions(self, run):
