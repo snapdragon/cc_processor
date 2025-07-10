@@ -287,14 +287,14 @@ class Command(BaseCommand):
         #     # TODO - not a batch call, shouldn't be here.
         #     self._add_protein_annotations(run)
 
-            self._calculate_phospho_q_and_fisher(project)
+            self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
 
         #     # TODO - figure out how, or if at all, to get this working for SL
         #     #   Actually it no longer works for ICR either, related to
         #     #   P04264 somehow
         #     # self._generate_kinase_predictions(run)
 
-            # self._calculate_protein_q_and_fisher(project, replicates, sample_stages)
+            # self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
 
         #     self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
@@ -314,9 +314,11 @@ class Command(BaseCommand):
             )
 
     # TODO - similar to other functionality, consolidate
-    def _calculate_phospho_q_and_fisher(self, project):
+    def _calculate_phospho_q_and_fisher_g(self, project, replicates, sample_stages):
         logger.info("Calculating phospho q and fisher G values")
         # TODO - blank all q_values in DB?
+
+        fisher_g_stats = self.calcFisherG(project, replicates, sample_stages, phospho = True)
 
         # Get all phospho abundances for this project for log2 mean
         statistics = Statistic.objects.filter(
@@ -327,21 +329,30 @@ class Command(BaseCommand):
         anova_stats: dict = {}
 
         for statistic in statistics:
-            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.mod}"
+            site_key = self._get_site_key(statistic)
 
-            anova_stats[phospho_key] = {
+            anova_stats[site_key] = {
                 P_VALUE: statistic.metrics[ANOVA][P_VALUE]
             }
 
         anova_stats = self._add_q_value(anova_stats)
 
         for statistic in statistics:
-            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.mod}"
+            # Determine Fisher G
+            site_key = self._get_site_key(statistic)
 
+            fisher_output = DEFAULT_FISHER_STATS
+
+            if site_key in fisher_g_stats:
+                fisher_output = fisher_g_stats[site_key]
+
+            statistic.metrics[FISHER_G] = fisher_output
+
+            # Determine ANOVA q value
             q_value = 1
 
             if anova_stats.get(phospho_key):
-                q_value = anova_stats[phospho_key][Q_VALUE]
+                q_value = anova_stats[site_key][Q_VALUE]
 
             statistic.metrics[ANOVA][Q_VALUE] = q_value
 
@@ -349,7 +360,7 @@ class Command(BaseCommand):
 
 
 
-    def _calculate_protein_q_and_fisher(self, project, replicates, sample_stages):
+    def _calculate_protein_q_and_fisher_g(self, project, replicates, sample_stages):
         logger.info("Calculating q and fisher G values for proteins.")
 
         # TODO - blank all q_values in DB?
@@ -371,8 +382,15 @@ class Command(BaseCommand):
         anova_stats = self._add_q_value(anova_stats)
 
         for statistic in statistics:
-            statistic.metrics[ANOVA][Q_VALUE] = anova_stats[statistic.protein][Q_VALUE]
+            # Determine q value
+            q_value = 1
 
+            if anova_stats.get(statistic.protein):
+                q_value = anova_stats[statistic.protein][Q_VALUE]
+
+            statistic.metrics[ANOVA][Q_VALUE] = q_value
+
+            # Determine Fisher G value
             fisher_output = DEFAULT_FISHER_STATS
 
             if statistic.protein.accession_number in fisher_g_stats:
@@ -384,39 +402,42 @@ class Command(BaseCommand):
 
 
 
-    # TODO - lifted from ICR, rewrite
-    # TODO - try to get rid of dataframes if possible
-    # TODO - needs a test if to be used, is only used by fisher
     # createAbundanceDf
-    def _create_results_dataframe(self, project, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
+    def _create_abundance_dataframe(self, project, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
         abundance_table = {}
 
+        # TODO - could combine these two loops using a function to generate the keys
         if phospho:
-            raise Exception("Phospho dataframe not done yet")
+            # Determine which phospho readings to use
+            statistic_type_name = ABUNDANCES_NORMALISED_LOG2_MEAN
 
-            # TODO - fetch and iterate abundances here
-                # for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
-                #     ppam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
+            if phospho_ab:
+                statistic_type_name = PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN
+            elif phospho_reg:
+                statistic_type_name = PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN
 
-                #     mod_key = f"{pan}_{ppam[PHOSPHORYLATION_SITE]}"
+            # Get all log2 mean abundances for all chosen phospho readings for this project
+            abundances = Abundance.objects.filter(
+                statistic__statistic_type__name = statistic_type_name,
+                statistic__phospho__protein__project = project
+            ).iterator(chunk_size=100)
+        
+            num_abundances = 0
 
-                #     if not len(ppam[POSITION_ABUNDANCES]):
-                #         continue
+            for abundance in abundances:
+                if not num_abundances % 100000:
+                    logger.info(f"Processing abundance {num_abundances}")
 
-                #     protein_abundances = ppam[POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]
+                num_abundances += 1
 
-                #     if phospho_ab:
-                #         if PROTEIN_OSCILLATION_ABUNDANCES not in ppam:
-                #             continue
+                site_key = self._get_site_key(abundance.statistic)
 
-                #         protein_abundances = ppam[PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
-                #     elif phospho_reg:
-                #         if PHOSPHO_REGRESSION not in ppam:
-                #             continue
+                if abundance_table.get(site_key) is None:
+                    abundance_table[site_key] = {}
 
-                #         protein_abundances = ppam[PHOSPHO_REGRESSION][LOG2_MEAN]
+                rep_timepoint = f"{abundance.replicate.name}_{abundance.sample_stage.name}"
 
-                #     self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
+                abundance_table[site_key][rep_timepoint] = abundance.reading
         else:
             # Get all log2 mean abundances for all proteins for this project
             abundances = Abundance.objects.filter(
@@ -1856,24 +1877,6 @@ class Command(BaseCommand):
             rr.save()
 
 
-    # TODO - is this worth being a function at all?
-    def _build_phospho_abundance_table(self, abundance_table, replicates, sample_stages, protein_abundances, mod_key):
-        for replicate in replicates:
-            if abundance_table.get(mod_key) is None:
-                abundance_table[mod_key] = {}
-
-            # TODO - not in original, why here?
-            if protein_abundances.get(replicate.name) is None:
-                continue
-
-            # TODO - check all these loops have the same variable name
-            for sample_stage in sample_stages:
-                if protein_abundances[replicate.name].get(sample_stage.name) is None:
-                    continue
-
-                rep_timepoint = f"{replicate.name}_{sample_stage.name}"
-                abundance_table[mod_key][rep_timepoint] = protein_abundances[replicate.name][sample_stage.name]
-
     # TODO - test
     def _add_q_value(self, info):
         info_df = pd.DataFrame(info)
@@ -1998,7 +2001,7 @@ class Command(BaseCommand):
     def calcFisherG(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics")
 
-        time_course_fisher = self._create_results_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
+        time_course_fisher = self._create_abundance_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
         time_course_fisher = time_course_fisher.dropna()
 
         ptest = importr("ptest")
@@ -2104,3 +2107,6 @@ class Command(BaseCommand):
 
     def _round(self, value):
         return round(value, 4)
+
+    def _get_site_key(self, statistic: Statistic):
+        return f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"        

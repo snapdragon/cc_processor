@@ -165,7 +165,7 @@ class Command(BaseCommand):
         #     # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
         #     self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
         #     # self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
-            self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True)
+            self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, False, True)
         #     self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
 
 
@@ -309,7 +309,7 @@ class Command(BaseCommand):
                         else:
                             print(f"No phospho FISHER_G metrics match {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
                     # else:
-                    #     print(f"FISHER_G metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
+                    #     print(f"FISHER_G metrics match for {statistic_type_name} for {phospho_original.protein.accession_number} for {field} reading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
 
 
     def _not_same(self, num1, num2, dps):
