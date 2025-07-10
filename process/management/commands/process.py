@@ -16,8 +16,8 @@ from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-# from rpy2.robjects.packages import importr
-# from rpy2.robjects.vectors import FloatVector
+from rpy2.robjects.packages import importr
+from rpy2.robjects.vectors import FloatVector
 
 from process.models import (
     ColumnName,
@@ -373,26 +373,28 @@ class Command(BaseCommand):
             protein__project = project
         )
 
-        # fisher_stats = self.calcFisherG(project, replicates, sample_stages)
+        fisher_g_stats = self.calcFisherG(project, replicates, sample_stages)
 
-        # TODO - rename this
-        prot_anova_info: dict = {}
+        print("++++ FISHER STATS")
+        print(fisher_g_stats)
 
-        for statistic in statistics:
-            prot_anova_info[statistic.protein] = {}
-            prot_anova_info[statistic.protein][P_VALUE] = statistic.metrics[ANOVA][P_VALUE]
-
-        prot_anova_info = self._add_q_value(prot_anova_info)
+        anova_stats: dict = {}
 
         for statistic in statistics:
-            statistic.metrics[ANOVA][Q_VALUE] = prot_anova_info[statistic.protein][Q_VALUE]
+            anova_stats[statistic.protein] = {}
+            anova_stats[statistic.protein][P_VALUE] = statistic.metrics[ANOVA][P_VALUE]
 
-            # fisher_output = DEFAULT_FISHER_STATS
+        anova_stats = self._add_q_value(anova_stats)
 
-            # if rr.protein.accession_number in fisher_stats:
-            #     fisher_output = fisher_stats[rr.protein.accession_number]
+        for statistic in statistics:
+            statistic.metrics[ANOVA][Q_VALUE] = anova_stats[statistic.protein][Q_VALUE]
 
-            # rr.combined_result[METRICS][LOG2_MEAN][FISHER_G] = fisher_output
+            fisher_output = DEFAULT_FISHER_STATS
+
+            if statistic.protein.accession_number in fisher_g_stats:
+                fisher_output = fisher_g_stats[statistic.protein.accession_number]
+
+            statistic.metrics[FISHER_G] = fisher_output
 
             statistic.save()
 
@@ -402,59 +404,63 @@ class Command(BaseCommand):
     # TODO - try to get rid of dataframes if possible
     # TODO - needs a test if to be used, is only used by fisher
     # createAbundanceDf
-    def _create_results_dataframe(self, run, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
-        # TODO - raw is always False, ignore all raw code
-        # TODO - norm_method is always log2_mean, ignore all norm_method code
-
-        run_results = self._fetch_run_results(run)
-
+    def _create_results_dataframe(self, project, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
         abundance_table = {}
 
-        for rr in run_results:
-            pan = rr.protein.accession_number
+        if phospho:
+            raise Exception("Phospho dataframe not done yet")
 
-            if phospho:
-                for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
-                    ppam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
+            # TODO - fetch and iterate abundances here
+                # for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
+                #     ppam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
 
-                    mod_key = f"{pan}_{ppam[PHOSPHORYLATION_SITE]}"
+                #     mod_key = f"{pan}_{ppam[PHOSPHORYLATION_SITE]}"
 
-                    if not len(ppam[POSITION_ABUNDANCES]):
-                        continue
+                #     if not len(ppam[POSITION_ABUNDANCES]):
+                #         continue
 
-                    protein_abundances = ppam[POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]
+                #     protein_abundances = ppam[POSITION_ABUNDANCES][NORMALISED][LOG2_MEAN]
 
-                    if phospho_ab:
-                        if PROTEIN_OSCILLATION_ABUNDANCES not in ppam:
-                            continue
+                #     if phospho_ab:
+                #         if PROTEIN_OSCILLATION_ABUNDANCES not in ppam:
+                #             continue
 
-                        protein_abundances = ppam[PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
-                    elif phospho_reg:
-                        if PHOSPHO_REGRESSION not in ppam:
-                            continue
+                #         protein_abundances = ppam[PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN]
+                #     elif phospho_reg:
+                #         if PHOSPHO_REGRESSION not in ppam:
+                #             continue
 
-                        protein_abundances = ppam[PHOSPHO_REGRESSION][LOG2_MEAN]
+                #         protein_abundances = ppam[PHOSPHO_REGRESSION][LOG2_MEAN]
 
-                    self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
-            else:
+                #     self._build_phospho_abundance_table(abundance_table, replicates, sample_stages, protein_abundances, mod_key)
+        else:
+            # Get all log2 mean abundances for all proteins for this project
+            abundances = Abundance.objects.filter(
+                statistic__statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
+                statistic__protein__project = project
+            ).iterator(chunk_size=100)
+
+            num_abundances = 0
+
+            for abundance in abundances:
+                if not num_abundances % 100000:
+                    logger.info(f"Processing abundance {num_abundances}")
+
+                num_abundances += 1
+
+                pan = abundance.statistic.protein.accession_number
+
                 # Not all proteins have protein results, some are phospho only
-                if rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED].get(LOG2_MEAN) is None:
+                # TODO - is this necessary? Would phospho-only results have a record?
+                if abundance.reading is None:
                     continue
 
-                pprpanlm = rr.combined_result[PROTEIN_ABUNDANCES][NORMALISED][LOG2_MEAN]
+                if abundance_table.get(pan) is None:
+                    abundance_table[pan] = {}
 
-                abundance_table[pan] = {}
+                rep_stage_name = f"{abundance.replicate.name}_{abundance.sample_stage.name}"
 
-                for replicate in replicates:
-                    for stage in sample_stages:
-                        if pprpanlm[replicate.name].get(stage.name) is None:
-                            continue
-
-                        rep_stage_name = f"{replicate.name}_{stage.name}"
-
-                        abundance_table[pan][rep_stage_name] = pprpanlm[
-                            replicate.name
-                        ][stage.name]
+                abundance_table[pan][rep_stage_name] = abundance.reading
 
         time_course_abundance_df = pd.DataFrame(abundance_table)
         time_course_abundance_df = time_course_abundance_df.T
@@ -2005,10 +2011,10 @@ class Command(BaseCommand):
 
 
     # TODO - rename
-    def calcFisherG(self, run, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
+    def calcFisherG(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics")
 
-        time_course_fisher = self._create_results_dataframe(run, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
+        time_course_fisher = self._create_results_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
         time_course_fisher = time_course_fisher.dropna()
 
         ptest = importr("ptest")
@@ -2027,7 +2033,7 @@ class Command(BaseCommand):
             time_course_fisher.loc[index, 'p_value'] = p_value
             time_course_fisher.loc[index, FREQUENCY] = list(freq)
 
-        q_value = self.p_adjust_bh(time_course_fisher['p_value'])
+        q_value = stats.false_discovery_control(time_course_fisher['p_value'])
 
         time_course_fisher['q_value'] = q_value
     
