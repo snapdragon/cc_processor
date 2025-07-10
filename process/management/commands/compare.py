@@ -134,28 +134,28 @@ class Command(BaseCommand):
         # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
-        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, False, True)
+        # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, False, True)
         # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
 
-        # # Compare phosphos
-        # phosphos_original = Phospho.objects.filter(
-        #     protein = protein_original
-        # )
+        # Compare phosphos
+        phosphos_original = Phospho.objects.filter(
+            protein = protein_original
+        )
 
-        # print(f"Comparing phosphos {len(list(phosphos_original))} for protein {accession_number}")
+        print(f"Comparing phosphos {len(list(phosphos_original))} for protein {accession_number}")
 
-        # for phospho_original in phosphos_original:
-        #     try:
-        #         phospho_process = Phospho.objects.get(
-        #             protein__project = project_process,
-        #             protein__accession_number = accession_number,
-        #             mod = phospho_original.mod
-        #         )
-        #     except Exception as e:
-        #         # TODO - why would this happen?
-        #         print(f"Can't get process phospho {accession_number} {phospho_original.mod}")
-        #         print(e)
-        #         return
+        for phospho_original in phosphos_original:
+            try:
+                phospho_process = Phospho.objects.get(
+                    protein__project = project_process,
+                    protein__accession_number = accession_number,
+                    mod = phospho_original.mod
+                )
+            except Exception as e:
+                # TODO - why would this happen?
+                print(f"Can't get process phospho {accession_number} {phospho_original.mod}")
+                print(e)
+                return
 
         #     # Don't compare phospho medians as they're not stored in the ICR json
         #     # Don't compare min-max and imputed for phospho as they're calculated differently
@@ -165,7 +165,7 @@ class Command(BaseCommand):
         #     # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
         #     self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
         #     # self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
-        #     self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True)
+            self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True)
         #     self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
 
 

@@ -287,14 +287,14 @@ class Command(BaseCommand):
         #     # TODO - not a batch call, shouldn't be here.
         #     self._add_protein_annotations(run)
 
-        #     self._calculate_phosphorylation_abundances_q_values(run, replicates, sample_stages)
+            self._calculate_phospho_q_and_fisher(project)
 
         #     # TODO - figure out how, or if at all, to get this working for SL
         #     #   Actually it no longer works for ICR either, related to
         #     #   P04264 somehow
         #     # self._generate_kinase_predictions(run)
 
-            self._calculate_protein_q_and_fisher(project, replicates, sample_stages)
+            # self._calculate_protein_q_and_fisher(project, replicates, sample_stages)
 
         #     self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
@@ -314,51 +314,38 @@ class Command(BaseCommand):
             )
 
     # TODO - similar to other functionality, consolidate
-    def _calculate_phosphorylation_abundances_q_values(self, run, replicates, sample_stages):
-        logger.info("Calculating q values for phosphorylation_abundances.")
-
+    def _calculate_phospho_q_and_fisher(self, project):
+        logger.info("Calculating phospho q and fisher G values")
         # TODO - blank all q_values in DB?
 
-        run_results = self._fetch_run_results(run)
+        # Get all phospho abundances for this project for log2 mean
+        statistics = Statistic.objects.filter(
+            statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
+            phospho__protein__project = project
+        )
 
-        # TODO - rename this
-        prot_anova_info: dict = {}
+        anova_stats: dict = {}
 
-        for rr in run_results:
-            for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
-                pprpam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
+        for statistic in statistics:
+            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.mod}"
 
-                phospho_key = f"{rr.protein.accession_number}_{pprpam['phosphorylation_site']}"
+            anova_stats[phospho_key] = {
+                P_VALUE: statistic.metrics[ANOVA][P_VALUE]
+            }
 
-                prot_anova_info[phospho_key] = {
-                    P_VALUE: pprpam[METRICS][LOG2_MEAN][ANOVA][P_VALUE]
-                }
+        anova_stats = self._add_q_value(anova_stats)
 
-        # prot_anova_info_df = pd.DataFrame(prot_anova_info).T
-        # prot_anova_info_df[Q_VALUE] = self.p_adjust_bh(prot_anova_info_df[P_VALUE])
+        for statistic in statistics:
+            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.mod}"
 
-        # prot_anova_info = prot_anova_info_df.to_dict("index")
+            q_value = 1
 
-        prot_anova_info = self._add_q_value(prot_anova_info)
+            if anova_stats.get(phospho_key):
+                q_value = anova_stats[phospho_key][Q_VALUE]
 
-        run_results = self._fetch_run_results(run)
+            statistic.metrics[ANOVA][Q_VALUE] = q_value
 
-        for rr in run_results:
-            for mod in rr.combined_result[PHOSPHORYLATION_ABUNDANCES]:
-                pprpam = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][mod]
-
-                phospho_key = f"{rr.protein.accession_number}_{pprpam['phosphorylation_site']}"
-
-                q_value = 1
-
-                if prot_anova_info.get(phospho_key):
-                    q_value = prot_anova_info[phospho_key][Q_VALUE]
-
-                pprpam[METRICS][LOG2_MEAN][ANOVA][Q_VALUE] = q_value
-
-            rr.save()
-
-
+            statistic.save()
 
 
 
@@ -367,16 +354,13 @@ class Command(BaseCommand):
 
         # TODO - blank all q_values in DB?
 
-        # Get all protein abundances for this project
+        # Get all protein abundances for this project for log2 mean
         statistics = Statistic.objects.filter(
             statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
             protein__project = project
         )
 
         fisher_g_stats = self.calcFisherG(project, replicates, sample_stages)
-
-        print("++++ FISHER STATS")
-        print(fisher_g_stats)
 
         anova_stats: dict = {}
 
@@ -2030,15 +2014,15 @@ class Command(BaseCommand):
             freq = ptestg_res.rx2("freq")
 
             time_course_fisher.loc[index, G_STATISTIC] = g_stat
-            time_course_fisher.loc[index, 'p_value'] = p_value
+            time_course_fisher.loc[index, P_VALUE] = p_value
             time_course_fisher.loc[index, FREQUENCY] = list(freq)
 
-        q_value = stats.false_discovery_control(time_course_fisher['p_value'])
+        q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
 
-        time_course_fisher['q_value'] = q_value
+        time_course_fisher[Q_VALUE] = q_value
     
         cols = time_course_fisher.columns
-        fisher_cols = [G_STATISTIC,'p_value', FREQUENCY, 'q_value']
+        fisher_cols = [G_STATISTIC, P_VALUE, FREQUENCY, Q_VALUE]
         ab_col = [x for x in cols if x not in fisher_cols]
         time_course_fisher = time_course_fisher.drop(columns=ab_col)
         time_course_fisher_dict = time_course_fisher.to_dict('index')
