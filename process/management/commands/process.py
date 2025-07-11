@@ -285,13 +285,13 @@ class Command(BaseCommand):
 
             self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
 
+            self._add_protein_oscillations(project, replicates, sample_stages, with_bugs)
+
             # TODO - figure out how, or if at all, to get this working for SL
             #   Actually it no longer works for ICR either, related to
             #   P04264 somehow
             # self._generate_kinase_predictions(run)
 
-
-        #     self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
         #     self._add_phospho_regression(run, replicates, sample_stages, with_bugs)
 
@@ -1317,76 +1317,106 @@ class Command(BaseCommand):
 
 
 
-    # TODO - lifted from ICR
     # addProteinOscillations
-    def _add_protein_oscillations(self, run, replicates, sample_stages, with_bugs):
+    def _add_protein_oscillations(self, project, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
 
-        self._generate_protein_oscillation_metrics(run, replicates, sample_stages, with_bugs)
+        self._generate_protein_oscillation_metrics(project, replicates, sample_stages, with_bugs)
 
-        # TODO - have this put the values directly into RR?
-        time_course_fisher_dict = self.calcFisherG(run, replicates, sample_stages, phospho = True, phospho_ab = True)
+        fisher_g_stats = self.calcFisherG(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
-        run_results = self._fetch_run_results(run)
+        # run_results = self._fetch_run_results(run)
 
         num_proteins = 0
 
-        for rr in run_results:
+        statistics = Statistic.objects.filter(
+            statistic_type_name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+            phospho__protein__project=project
+        ).iterator(chunk_size=100)
+
+        # for rr in run_results:
+        for statistic in statistics:
             if not num_proteins % 1000:
-                print(f"Calculating protein oscillation {num_proteins} {rr.protein.accession_number}")
+                print(f"Calculating protein oscillation {num_proteins} {statistic.phospho.protein.accession_number}")
  
             num_proteins += 1
 
-            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
+            # for mod in pprpa:
+            # TODO - generate with a site_key function?
+            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
 
-            for mod in pprpa:
-                if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES):
-                    phospho_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
+            if phospho_key not in ps_and_qs:
+                ps_and_qs[phospho_key] = {}
 
-                    if phospho_key not in ps_and_qs:
-                        ps_and_qs[phospho_key] = {}
+            if statistic.metrics.get(LOG2_MEAN) is not None and statistic.metrics[LOG2_MEAN].get(ANOVA) is not None:
+                ps_and_qs[phospho_key][P_VALUE] = statistic.metrics[LOG2_MEAN][ANOVA][P_VALUE]
 
-                    ps_and_qs[phospho_key][P_VALUE] = pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+            # pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
-        # TODO - what's this for?
+            # # for mod in pprpa:
+            # # TODO - generate with a site_key function?
+            # phospho_key = f"{phospho.protein.accession_number}_{phospho.phosphosite}"
+
+            # if phospho_key not in ps_and_qs:
+            #     ps_and_qs[phospho_key] = {}
+
+            # ps_and_qs[phospho_key][P_VALUE] = pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
+
         ps_and_qs = self._add_q_value(ps_and_qs)
 
-        run_results = self._fetch_run_results(run)
+        # run_results = self._fetch_run_results(run)
 
-        # TODO - tidy up, two loops not necessary?
-        for rr in run_results:
-            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
+        num_proteins = 0
 
-            # TODO - why check for raw?
-            if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
-                continue
+        statistics = Statistic.objects.filter(
+            statistic_type_name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+            phospho__protein__project=project
+        ).iterator(chunk_size=100)
 
-            for mod in pprpa:
-                if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES) is None:
-                    continue
+        # for rr in run_results:
+        # TODO - this code is very similar to others, consolidate?
+        for statistic in statistics:
+            if not num_proteins % 1000:
+                print(f"Calculating protein oscillation {num_proteins} {statistic.phospho.protein.accession_number}")
+ 
+            num_proteins += 1
 
-                mod_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
+        # for rr in run_results:
+        #     pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
-                q_value = 1
+        #     # TODO - why check for raw?
+        #     if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
+        #         continue
 
-                if mod_key in ps_and_qs:
-                    q_value = ps_and_qs[mod_key][Q_VALUE]
+            # for mod in pprpa:
+            #     if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES) is None:
+            #         continue
 
-                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
+            # mod_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
+            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
 
-                # Fisher
-                # TODO - tidy this and others like it
-                fisher_output = DEFAULT_FISHER_STATS
+            q_value = 1
 
-                if mod_key in time_course_fisher_dict:
-                    fisher_output = time_course_fisher_dict[mod_key]
+            if phospho_key in ps_and_qs:
+                q_value = ps_and_qs[phospho_key][Q_VALUE]
 
-                pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_output
+            statistic.metrics[ANOVA][Q_VALUE] = q_value
 
-            rr.save()
+            fisher_output = DEFAULT_FISHER_STATS
+
+            if phospho_key in fisher_g_stats:
+                fisher_output = fisher_g_stats[phospho_key]
+
+            statistic.metrics[FISHER_G] = fisher_output
+
+            statistic.save()
+
+            #     pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_output
+
+            # rr.save()
 
 
 
@@ -1472,8 +1502,8 @@ class Command(BaseCommand):
             rr.save()
 
     # calculateProteinOscillationAbundances
-    # TODO - tested
-    def _calculate_protein_oscillation(self, result, norm_method, phosphosite, replicates, sample_stages):
+    def _calculate_protein_oscillation(self, protein, phospho, replicates, sample_stages, zero_or_log2, statistic_type_name):
+        # TODO - remove this comment
         '''
         Iterates through the replicates and stages for
             results_single[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
@@ -1486,39 +1516,53 @@ class Command(BaseCommand):
             It's basically how much protein and phospho values differ for each normalised
             sample stage.
         '''
+        # rspannm = result[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
+        # rspappann = result[PHOSPHORYLATION_ABUNDANCES][
+        #                 phosphosite][POSITION_ABUNDANCES][NORMALISED][norm_method]
 
-        phospho_oscillations = {}
+        protein_abundances = self._get_abundances(zero_or_log2, protein=protein)
+        phospho_abundances = self._get_abundances(zero_or_log2, phospho=phospho)
 
-        rspannm = result[PROTEIN_ABUNDANCES][NORMALISED][norm_method]
-        rspappann = result[PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][POSITION_ABUNDANCES][NORMALISED][norm_method]
+        stat = self._get_statistic(statistic_type_name, phospho=phospho)
 
         for replicate in replicates:
-            if replicate.name in rspannm and replicate.name in rspappann:
-                protein_oscillation_abundances = {}
+            # if replicate.name in rspannm and replicate.name in rspappann:
+            # TODO - inefficient
+            protein_replicate = protein_abundances.filter(replicate=replicate)
+            phospho_replicate = phospho_abundances.filter(replicate=replicate)
 
-                protein_normed = rspannm[replicate.name]
-                phospho_normed = rspappann[replicate.name]
+            if not protein_replicate.exists() or not phospho_replicate.exists():
+                continue
+    
+            # protein_oscillation_abundances = {}
 
+            # protein_normed = rspannm[replicate.name]
+            # phospho_normed = rspappann[replicate.name]
+
+            for sample_stage in sample_stages:
                 try:
-                    for sample_stage in sample_stages:
-                        if protein_normed.get(sample_stage.name) is None or phospho_normed.get(sample_stage.name) is None:
-                            continue
+                    protein_stage = protein_replicate.get(sample_stage=sample_stage)
+                    phospho_stage = phospho_replicate.get(sample_stage=sample_stage)
+                except:
+                    continue
 
-                        protein_oscillation_abundances[sample_stage.name] = (
-                            phospho_normed[sample_stage.name]
-                            - protein_normed[sample_stage.name]
-                        )
-                except Exception as e:
-                    logger.error("_calculate_protein_oscillation error")
-                    logger.error(protein_normed)
-                    logger.error(phospho_normed)
-                    logger.error(e)
-                    exit()
+                oscillation = phospho_stage.reading - protein_stage.reading
 
-                phospho_oscillations[replicate.name] = protein_oscillation_abundances
+                Abundance.objects.create(
+                    statistic = stat,
+                    replicate = replicate,
+                    sample_stage = sample_stage,
+                    reading = oscillation,
+                )
 
-        return phospho_oscillations
+                # except Exception as e:
+                #     logger.error("_calculate_protein_oscillation error")
+                #     logger.error(e)
+
+        #     phospho_oscillations[replicate.name] = protein_oscillation_abundances
+
+        # return phospho_oscillations
+
 
     def _calculate_abundances_metrics(
         self,
@@ -1808,50 +1852,98 @@ class Command(BaseCommand):
             rr.save()
 
     # TODO - tested
-    def _generate_protein_oscillation_metrics(self, run, replicates, sample_stages, with_bugs):
-        run_results = self._fetch_run_results(run)
+    def _generate_protein_oscillation_metrics(self, project, replicates, sample_stages, with_bugs):
+        # run_results = self._fetch_run_results(run)
 
-        for rr in run_results:
-            prpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
+        proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
+
+        # TODO - could maybe just loop through phosphos here:
+        #   phosphos = Phospho.objects.filter(protein__project=project)
+        #   as checks for values are done in calculate_protein_oscillation
+        # for rr in run_results:
+        for protein in proteins:
+            # prpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
             # Not all samples have both protein and phosphorylation abundances
-            if not len(prpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
+            stat_protein_raw = self._get_statistic(ABUNDANCES_RAW, protein=protein)
+
+            # TODO - probably inefficient
+            if not self._get_abundances(stat_protein_raw).count():
                 continue
 
-            for mod in prpa:
-                prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {}
-                prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
+            # if not len(prpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
+            #     continue
 
-                for norm_method in [ZERO_MAX, LOG2_MEAN]:
+            phosphos = Phospho.objects.get(protein=protein)
+
+            # for mod in prpa:
+            for phospho in phosphos:
+                # Not all samples have both protein and phosphorylation abundances
+                stat_phospho_raw = self._get_statistic(ABUNDANCES_RAW, phospho=phospho)
+
+                # TODO - probably inefficient
+                if not self._get_abundances(stat_phospho_raw).count():
+                    continue
+
+                # prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {}
+                # prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
+
+                for zero_or_log2, statistic_type_name in [
+                    [ABUNDANCES_NORMALISED_ZERO_MAX, PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX], 
+                    [ABUNDANCES_NORMALISED_LOG2_MEAN, PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN]
+                ]:
                     # TODO - should this be passing phosphosite, not mod?
                     #   In the original the two seem to be interchangeable to an extent.
-                    phospho_oscillations = self._calculate_protein_oscillation(
-                        rr.combined_result, norm_method, mod, replicates, sample_stages
+
+                    # phospho_oscillations = self._calculat_protein_oscillation(
+                    #     pr, norm_method, mod, replicates, sample_stages
+                    # )
+
+                    self._calculate_protein_oscillation(
+                        protein, phospho, replicates, sample_stages, zero_or_log2, statistic_type_name
                     )
 
-                    prpampoa[norm_method] = phospho_oscillations
+                    # prpampoa[norm_method] = phospho_oscillations
 
-                    # TODO - split this out into its own variable? That's done with other average
-                    prpampoa[norm_method][ABUNDANCE_AVERAGE] = self._calculate_means(
-                        prpampoa[norm_method], imputed = False, with_bugs = with_bugs
+                    # prpampoa[norm_method][ABUNDANCE_AVERAGE] = self._calculate_means(
+                    #     prpampoa[norm_method], imputed = False, with_bugs = with_bugs
+                    # )
+
+                    self._calculate_means(
+                        statistic_type_name,
+                        protein = None,
+                        phospho = phospho,
+                        with_bugs = with_bugs
                     )
 
-                # TODO - check all comments to make sure they're non-ICR
-                # TODO - why only the check for LOG2_MEAN? Why not for both?
-                if len(prpampoa[LOG2_MEAN]) > 1:
-                    for norm_method in [ZERO_MAX, LOG2_MEAN]:
-                        prpampoa[norm_method][METRICS] = self._calculate_metrics(
-                            prpampoa[norm_method],
-                            prpampoa[norm_method][ABUNDANCE_AVERAGE],
-                            replicates,
-                            sample_stages
-                        )
+                    self._calculate_metrics(
+                        statistic_type_name,
+                        replicates,
+                        sample_stages,
+                        None,
+                        phospho
+                    )
 
-                    anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN], replicates, sample_stages)
+                    # for norm_method in [ZERO_MAX, LOG2_MEAN]:
+                    #     prpampoa[norm_method][METRICS] = self._calculate_metrics(
+                    #         prpampoa[norm_method],
+                    #         prpampoa[norm_method][ABUNDANCE_AVERAGE],
+                    #         replicates,
+                    #         sample_stages
+                    #     )
 
-                    prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
+                    self._calculate_ANOVA(
+                        ABUNDANCES_NORMALISED_LOG2_MEAN,
+                        sample_stages,
+                        protein,
+                        phospho
+                    )
 
-            rr.save()
+                    # anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN], replicates, sample_stages)
+
+            #         prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
+
+            # rr.save()
 
 
     # TODO - test

@@ -1,17 +1,15 @@
-Is palbo normalisation the same as Nocodozole normalisation?
-    Actually presumably it should be normalised by the first stage, as that's what Palbo is.
+Why are there so many missing values? Should they be considered zero or none?
+    Should they be imputed? Would that work with so little data? What is imputation for?
 
-Is the method of imputing data what we want? Linear imputation between nearest timepoints I believe.
+Is the method of imputing data what we want? Linear imputation.
 
-The ICR data has various values for 'confidence'. What about us?
+What should phosphosite be for SL?
+Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?
 
 min-max and impute values are calculated differently in proteo and phosho. And position_abundances?
     Which is correct?
     Proteo uses calclog2RelativeAbundance
     Phospho uses firstLevelNormalisationPhospho
 
-Is there some equivalent of ICR's cell_cycle_mitotic_exit_analyser?
+The ICR data has various values for 'confidence'. What about us?
 
-Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?
-
-What should phosphosite be for SL?

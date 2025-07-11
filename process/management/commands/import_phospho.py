@@ -117,8 +117,6 @@ class Command(BaseCommand):
                             if reading != reading:
                                 continue
 
-                            # logger.info(f"Adding {phospho} {cn} {reading}")
-
                             Abundance.objects.create(
                                 statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                             )

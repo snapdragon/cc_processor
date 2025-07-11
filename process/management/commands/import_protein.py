@@ -99,11 +99,26 @@ class Command(BaseCommand):
                 continue
 
 
-            for col in df.columns:
-                col_short = re.search(r'IITI_\d{3}', col)
+            if project_name == "SL":
+                for col in df.columns:
+                    col_short = re.search(r'IITI_\d{3}', col)
 
-                if col_short is not None:
-                    if cn := cns_by_name.get(col_short.group()):
+                    if col_short is not None:
+                        print(f"+++++ COL SHORT {col_short}")
+
+                        if cn := cns_by_name.get(col_short.group()):
+                            print("MATCHED")
+                            reading = row[col]
+
+                            if reading != reading:
+                                continue
+
+                            Abundance.objects.create(
+                                statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
+                            )
+            else:
+                for col in df.columns:
+                    if cn := cns_by_name.get(col):
                         reading = row[col]
 
                         if reading != reading:
@@ -112,5 +127,6 @@ class Command(BaseCommand):
                         Abundance.objects.create(
                             statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                         )
+
 
         print(f"Total rows: {row_no}")
