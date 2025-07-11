@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pandas as pd
 from django.core.management.base import BaseCommand
@@ -98,7 +99,15 @@ class Command(BaseCommand):
                 continue
 
             for col in df.columns:
-                if cn := cns_by_name.get(col):
+                # print(col)
+                short_col = col
+
+                if project_name == "SL":
+                    # We don't use the full column name, just an identifier
+                    if re.search(r'IITI_\d{3}', col):
+                        short_col = re.search(r'IITI_\d{3,4}', col).group()
+
+                if cn := cns_by_name.get(short_col):
                     reading = row[col]
 
                     if reading != reading:

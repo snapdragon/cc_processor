@@ -246,12 +246,6 @@ class Command(BaseCommand):
             if accession_number:
                 logger.info(f"Processing phospho protein {accession_number}")
 
-                # stat = self._get_statistic(PHOSPHO_MEDIAN, project=project)
-                # for abundance in Abundance.objects.filter(statistic=stat):
-                #     print(f"rep: {abundance.replicate} ss: {abundance.sample_stage} reading: {abundance.reading}")
-
-                # exit()
-
                 protein = Protein.objects.get(
                     project=project,
                     accession_number=accession_number
@@ -266,6 +260,13 @@ class Command(BaseCommand):
 
             else:
                 logger.info("Processing all phosphos")
+
+                print("++++ REPLICATES 2")
+                print("++++ REPLICATES 2")
+                print("++++ REPLICATES 2")
+                print("++++ REPLICATES 2")
+                print(replicates)
+                exit()
 
                 proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
 
@@ -287,14 +288,15 @@ class Command(BaseCommand):
         #     # TODO - not a batch call, shouldn't be here.
         #     self._add_protein_annotations(run)
 
+            # self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
+
             self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
 
-        #     # TODO - figure out how, or if at all, to get this working for SL
-        #     #   Actually it no longer works for ICR either, related to
-        #     #   P04264 somehow
-        #     # self._generate_kinase_predictions(run)
+            # TODO - figure out how, or if at all, to get this working for SL
+            #   Actually it no longer works for ICR either, related to
+            #   P04264 somehow
+            # self._generate_kinase_predictions(run)
 
-            # self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
 
         #     self._add_protein_oscillations(run, replicates, sample_stages, with_bugs)
 
@@ -351,7 +353,7 @@ class Command(BaseCommand):
             # Determine ANOVA q value
             q_value = 1
 
-            if anova_stats.get(phospho_key):
+            if anova_stats.get(site_key):
                 q_value = anova_stats[site_key][Q_VALUE]
 
             statistic.metrics[ANOVA][Q_VALUE] = q_value
@@ -419,14 +421,27 @@ class Command(BaseCommand):
             # Get all log2 mean abundances for all chosen phospho readings for this project
             abundances = Abundance.objects.filter(
                 statistic__statistic_type__name = statistic_type_name,
-                statistic__phospho__protein__project = project
+                statistic__phospho__protein__project = project,
             ).iterator(chunk_size=100)
-        
+
+            print("++++ REPLICATES")
+            print("++++ REPLICATES")
+            print("++++ REPLICATES")
+            print("++++ REPLICATES")
+            abundances = Abundance.objects.filter(
+                statistic__statistic_type__name = statistic_type_name,
+                statistic__phospho__protein__project = project,
+            ).values_list('replicate__name', flat=True).distinct()
+
+            print(abundances)
+
+            exit()
+
             num_abundances = 0
 
             for abundance in abundances:
                 if not num_abundances % 100000:
-                    logger.info(f"Processing abundance {num_abundances}")
+                    logger.info(f"Processing dataframe phospho abundance {num_abundances}")
 
                 num_abundances += 1
 
@@ -442,14 +457,15 @@ class Command(BaseCommand):
             # Get all log2 mean abundances for all proteins for this project
             abundances = Abundance.objects.filter(
                 statistic__statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
-                statistic__protein__project = project
+                statistic__protein__project = project,
+                replicate__mean = False,
             ).iterator(chunk_size=100)
 
             num_abundances = 0
 
             for abundance in abundances:
                 if not num_abundances % 100000:
-                    logger.info(f"Processing abundance {num_abundances}")
+                    logger.info(f"Processing dataframe protein abundance {num_abundances}")
 
                 num_abundances += 1
 
@@ -472,6 +488,7 @@ class Command(BaseCommand):
 
         new_cols = []
 
+        # TODO - is this ordering correct?
         for sample_stage in sample_stages:
             for replicate in replicates:
                 new_cols.append(f"{replicate.name}_{sample_stage.name}")
@@ -482,6 +499,8 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error("DF FAILED")
             logger.error(phospho)
+            logger.error(new_cols)
+            logger.error(time_course_abundance_df.columns)
             logger.error(time_course_abundance_df)
             logger.error(e)
             exit()
@@ -958,20 +977,9 @@ class Command(BaseCommand):
                 reading=normalised_abundance
             )
 
-        # if phospho.mod == "185":
-        #     print("++++ NORM")
-        #     print("++++ NORM")
-        #     print("++++ NORM")
-        #     print("++++ NORM")
-        #     for abundance in Abundance.objects.filter(statistic=stat_normalised_log2_mean):
-        #         print(f"rep: {abundance.replicate} ss: {abundance.sample_stage} reading: {abundance.reading}")
-
-        #     exit()
-
 
 
     def _calculate_arrest_log2_normalisation(self, protein = None, phospho = None):
-        # TODO - is ARRESTING_AGENT the wrong name?
         ARRESTING_AGENT = "Nocodozole"
 
         _, stat_normalised_log2_arrest = self._clear_and_fetch_stats(
@@ -981,11 +989,10 @@ class Command(BaseCommand):
         )
 
         if protein:
-            # TODO - this is a hack, maybe add the field to the Project model?
+            # TODO - this is a hack, add the field to the Project model.
             if protein.project.name == "ICR":
                 ARRESTING_AGENT = "Palbo"
         else:
-            # TODO - this is a hack, maybe add the field to the Project model?
             if phospho.protein.project.name == "ICR":
                 ARRESTING_AGENT = "Palbo"
 
@@ -1090,15 +1097,6 @@ class Command(BaseCommand):
                     reading=normalised_reading
                 )
 
-        # if phospho.protein.accession_number == "Q6ZRS2" and phospho.mod == "274":
-        #     print("++++ NORM")
-        #     print("++++ NORM")
-        #     print("++++ NORM")
-        #     print("++++ NORM")
-        #     for abundance in Abundance.objects.filter(statistic=stat_normalised_medians):
-        #         print(f"rep: {abundance.replicate} ss: {abundance.sample_stage} reading: {abundance.reading}")
-
-        #     exit()
 
     # calculateAverageRepAbundance
     def _calculate_means(
@@ -1241,7 +1239,7 @@ class Command(BaseCommand):
         #   Why did it suddenly start erroring? It happened just after I
         #   first removed some of the R code from calcFisherG.
         #   It's something to do with P04264, one of the duplicated proteins
-        #   for ICR. It's the reason I made it like get_or_create in import_proteo
+        #   for ICR. It's the reason I made it like get_or_create in import_protein
         #   on duplicate, not just continue.
         # peptide_seq = []
 
@@ -1979,12 +1977,16 @@ class Command(BaseCommand):
             rep_stage_abundances[replicate1] = rep_stage_abundances[replicate2]
 
         for replicate in replicates:
+            if rep_stage_abundances.get(replicate) is None:
+                continue
+
             for sample_stage in sample_stages:
                 if rep_stage_abundances[replicate].get(sample_stage) is None:
-                    logger.error(f"Median with no sample stage (??) {replicate.name} {sample_stage.name}")
+                    continue
 
                 if not len(rep_stage_abundances[replicate][sample_stage]):
                     logger.error(f"Median with no values (??) {replicate.name} {sample_stage.name}")
+                    continue
 
                 median = statistics.median(rep_stage_abundances[replicate][sample_stage])
 

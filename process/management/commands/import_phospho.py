@@ -53,7 +53,7 @@ class Command(BaseCommand):
         prs = Protein.objects.filter(is_contaminant=False, project=project)
 
         if len(prs) == 0:
-            raise Exception("No proteins in DB. Have you run import_proteo?")
+            raise Exception("No proteins in DB. Have you run import_protein?")
 
         proteins = {pr.accession_number: pr for pr in prs}
 
@@ -81,11 +81,12 @@ class Command(BaseCommand):
             row_no = 0
 
             for index, row in df.iterrows():
-                row_no += 1
-
                 accession_number = row[project.proteome_file_accession_number_column_name]
 
-                logger.info(f"Adding phospho row {row_no} {accession_number}")
+                if not row_no % 1000:
+                    logger.info(f"Adding phospho row {row_no} {accession_number}")
+
+                row_no += 1
 
                 if not proteins.get(accession_number):
                     new_protein = Protein.objects.create(
@@ -118,7 +119,7 @@ class Command(BaseCommand):
                             if reading != reading:
                                 continue
 
-                            logger.info(f"Adding {phospho} {cn} {reading}")
+                            # logger.info(f"Adding {phospho} {cn} {reading}")
 
                             Abundance.objects.create(
                                 statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading

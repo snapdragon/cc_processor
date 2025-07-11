@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
         replicate_1 = Replicate.objects.create(name="One", project=proj, mean=False)
         replicate_2 = Replicate.objects.create(name="Two", project=proj, mean=False)
         replicate_3 = Replicate.objects.create(name="Three", project=proj, mean=False)
-        replicate_3 = Replicate.objects.create(name="Mean", project=proj, mean=True)
+        _ = Replicate.objects.create(name="Mean", project=proj, mean=True)
 
         SampleStage = apps.get_model("process", "SampleStage")
         sample_stage_1 = SampleStage.objects.create(
@@ -98,154 +98,154 @@ class Migration(migrations.Migration):
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_1,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_001_01_1ug.51b7a776fbe207cca4dc3cbaf3e65725.mzML",
+            name="IITI_001",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_2,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_002_01_1ug.a972822c12d3531250fe20ae6ecb69aa.mzML",
+            name="IITI_002",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_3,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_003_01_1ug.cad9400d7eba72576923cc895f70af6f.mzML",
+            name="IITI_003",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_4,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_004_01_1ug.2ddb48073d9de37c4b0577bf07ec287e.mzML",
+            name="IITI_004",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_5,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_005_01_1ug.d328d37a46090c888c870306d0667ee0.mzML",
+            name="IITI_005",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_6,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_006_01_1ug.8742a276a5a238c3619d330452615790.mzML",
+            name="IITI_006",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_7,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_007_01_1ug.9f20f2a13f46094c6e05d450368ac4b9.mzML",
+            name="IITI_007",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_8,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_008_01_1ug.88c053097fe9088c531abea2e67c6758.mzML",
+            name="IITI_008",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_9,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_009_01_1ug.7cc37d682de27eda4edef0ccab026af7.mzML",
+            name="IITI_009",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_10,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_010_01_1ug.1c2b1a3ce2fa1ccbc6b7eac9ce05956d.mzML",
+            name="IITI_010",
         )
 
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_1,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_011_01_1ug.d0c28c029ee2c2e6db5b1b50665d4e4a.mzML",
+            name="IITI_011",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_2,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_012_01_1ug.2a322473a6c3f2f17ef9d4a53ed71dcb.mzML",
+            name="IITI_012",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_3,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_013_01_1ug.8b2322fec72c6dfc64e48985b201be31.mzML",
+            name="IITI_013",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_4,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_014_01_1ug.d34730570aa7065d1b8fc1bf7c63120b.mzML",
+            name="IITI_014",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_5,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_015_01_1ug.e1db3e62958d4004120df6232d7e4cfb.mzML",
+            name="IITI_015",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_6,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_016_01_1ug.da2aa3f688849ccaf9b48f20c280feb7.mzML",
+            name="IITI_016",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_7,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_017_01_1ug.224040fdec92fe339478bf8880fbdca4.mzML",
+            name="IITI_017",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_8,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_018_01_1ug.0a587479bed4bb6ca2646b9fd4696929.mzML",
+            name="IITI_018",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_9,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_019_01_1ug.e58220209d4d4a8ad4b75290b1afe11c.mzML",
+            name="IITI_019",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_10,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_020_01_1ug.919455044bdeaaf3a82baf91dd9454fe.mzML",
+            name="IITI_020",
         )
 
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_1,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_021_01_1ug.e5a263c0704ca7f2c5ef59f622683b94.mzML",
+            name="IITI_021",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_2,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_022_01_1ug.94bd6f3a75657b35542bcb0eb17bef0d.mzML",
+            name="IITI_022",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_3,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_023_01_1ug.02320fcf5845af144f62809601a6c6ba.mzML",
+            name="IITI_023",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_4,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_024_01_1ug.d86dfb6cbe421d43a505d2d564d3c6f7.mzML",
+            name="IITI_024",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_5,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_025_01_1ug.4335cd91e3ccbe88508c7a9659b6c117.mzML",
+            name="IITI_025",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_6,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_026_01_1ug.80960811cdc975851244195926b02747.mzML",
+            name="IITI_026",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_7,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_027_01_1ug.5d7c208e6ec913f11208ca0af6e9a6a6.mzML",
+            name="IITI_027",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_8,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_028_01_1ug.93de991e7437ba5b76cf9f6046801c9b.mzML",
+            name="IITI_028",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_9,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_029_01_1ug.876cc9b4e0c16ec665ea03d6d1c3393c.mzML",
+            name="IITI_029",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_10,
-            name="/users/pr/rawstream/2023MK001/mzml/2023MK001_IITI_030_01_1ug.90f58effdd53b09a52b544e757179640.mzML",
+            name="IITI_030",
         )
 
         # Config for Institute of Cancer Research project
@@ -262,7 +262,7 @@ class Migration(migrations.Migration):
         replicate_ICR_2 = Replicate.objects.create(
             name=ABUNDANCE_REP_2, project=project_ICR, mean=False
         )
-        replicate_ICR_3 = Replicate.objects.create(
+        _ = Replicate.objects.create(
             name="abundance_average", project=project_ICR, mean=True
         )
 
