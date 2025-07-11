@@ -67,9 +67,7 @@ class Command(BaseCommand):
 
         if project_name == "SL":
             for cn in column_names:
-                cn_short = re.search(r'IITI_\d{3}_', cn.name)
-
-                cns_by_name[cn_short.group()] = cn
+                cns_by_name[cn.name] = cn
 
             # file_path = f"data/{project.phosphoproteome_file}"
 
@@ -110,7 +108,7 @@ class Command(BaseCommand):
                 )
 
                 for col in df.columns:
-                    col_short = re.search(r'IITI_\d{3}_', col)
+                    col_short = re.search(r'IITI_\d{3}', col)
 
                     if col_short is not None:
                         if cn := cns_by_name.get(col_short.group()):

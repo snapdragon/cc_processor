@@ -36,6 +36,9 @@ from process.constants import (
     PHOSPHORYLATION_ABUNDANCES,
     PHOSPHORYLATION_SITE,
     POSITION_ABUNDANCES,
+    PROTEIN_OSCILLATION_ABUNDANCES,
+    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
 )
 
 logging.basicConfig(
@@ -147,6 +150,56 @@ class Command(BaseCommand):
                         pm,
                     )
 
+                    if phospho_data.get(PROTEIN_OSCILLATION_ABUNDANCES):
+                        poa = phospho_data.get(PROTEIN_OSCILLATION_ABUNDANCES)
+
+                        if poa.get(ZERO_MAX):
+                            self._import_readings(
+                                replicates_by_name,
+                                sample_stages_by_name,
+                                None,
+                                phospho,
+                                PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+                                poa[ZERO_MAX],
+                            )
+
+                            if poa[ZERO_MAX].get(METRICS):
+                                self._import_metrics(
+                                    None,
+                                    phospho,
+                                    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+                                    poa[ZERO_MAX][METRICS],
+                                )
+                            else:
+                                print(f"No protein oscillation zero max metrics {protein.accession_number}")
+
+                        else:
+                            logger.info(f"No protein oscillation zero max for protein {protein.accession_number}")
+
+                        if poa.get(LOG2_MEAN):
+                            self._import_readings(
+                                replicates_by_name,
+                                sample_stages_by_name,
+                                None,
+                                phospho,
+                                PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+                                poa[LOG2_MEAN],
+                            )
+
+                            if poa[LOG2_MEAN].get(METRICS):
+                                self._import_metrics(
+                                    None,
+                                    phospho,
+                                    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+                                    poa[LOG2_MEAN][METRICS],
+                                )
+                            else:
+                                print(f"No protein oscillation log2 mean metrics {protein.accession_number}")
+
+                        else:
+                            logger.info(f"No protein oscillation log2 mean for protein {protein.accession_number}")
+
+
     def _import_metrics(
         self,
         protein,
@@ -193,6 +246,10 @@ class Command(BaseCommand):
                 # Strip out 'status' string for imputed values
                 if statistic_type_name == ABUNDANCES_IMPUTED:
                     reading = reading['value']
+
+                # Protein oscillations puts metrics at the same level as replicates
+                if replicate_name == "metrics":
+                    continue
 
                 replicate = replicates_by_name[replicate_name]
                 sample_stage = sample_stages_by_name[sample_stage_name]

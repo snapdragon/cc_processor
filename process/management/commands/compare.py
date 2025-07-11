@@ -35,6 +35,8 @@ from process.constants import (
     G_STATISTIC,
     FISHER_G,
     FREQUENCY,
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
 )
 
 # TODO - move to constants file
@@ -127,15 +129,15 @@ class Command(BaseCommand):
             print(f"Can't get process protein {accession_number}")
             return
 
-        # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
-        self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
-        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
-        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
+        # # Don't compare protein medians as they're not stored in the ICR json
+        # self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
+        # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
+        # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
 
         # Compare phosphos
         phosphos_original = Phospho.objects.filter(
@@ -157,16 +159,22 @@ class Command(BaseCommand):
                 print(e)
                 return
 
-            # Don't compare phospho medians as they're not stored in the ICR json
-            # Don't compare min-max and imputed for phospho as they're calculated differently
-            self._compare_numbers(ABUNDANCES_RAW, None, None, phospho_original, phospho_process)
-            self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, None, None, phospho_original, phospho_process)
-            self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process)
-            # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
-            self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
-            # self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
-            self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
-            self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process, False, False)
+            # # Don't compare phospho medians as they're not stored in the ICR json
+            # # Don't compare min-max and imputed for phospho as they're calculated differently
+            # self._compare_numbers(ABUNDANCES_RAW, None, None, phospho_original, phospho_process)
+            # self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, None, None, phospho_original, phospho_process)
+            # self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process)
+            # # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, None, None, phospho_original, phospho_process)
+            # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process)
+            # # self._compare_numbers(ABUNDANCES_IMPUTED, None, None, phospho_original, phospho_process)
+            # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
+            # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process, False, False)
+
+            self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
+            self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
+
+            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
+            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
 
 
     def _compare_metrics(

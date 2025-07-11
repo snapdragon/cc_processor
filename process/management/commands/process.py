@@ -261,13 +261,6 @@ class Command(BaseCommand):
             else:
                 logger.info("Processing all phosphos")
 
-                print("++++ REPLICATES 2")
-                print("++++ REPLICATES 2")
-                print("++++ REPLICATES 2")
-                print("++++ REPLICATES 2")
-                print(replicates)
-                exit()
-
                 proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
 
                 for i, protein in enumerate(proteins):
@@ -288,7 +281,7 @@ class Command(BaseCommand):
         #     # TODO - not a batch call, shouldn't be here.
         #     self._add_protein_annotations(run)
 
-            # self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
+            self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
 
             self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
 
@@ -424,19 +417,6 @@ class Command(BaseCommand):
                 statistic__phospho__protein__project = project,
             ).iterator(chunk_size=100)
 
-            print("++++ REPLICATES")
-            print("++++ REPLICATES")
-            print("++++ REPLICATES")
-            print("++++ REPLICATES")
-            abundances = Abundance.objects.filter(
-                statistic__statistic_type__name = statistic_type_name,
-                statistic__phospho__protein__project = project,
-            ).values_list('replicate__name', flat=True).distinct()
-
-            print(abundances)
-
-            exit()
-
             num_abundances = 0
 
             for abundance in abundances:
@@ -458,7 +438,6 @@ class Command(BaseCommand):
             abundances = Abundance.objects.filter(
                 statistic__statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
                 statistic__protein__project = project,
-                replicate__mean = False,
             ).iterator(chunk_size=100)
 
             num_abundances = 0

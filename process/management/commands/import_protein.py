@@ -98,23 +98,19 @@ class Command(BaseCommand):
             if is_contaminant:
                 continue
 
+
             for col in df.columns:
-                # print(col)
-                short_col = col
+                col_short = re.search(r'IITI_\d{3}', col)
 
-                if project_name == "SL":
-                    # We don't use the full column name, just an identifier
-                    if re.search(r'IITI_\d{3}', col):
-                        short_col = re.search(r'IITI_\d{3,4}', col).group()
+                if col_short is not None:
+                    if cn := cns_by_name.get(col_short.group()):
+                        reading = row[col]
 
-                if cn := cns_by_name.get(short_col):
-                    reading = row[col]
+                        if reading != reading:
+                            continue
 
-                    if reading != reading:
-                        continue
-
-                    Abundance.objects.create(
-                        statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
-                    )
+                        Abundance.objects.create(
+                            statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
+                        )
 
         print(f"Total rows: {row_no}")
