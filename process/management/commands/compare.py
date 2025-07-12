@@ -173,8 +173,8 @@ class Command(BaseCommand):
             self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
             self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
 
-            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
-            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
+            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
+            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
 
 
     def _compare_metrics(
@@ -242,9 +242,11 @@ class Command(BaseCommand):
                     print(f"No original protein metrics string {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
                 else:
                     print(f"No original phospho metrics string {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
-
             # else:
-            #     print(f"Match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+            #     if protein_original:
+            #         print(f"Match for protein {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+            #     else:
+            #         print(f"Match for phospho {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         for field in METRICS_NUMBER_FIELDS:
             if metrics_process.get(field) is None:
@@ -261,7 +263,10 @@ class Command(BaseCommand):
                 else:
                     print(f"No phospho metrics number match {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
             # else:
-            #     print(f"Metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+            #     if protein_original:
+            #         print(f"Metrics match for protein {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+            #     else:
+            #         print(f"Metrics match for phospho {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
 
         if with_anova:
             if metrics_process.get(ANOVA) is None:
@@ -365,7 +370,7 @@ class Command(BaseCommand):
             if protein_original:
                 print(f"Protein abundance lengths don't match {statistic_type_name} for {protein_original.accession_number}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
             else:
-                print(f"Phospho abundance lengths don't match {statistic_type_name} for {phospho_original.protein.accession_number}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
+                print(f"Phospho abundance lengths don't match {statistic_type_name} for {phospho_original.protein.accession_number} {phospho_original.mod}: {len(stat_abundances_original)} vs {len(stat_abundances_process)}")
 
         for ab_original in stat_abundances_original:
             ab_process = stat_abundances_process.filter(
@@ -388,7 +393,10 @@ class Command(BaseCommand):
                 else:
                     print(f"No phospho match {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
             # else:
-            #     print(f"Match for {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            #     if protein_original:
+            #         print(f"Match for protein {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            #     else:
+            #         print(f"Match for phospho {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
 
 
     # TODO - copied from import_original

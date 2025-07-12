@@ -41,8 +41,8 @@ from process.constants import (
     SL_SAMPLE_STAGE_NAME_9,
     SL_SAMPLE_STAGE_NAME_10,
 
-    ABUNDANCE_REP_1,
-    ABUNDANCE_REP_2
+    ICR_ABUNDANCE_REP_1,
+    ICR_ABUNDANCE_REP_2
 )
 
 
@@ -257,10 +257,10 @@ class Migration(migrations.Migration):
         )
 
         replicate_ICR_1 = Replicate.objects.create(
-            name=ABUNDANCE_REP_1, project=project_ICR, mean=False
+            name=ICR_ABUNDANCE_REP_1, project=project_ICR, mean=False
         )
         replicate_ICR_2 = Replicate.objects.create(
-            name=ABUNDANCE_REP_2, project=project_ICR, mean=False
+            name=ICR_ABUNDANCE_REP_2, project=project_ICR, mean=False
         )
         _ = Replicate.objects.create(
             name="abundance_average", project=project_ICR, mean=True
@@ -385,10 +385,10 @@ class Migration(migrations.Migration):
         )
 
         replicate_original_1 = Replicate.objects.create(
-            name=ABUNDANCE_REP_1, project=project_original, mean=False
+            name=ICR_ABUNDANCE_REP_1, project=project_original, mean=False
         )
         replicate_original_2 = Replicate.objects.create(
-            name=ABUNDANCE_REP_2, project=project_original, mean=False
+            name=ICR_ABUNDANCE_REP_2, project=project_original, mean=False
         )
         replicate_original_3 = Replicate.objects.create(
             name="abundance_average", project=project_original, mean=True

@@ -86,17 +86,17 @@ class Command(BaseCommand):
 
         with open(file_path, 'r') as f:
             for gene_name, gene_data in ijson.kvitems(f, ''):
-                num_proteins += 1
-
                 if not num_proteins % 1000:
-                    print(f"Importing original protein result {num_proteins} {gene_name}")
+                    logger.info(f"Importing original protein result {num_proteins} {gene_name}")
+
+                num_proteins += 1
 
                 protein = Protein.objects.create(
                     project=project, accession_number=gene_name, is_contaminant=False
                 )
 
                 if not gene_data.get(PROTEIN_ABUNDANCES):
-                    print(f"No protein abundances for {gene_name}")
+                    logger.info(f"No protein abundances for {gene_name}")
                     continue
 
                 pa = gene_data[PROTEIN_ABUNDANCES]
@@ -117,7 +117,7 @@ class Command(BaseCommand):
                 )
 
                 if not gene_data.get(PHOSPHORYLATION_ABUNDANCES):
-                    # print(f"No phosphorylation abundances for {protein.accession_number}")
+                    # logger.info(f"No phosphorylation abundances for {protein.accession_number}")
                     continue
 
                 for mod, phospho_data in gene_data[PHOSPHORYLATION_ABUNDANCES].items():
@@ -130,13 +130,13 @@ class Command(BaseCommand):
                     # TODO - peptide abundances
 
                     if not phospho_data.get(POSITION_ABUNDANCES):
-                        print(f"No phospho position abundances for {gene_name} {mod}")
+                        logger.info(f"No phospho position abundances for {gene_name} {mod}")
                         continue
 
                     pa = phospho_data[POSITION_ABUNDANCES]
 
                     if not phospho_data.get(METRICS):
-                        print(f"No phospho metrics for {gene_name} {mod}")
+                        logger.info(f"No phospho metrics for {gene_name} {mod}")
                         continue
 
                     pm = phospho_data[METRICS]
@@ -171,7 +171,7 @@ class Command(BaseCommand):
                                     poa[ZERO_MAX][METRICS],
                                 )
                             else:
-                                print(f"No protein oscillation zero max metrics {protein.accession_number}")
+                                logger.info(f"No protein oscillation zero max metrics {protein.accession_number}")
 
                         else:
                             logger.info(f"No protein oscillation zero max for protein {protein.accession_number}")
@@ -194,7 +194,7 @@ class Command(BaseCommand):
                                     poa[LOG2_MEAN][METRICS],
                                 )
                             else:
-                                print(f"No protein oscillation log2 mean metrics {protein.accession_number}")
+                                logger.info(f"No protein oscillation log2 mean metrics {protein.accession_number}")
 
                         else:
                             logger.info(f"No protein oscillation log2 mean for protein {protein.accession_number}")
@@ -291,7 +291,7 @@ class Command(BaseCommand):
                 pa[NORMALISED][MEDIAN],
             )
         else:
-            print(f"No normalised medians for protein {protein.accession_number}")
+            logger.info(f"No normalised medians for protein {protein.accession_number}")
 
         if pa.get(NORMALISED) and pa[NORMALISED].get("log2_palbo"):
             self._import_readings(
@@ -303,7 +303,7 @@ class Command(BaseCommand):
                 pa[NORMALISED]["log2_palbo"],
             )
         else:
-            print(f"No normalised log2 arrest for protein {protein.accession_number}")
+            logger.info(f"No normalised log2 arrest for protein {protein.accession_number}")
 
         if pa.get(NORMALISED) and pa[NORMALISED].get(LOG2_MEAN):
             self._import_readings(
@@ -315,7 +315,7 @@ class Command(BaseCommand):
                 pa[NORMALISED][LOG2_MEAN],
             )
         else:
-            print(f"No normalised log2 mean for protein {protein.accession_number}")
+            logger.info(f"No normalised log2 mean for protein {protein.accession_number}")
                 
         if pa.get(NORMALISED) and pa[NORMALISED].get(MIN_MAX):
             self._import_readings(
@@ -327,7 +327,7 @@ class Command(BaseCommand):
                 pa[NORMALISED][MIN_MAX],
             )
         else:
-            print(f"No normalised min max for protein {protein.accession_number}")
+            logger.info(f"No normalised min max for protein {protein.accession_number}")
 
         if pa.get(NORMALISED) and pa[NORMALISED].get(ZERO_MAX):
             self._import_readings(
@@ -339,7 +339,7 @@ class Command(BaseCommand):
                 pa[NORMALISED][ZERO_MAX],
             )
         else:
-            print(f"No normalised zero max for protein {protein.accession_number}")
+            logger.info(f"No normalised zero max for protein {protein.accession_number}")
 
         if pa.get(IMPUTED):
             self._import_readings(
@@ -351,7 +351,7 @@ class Command(BaseCommand):
                 pa[IMPUTED],
             )
         else:
-            print(f"No imputed values for protein {protein.accession_number}")
+            logger.info(f"No imputed values for protein {protein.accession_number}")
 
         if pm.get(LOG2_MEAN):
             self._import_metrics(
@@ -361,7 +361,7 @@ class Command(BaseCommand):
                 pm[LOG2_MEAN],
             )
         else:
-            print(f"No log2 mean metrics {protein.accession_number}")
+            logger.info(f"No log2 mean metrics {protein.accession_number}")
 
         if pm.get(ZERO_MAX):
             self._import_metrics(
@@ -371,7 +371,7 @@ class Command(BaseCommand):
                 pm[ZERO_MAX],
             )
         else:
-            print(f"No zero max metrics {protein.accession_number}")
+            logger.info(f"No zero max metrics {protein.accession_number}")
 
     def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
         statistic_type = StatisticType.objects.get(name=statistic_type_name)

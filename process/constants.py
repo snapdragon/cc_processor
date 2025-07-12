@@ -15,6 +15,8 @@ IMPUTED = "imputed"
 P_VALUE = "p_value"
 # TODO - should it be F_statistic, singular?
 F_STATISTICS = "F_statistics"
+
+# TODO - change all these to not have PROTEIN_
 PROTEIN_OSCILLATION_ABUNDANCES = "protein_oscillation_abundances"
 ABUNDANCE_AVERAGE = "abundance_average"
 PROTEIN_INFO = "protein_info"
@@ -115,5 +117,5 @@ SL_SAMPLE_STAGE_NAME_8 = "Palb sample, 8h"
 SL_SAMPLE_STAGE_NAME_9 = "Palb sample, 10h"
 SL_SAMPLE_STAGE_NAME_10 = "Nocodozole"
 
-ABUNDANCE_REP_1 = "abundance_rep_1"
-ABUNDANCE_REP_2 = "abundance_rep_2"
+ICR_ABUNDANCE_REP_1 = "abundance_rep_1"
+ICR_ABUNDANCE_REP_2 = "abundance_rep_2"

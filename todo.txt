@@ -33,6 +33,8 @@ _add_protein_annotations and _get_kinase_predictions should be excluded unless I
     figure out what they do.
 
 
+Wrap all code that have the not i % 1000 in a function then wrap that in a decorator?
+Add admin app
 Write unit tests for _calculate_metrics and _calculate_ANOVA
 Go through the code and make it work with no records created for empty values
     in import_protein and import_phospho

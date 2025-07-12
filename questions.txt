@@ -1,7 +1,6 @@
 Why are there so many missing values? Should they be considered zero or none?
     Should they be imputed? Would that work with so little data? What is imputation for?
-
-Is the method of imputing data what we want? Linear imputation.
+    Is the method of imputing data what we want? Linear imputation.
 
 What should phosphosite be for SL?
 Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?
@@ -13,3 +12,17 @@ min-max and impute values are calculated differently in proteo and phosho. And p
 
 The ICR data has various values for 'confidence'. What about us?
 
+How does kinase prediction work?
+
+What proportion of the paper should be about the cell cycle in general, and what to the experiment?
+
+What to do about all the bugs? Mention them in the paper?
+    Should I leave in all the code for ICR, such as for generating correct results?
+
+Bugs:
+
+Mean
+Median
+Variation in imputed and min-max between protein and phospho
+The linear imputation wraps round at the upper end
+Various values not calculated when they could be do to try-except structure
