@@ -26,6 +26,9 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.in-project true && \
     poetry install --only main --no-root
 
+# Install R packages
+RUN R -e "install.packages('ptest', repos='https://cloud.r-project.org')"
+
 # Copy application source code
 COPY . .
 

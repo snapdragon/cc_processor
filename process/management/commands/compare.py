@@ -212,6 +212,7 @@ class Command(BaseCommand):
         metrics_original = stat_original.metrics
         metrics_process = stat_process.metrics
 
+        # TODO - all these ifs are an absolute mess
         if not metrics_original:
             if protein_original:
                 print(f"No original protein metrics {statistic_type_name} for {protein_original.accession_number}")
@@ -293,11 +294,11 @@ class Command(BaseCommand):
                             print(f"No protein ANOVA metrics match {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
                         else:
                             print(f"No phospho ANOVA metrics match {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
-                    else:
-                        if protein_original:
-                            print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
-                        else:
-                            print(f"ANOVA metrics match for {statistic_type_name} for {phospho_original.protein.accession_number} {phospho_original.mod} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                    # else:
+                    #     if protein_original:
+                    #         print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                    #     else:
+                    #         print(f"ANOVA metrics match for {statistic_type_name} for {phospho_original.protein.accession_number} {phospho_original.mod} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
 
 
         if with_fisher_g:

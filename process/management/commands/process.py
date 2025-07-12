@@ -413,10 +413,16 @@ class Command(BaseCommand):
                 statistic_type_name = PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN
 
             # Get all log2 mean abundances for all chosen phospho readings for this project
+            # abundances = Abundance.objects.filter(
+            #     statistic__statistic_type__name = statistic_type_name,
+            #     statistic__phospho__protein__project = project,
+            # ).iterator(chunk_size=100)
+
             abundances = Abundance.objects.filter(
                 statistic__statistic_type__name = statistic_type_name,
                 statistic__phospho__protein__project = project,
-            ).iterator(chunk_size=100)
+            )[:10000]
+
 
             num_abundances = 0
 
@@ -555,12 +561,6 @@ class Command(BaseCommand):
                 P_VALUE: p_value,
                 F_STATISTICS: f_statistic
             }
-
-            print("+++++ SAVING ANOVA FOR")
-            print(stat_log2_mean.statistic_type.name)
-            print(stat_log2_mean.protein)
-            print(stat_log2_mean.phospho)
-            print(stat_log2_mean.metrics)
 
             stat_log2_mean.save()
 
@@ -1330,8 +1330,6 @@ class Command(BaseCommand):
 
         self._generate_protein_oscillation_metrics(project, replicates, sample_stages, with_bugs)
 
-        return
-
         fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
@@ -1864,9 +1862,8 @@ class Command(BaseCommand):
         # ).iterator(chunk_size=100)
 
         phosphos = Phospho.objects.filter(
-            protein__project = project,
-            protein__accession_number = 'Q09666'
-        )
+            protein__project = project
+        )[:100]
 
         num_phosphos = 0
 
