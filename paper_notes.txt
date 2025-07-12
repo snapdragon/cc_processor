@@ -1,0 +1,38 @@
+Todo
+====
+
+Create charts like 1.A, 1.C. 1.D and 1.E
+
+
+Intro
+=====
+
+
+Results
+=======
+
+High resolution time course proteomic and phosphoproteomic analysis of cell cycle progression in RPE-1 cells
+------------------------------------------------------------------------------------------------------------
+
+How does fig 1.B work? What are the horizontal axes?
+How does the principal component analysis for 1.B and 1.C work?
+    The figure note says 'See supplementary data 1'
+
+Defining protein and phosphorylation oscillations during the cell cycle
+-----------------------------------------------------------------------
+
+'The cutoffs ...', see questions.
+
+Protein and phosphorylation changes during mitotic exit
+-------------------------------------------------------
+
+Skipped as we're not doing it
+
+
+Fig 2
+-----
+
+Create charts like 2.A, 2.B, 2.C, 2.D
+What does 2.F mean?
+
+Not 2.E due to lack of Western Blot.
