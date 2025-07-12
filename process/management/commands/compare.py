@@ -170,11 +170,11 @@ class Command(BaseCommand):
             # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
             # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process, False, False)
 
-            self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
-            self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
+            # self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
+            # self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
 
-            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
-            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
+            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
+            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
 
 
     def _compare_metrics(
@@ -293,8 +293,12 @@ class Command(BaseCommand):
                             print(f"No protein ANOVA metrics match {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
                         else:
                             print(f"No phospho ANOVA metrics match {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
-                    # else:
-                    #     print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                    else:
+                        if protein_original:
+                            print(f"ANOVA metrics match for {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+                        else:
+                            print(f"ANOVA metrics match for {statistic_type_name} for {phospho_original.protein.accession_number} {phospho_original.mod} for {field} reading {metrics_original[ANOVA][field]} vs {metrics_process[ANOVA][field]}")
+
 
         if with_fisher_g:
             if metrics_process.get(FISHER_G) is None:

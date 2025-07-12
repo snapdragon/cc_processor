@@ -152,3 +152,11 @@ python manage.py import_original
 ```sh
 python manage.py compare --accession-number Q93075
 ```
+
+### To get the admin site working
+```sh
+docker exec -it cc_processor /bin/bash
+python manage.py createsuperuser
+python manage.py runserver 0.0.0.0:8000
+# Then go to 0.0.0.0:8000/admin in your browser
+```

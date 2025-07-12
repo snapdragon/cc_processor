@@ -29,5 +29,8 @@ RUN poetry config virtualenvs.in-project true && \
 # Copy application source code
 COPY . .
 
+# Expose Django development port
+EXPOSE 8000
+
 # Set the default command
 CMD ["/bin/bash"]

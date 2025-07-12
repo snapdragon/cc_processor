@@ -555,6 +555,13 @@ class Command(BaseCommand):
                 P_VALUE: p_value,
                 F_STATISTICS: f_statistic
             }
+
+            print("+++++ SAVING ANOVA FOR")
+            print(stat_log2_mean.statistic_type.name)
+            print(stat_log2_mean.protein)
+            print(stat_log2_mean.phospho)
+            print(stat_log2_mean.metrics)
+
             stat_log2_mean.save()
 
         except Exception as e:
@@ -1913,10 +1920,10 @@ class Command(BaseCommand):
                 self._calculate_metrics(
                     statistic_type_name,
                     replicates,
-                        sample_stages,
-                        None,
-                        phospho
-                    )
+                    sample_stages,
+                    None,
+                    phospho
+                )
 
                     # for norm_method in [ZERO_MAX, LOG2_MEAN]:
                     #     prpampoa[norm_method][METRICS] = self._calculate_metrics(
@@ -1927,7 +1934,7 @@ class Command(BaseCommand):
                     #     )
 
                 self._calculate_ANOVA(
-                    ABUNDANCES_NORMALISED_LOG2_MEAN,
+                    statistic_type_name,
                     sample_stages,
                     None,
                     phospho
