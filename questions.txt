@@ -1,7 +1,9 @@
 ICR is what I've been referring to the most so it'll be mentioned a lot here.
 The questions are wide ranging.
 
-Why are there so many missing values? Should they be considered zero or none?
+Why are there so many missing values? Their abscence makes it difficult to calculate
+meaningful results.
+    Should they be considered zero or none?
     Should they be imputed? Would that work with so little data? What is imputation for?
     Is the method of imputing data what we want? Linear imputation.
 
@@ -12,8 +14,11 @@ interpret.
 
 What proportion of the paper should be about the cell cycle in general, and what to the experiment?
 
+As well as GO terms, figuring out what the various data sources are.
+
+What is Figure 4 c?
+
 Should I do a comparisong with other papers, as per ICR? Maybe just with one paper?
-How does GO term enrichment work?
 
 min-max and impute values are calculated differently in proteo and phospho. And position_abundances?
     Which is correct?

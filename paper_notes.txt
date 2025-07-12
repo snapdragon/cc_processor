@@ -23,16 +23,24 @@ Defining protein and phosphorylation oscillations during the cell cycle
 
 'The cutoffs ...', see questions.
 
+Do all the Fig 2 charts except for the ones related to Western Blot, which we don't have.
+
+What does 2.F mean?
+
+
 Protein and phosphorylation changes during mitotic exit
 -------------------------------------------------------
 
 Skipped as we're not doing it
 
+Comparing time course and mitotic exit datasets
+-----------------------------------------------
 
-Fig 2
------
+Also skipped
 
-Create charts like 2.A, 2.B, 2.C, 2.D
-What does 2.F mean?
 
-Not 2.E due to lack of Western Blot.
+
+Biological role of cell cycle-dependent proteins
+------------------------------------------------
+
+Very interesting! Study in detail and reproduce.

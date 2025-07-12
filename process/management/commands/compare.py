@@ -136,8 +136,10 @@ class Command(BaseCommand):
         # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
-        # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
-        # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
+        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
+        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
+
+        return
 
         # Compare phosphos
         phosphos_original = Phospho.objects.filter(
@@ -173,8 +175,8 @@ class Command(BaseCommand):
             # self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
             # self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
 
-            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
-            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
+            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
+            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
 
 
     def _compare_metrics(

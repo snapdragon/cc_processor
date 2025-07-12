@@ -132,6 +132,8 @@ python manage.py output_protein --project "ICR" --with-bugs --accession-number Q
 
 ### Various DB queries
 ```sh
+CREATE DATABASE dbify;
+
 # Change DB
 \c dbify
 
