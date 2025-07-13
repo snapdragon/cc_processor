@@ -55,7 +55,4 @@ con dently assigned to a speci c residue, also exhibiting high repro-
 ducibility within the replicates of each time point (Fig. 1D).'
     How was this done? Fig 1D is a PCA chart.
 
-
-The ICR data has various values for 'confidence'. What about us?
-
 How does kinase prediction work?
