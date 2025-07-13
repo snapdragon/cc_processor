@@ -12,9 +12,21 @@ The ICR paper seems to say the various limits (q < 0.01 for yes, q > 0.01 and st
 for no) were determined by GO term enrichment analysis but the supplementary data (3) is hard to
 interpret.
 
-What proportion of the paper should be about the cell cycle in general, and what to the experiment?
+Why was Nocodozole used? How should the data be analysed?
 
-As well as GO terms, figuring out what the various data sources are.
+The stage names aren't related to a cell cycle stage like the ICR ones.
+    ICR states 'The cell cycle phase for each timepoint was defined by a combination of
+    flow cytometry profiles and protein abundance data from the MS analysis'.
+    If none, how do we know what percentage of the cells were actually synchronised?
+    ICR paper says using flow cytometry before MS analysis reveals G1 cells only 8-16%
+    of S and G2/M cells.
+Why are there so many Palbs? ICR says it works on G1 but not others.
+
+
+
+Is there any data about the data capture process available?
+
+What proportion of the paper should be about the cell cycle in general, and what to the experiment?
 
 What is Figure 4 c?
 
@@ -24,15 +36,6 @@ min-max and impute values are calculated differently in proteo and phospho. And 
     Which is correct?
     Proteo uses ABUNDANCES_NORMALISED_LOG2_MEAN
     Phospho uses ABUNDANCES_NORMALISED_MIN_MAX
-
-Is there any data about the data capture process available?
-The stage names aren't related to a cell cycle stage like the ICR ones.
-    ICR states 'The cell cycle phase for each timepoint was defined by a combination of
-    flow cytometry profiles and protein abundance data from the MS analysis'.
-    If none, how do we know what percentage of the cells were actually synchronised?
-    ICR paper says using flow cytometry before MS analysis reveals G1 cells only 8-16%
-    of S and G2/M cells.
-Why are there so many Palbs? ICR says it works on G1 but not others.
 
 What should phosphosite be for SL?
 Is Precursor.Id the correct field to use for identifying a mod? What field for phosphosite?

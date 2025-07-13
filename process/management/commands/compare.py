@@ -129,17 +129,15 @@ class Command(BaseCommand):
             print(f"Can't get process protein {accession_number}")
             return
 
-        # # Don't compare protein medians as they're not stored in the ICR json
+        # Don't compare protein medians as they're not stored in the ICR json
         # self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None)
         # self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
-        self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
-        self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
-
-        return
+        # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
+        # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
 
         # Compare phosphos
         phosphos_original = Phospho.objects.filter(
@@ -161,8 +159,8 @@ class Command(BaseCommand):
                 print(e)
                 return
 
-            # # Don't compare phospho medians as they're not stored in the ICR json
-            # # Don't compare min-max and imputed for phospho as they're calculated differently
+            # Don't compare phospho medians as they're not stored in the ICR json
+            # Don't compare min-max and imputed for phospho as they're calculated differently
             # self._compare_numbers(ABUNDANCES_RAW, None, None, phospho_original, phospho_process)
             # self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, None, None, phospho_original, phospho_process)
             # self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process)
@@ -172,11 +170,11 @@ class Command(BaseCommand):
             # self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
             # self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, None, None, phospho_original, phospho_process, False, False)
 
-            # self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
-            # self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
+            self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process)
+            self._compare_numbers(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process)
 
-            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
-            # self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, True, True)
+            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, None, None, phospho_original, phospho_process, True, True)
+            self._compare_metrics(PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX, None, None, phospho_original, phospho_process, False, False)
 
 
     def _compare_metrics(
@@ -242,9 +240,9 @@ class Command(BaseCommand):
 
             if metrics_original[field] != metrics_process[field]:
                 if protein_original:
-                    print(f"No original protein metrics string {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                    print(f"Nom-matching original protein metrics string {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
                 else:
-                    print(f"No original phospho metrics string {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                    print(f"Non-matching original phospho metrics string {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
             # else:
             #     if protein_original:
             #         print(f"Match for protein {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
@@ -329,7 +327,10 @@ class Command(BaseCommand):
                         else:
                             print(f"No phospho FISHER_G metrics match {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
                     # else:
-                    #     print(f"FISHER_G metrics match for {statistic_type_name} for {phospho_original.protein.accession_number} for {field} reading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
+                    #     if protein_original:
+                    #         print(f"FISHER_G metrics match for {statistic_type_name} for {protein_original.accession_number} for {fieldreading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
+                    #     else:
+                    #         print(f"FISHER_G metrics match for {statistic_type_name} for {phospho_original.protein.accession_number} for {field} reading {metrics_original[FISHER_G][field]} vs {metrics_process[FISHER_G][field]}")
 
 
     def _not_same(self, num1, num2, dps):

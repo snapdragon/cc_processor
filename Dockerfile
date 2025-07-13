@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev libreadline-dev \
     libcurl4-openssl-dev libssl-dev libxml2-dev \
     libbz2-dev zlib1g-dev liblzma-dev \
-    r-base r-base-dev \
     ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -25,9 +24,6 @@ RUN pip install "poetry==$POETRY_VERSION"
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.in-project true && \
     poetry install --only main --no-root
-
-# Install R packages
-RUN R -e "install.packages('ptest', repos='https://cloud.r-project.org')"
 
 # Copy application source code
 COPY . .

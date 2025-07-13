@@ -275,17 +275,13 @@ class Command(BaseCommand):
                     )
 
         if calculate_batch or calculate_all:
-        # # Largely batch processing from now on
-        # # TODO - some of the parts of the batch processing, e.g. protein oscillation
-        # #   metrics, aren't actually batch. Move them out.
-        #     # TODO - not a batch call, shouldn't be here.
         #     self._add_protein_annotations(run)
 
             self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
 
             self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
 
-            # self._add_oscillations(project, replicates, sample_stages, with_bugs)
+            self._add_oscillations(project, replicates, sample_stages, with_bugs)
 
         #     self._add_phospho_regression(project, replicates, sample_stages, with_bugs)
 
@@ -565,7 +561,7 @@ class Command(BaseCommand):
             stat_log2_mean.save()
 
         except Exception as e:
-            logger.error("Error in _calculate_anova")
+            logger.error("Error in _calculate_ANOVA")
             logger.error(e)
 
     # TODO - lifted from ICR, change names
@@ -1332,8 +1328,6 @@ class Command(BaseCommand):
 
         fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
-        return
-
         ps_and_qs = {}
 
         # run_results = self._fetch_run_results(run)
@@ -1341,7 +1335,7 @@ class Command(BaseCommand):
         num_proteins = 0
 
         statistics = Statistic.objects.filter(
-            statistic_type_name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+            statistic_type__name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
             phospho__protein__project=project
         ).iterator(chunk_size=100)
 
@@ -1359,8 +1353,14 @@ class Command(BaseCommand):
             if phospho_key not in ps_and_qs:
                 ps_and_qs[phospho_key] = {}
 
-            if statistic.metrics.get(LOG2_MEAN) is not None and statistic.metrics[LOG2_MEAN].get(ANOVA) is not None:
-                ps_and_qs[phospho_key][P_VALUE] = statistic.metrics[LOG2_MEAN][ANOVA][P_VALUE]
+            # print("++++ STAT")
+            # print(statistic)
+            # print(statistic.metrics)
+
+            if (statistic.metrics.get(ANOVA) is not None) and (statistic.metrics[ANOVA].get(P_VALUE) is not None):
+                # print(f"Match {statistic.metrics[ANOVA][P_VALUE]}")
+
+                ps_and_qs[phospho_key][P_VALUE] = statistic.metrics[ANOVA][P_VALUE]
 
             # pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
 
@@ -1380,7 +1380,7 @@ class Command(BaseCommand):
         num_proteins = 0
 
         statistics = Statistic.objects.filter(
-            statistic_type_name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+            statistic_type__name=PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
             phospho__protein__project=project
         ).iterator(chunk_size=100)
 
@@ -1857,13 +1857,13 @@ class Command(BaseCommand):
 
         #     phosphos = Phospho.objects.get(protein=protein)
 
-        # phosphos = Phospho.objects.filter(
-        #     protein__project = project
-        # ).iterator(chunk_size=100)
-
         phosphos = Phospho.objects.filter(
             protein__project = project
-        )[:100]
+        ).iterator(chunk_size=100)
+
+        # phosphos = Phospho.objects.filter(
+        #     protein__project = project
+        # )[:100]
 
         num_phosphos = 0
 

@@ -104,10 +104,7 @@ class Command(BaseCommand):
                     col_short = re.search(r'IITI_\d{3}', col)
 
                     if col_short is not None:
-                        print(f"+++++ COL SHORT {col_short}")
-
                         if cn := cns_by_name.get(col_short.group()):
-                            print("MATCHED")
                             reading = row[col]
 
                             if reading != reading:
