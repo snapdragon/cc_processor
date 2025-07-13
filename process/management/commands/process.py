@@ -16,8 +16,8 @@ from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
 
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import FloatVector
+# from rpy2.robjects.packages import importr
+# from rpy2.robjects.vectors import FloatVector
 
 from process.models import (
     ColumnName,
@@ -281,11 +281,11 @@ class Command(BaseCommand):
         #     # TODO - not a batch call, shouldn't be here.
         #     self._add_protein_annotations(run)
 
-            # self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
+            self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
 
-            # self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
+            self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
 
-            self._add_oscillations(project, replicates, sample_stages, with_bugs)
+            # self._add_oscillations(project, replicates, sample_stages, with_bugs)
 
         #     self._add_phospho_regression(project, replicates, sample_stages, with_bugs)
 
@@ -413,15 +413,15 @@ class Command(BaseCommand):
                 statistic_type_name = PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN
 
             # Get all log2 mean abundances for all chosen phospho readings for this project
-            # abundances = Abundance.objects.filter(
-            #     statistic__statistic_type__name = statistic_type_name,
-            #     statistic__phospho__protein__project = project,
-            # ).iterator(chunk_size=100)
-
             abundances = Abundance.objects.filter(
                 statistic__statistic_type__name = statistic_type_name,
                 statistic__phospho__protein__project = project,
-            )[:10000]
+            ).iterator(chunk_size=100)
+
+            # abundances = Abundance.objects.filter(
+            #     statistic__statistic_type__name = statistic_type_name,
+            #     statistic__phospho__protein__project = project,
+            # )[:10000]
 
 
             num_abundances = 0
@@ -1332,6 +1332,8 @@ class Command(BaseCommand):
 
         fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
+        return
+
         ps_and_qs = {}
 
         # run_results = self._fetch_run_results(run)
@@ -1440,8 +1442,6 @@ class Command(BaseCommand):
         logger.info("Adding Phospho Normalised on Protein Abundances - Regression")
 
         self._generate_phospho_regression_metrics(project, replicates, sample_stages, with_bugs)
-
-        return
 
         # Fisher G Statistic - Phospho
         time_course_fisher_dict = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
@@ -2068,28 +2068,36 @@ class Command(BaseCommand):
 
 
 
-    # TODO - rename
     def calculate_fisher_g(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics")
 
         time_course_fisher = self._create_abundance_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
         time_course_fisher = time_course_fisher.dropna()
 
-        ptest = importr("ptest")
+        # ptest = importr("ptest")
+
+        # for index, row in time_course_fisher.iterrows():
+        #     row_z = [i for i in row.tolist()]
+        #     z = FloatVector(row_z)
+
+        #     ptestg_res = ptest.ptestg(z, method="Fisher")
+
+        #     g_stat = ptestg_res.rx2("obsStat")[0]
+        #     p_value = ptestg_res.rx2("pvalue")[0]
+        #     freq = ptestg_res.rx2("freq")
+
+        #     time_course_fisher.loc[index, G_STATISTIC] = g_stat
+        #     time_course_fisher.loc[index, P_VALUE] = p_value
+        #     time_course_fisher.loc[index, FREQUENCY] = list(freq)
 
         for index, row in time_course_fisher.iterrows():
             row_z = [i for i in row.tolist()]
-            z = FloatVector(row_z)
 
-            ptestg_res = ptest.ptestg(z, method="Fisher")
+            result = ptestg(row_z)
 
-            g_stat = ptestg_res.rx2("obsStat")[0]
-            p_value = ptestg_res.rx2("pvalue")[0]
-            freq = ptestg_res.rx2("freq")
-
-            time_course_fisher.loc[index, G_STATISTIC] = g_stat
-            time_course_fisher.loc[index, P_VALUE] = p_value
-            time_course_fisher.loc[index, FREQUENCY] = list(freq)
+            time_course_fisher.loc[index, G_STATISTIC] = result["obsStat"]
+            time_course_fisher.loc[index, P_VALUE] = result["pvalue"]
+            time_course_fisher.loc[index, FREQUENCY] = result["freq"]
 
         q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
 
@@ -2180,4 +2188,62 @@ class Command(BaseCommand):
         return round(value, 4)
 
     def _get_site_key(self, statistic: Statistic):
-        return f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"        
+        return f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
+    
+import numpy as np
+from scipy.signal import periodogram
+from scipy.special import comb
+
+def fisher_g_test(z):
+    """
+    Perform Fisher's g-test on a time series `z`.
+    Returns:
+        g_stat: the observed test statistic
+        p_value: p-value for the test
+        freq: frequency with max periodogram value
+    """
+    z = np.asarray(z)
+    n = len(z)
+    m = (n - 2) // 2 if n % 2 == 0 else (n - 1) // 2
+
+    # Compute the periodogram (uses normalized frequencies)
+    freqs, pgram_vals = periodogram(z, scaling='spectrum')
+
+    # Remove Nyquist frequency for even-length input
+    if n % 2 == 0:
+        pgram_vals = pgram_vals[:-1]
+
+    max_index = np.argmax(pgram_vals)
+    g_stat = pgram_vals[max_index] / np.sum(pgram_vals)
+
+    # Compute p-value
+    p = int(np.floor(1 / g_stat))
+    i_vals = np.arange(1, p + 1)
+    terms = comb(m, i_vals) * (-1) ** (i_vals - 1) * (1 - i_vals * g_stat) ** (m - 1)
+    p_value = np.sum(terms)
+
+    return np.array([g_stat, p_value, freqs[max_index]])
+
+def ptestg(z):
+    """
+    Perform periodicity test on input data `z` using Fisher's g-test.
+    """
+    z = np.atleast_2d(z).T  # Ensure z is a column vector
+    n, m = z.shape
+
+    obs_stat = np.zeros(m)
+    p_values = np.zeros(m)
+    freqs = np.zeros(m)
+
+    for i in range(m):
+        result = fisher_g_test(z[:, i])
+        obs_stat[i] = result[0]
+        p_values[i] = result[1]
+        freqs[i] = result[2]
+
+    return {
+        "obsStat": obs_stat,
+        "pvalue": p_values,
+        "freq": freqs,
+        "class": "Htest"
+    }
