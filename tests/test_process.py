@@ -524,7 +524,6 @@ def test_calculate_curve_fold_change(basic_project_setup):
     curve_fold_change, curve_peak = command._calculate_curve_fold_change(
         abundances,
         replicates,
-        sample_stages,
     )
 
     print("++++++")

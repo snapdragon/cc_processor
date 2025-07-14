@@ -179,8 +179,6 @@ class Command(BaseCommand):
 
         logger.info(f"Processing for project {project_name}, with bugs {with_bugs}")
 
-        # TODO - return if no calculate flags are set?
-
         project = Project.objects.get(name=project_name)
         replicates = Replicate.objects.filter(project=project, mean=False)
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
@@ -308,8 +306,8 @@ class Command(BaseCommand):
         logger.info("Calculating phospho q and fisher G values")
         # TODO - blank all q_values in DB?
 
-        # fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True)
-        fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True)
+        fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True)
+        # fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True)
 
         # Get all phospho abundances for this project for log2 mean
         statistics = Statistic.objects.filter(
@@ -362,8 +360,8 @@ class Command(BaseCommand):
             protein__project = project
         )
 
-        # fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages)
-        fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages)
+        fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages)
+        # fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages)
 
         anova_stats: dict = {}
 
@@ -595,18 +593,12 @@ class Command(BaseCommand):
         stat.metrics = {}
         stat.save()
 
-        # TODO - converts abundances to the old format used by this function.
-        #   Refactor this function to use abundances directly.
         abundances_non_mean = abundances_all.filter(replicate__mean=False)
-        abundance_averages = {}
-        abundance_averages_list = []
 
-        for abfr in abundances_all:
-            if abfr.replicate.mean and abfr.reading is not None:
-                abundance_averages[abfr.sample_stage.name] = abfr.reading
-                abundance_averages_list.append(abfr.reading)
+        abundance_averages = {a.sample_stage.name:a.reading for a in abundances_all.filter(replicate__mean=True) if a.reading is not None}
+        abundance_averages_list = [val for val in abundance_averages.values()]
 
-        if len(abundances_all.values("replicate__id").distinct()) < 3:
+        if len(abundances_non_mean.values("replicate__id").distinct()) < 2:
             # There aren't as least two replicates to calculate (one is the mean), give up
             return
 
@@ -619,18 +611,15 @@ class Command(BaseCommand):
         )
 
         try:
-            # TODO - rename variable
-            poly = np.polyfit(
+            polyfit_result = np.polyfit(
                 range(0, len(abundance_averages)),
                 abundance_averages_list,
                 2,
                 full=True,
             )
 
-            
-            
-            if len(poly[1]):
-                residuals = poly[1][0]
+            if len(polyfit_result[1]):
+                residuals = polyfit_result[1][0]
             else:
                 # TODO - is this a meaningful value? It's just the mean.
                 residuals = int(len(sample_stages) / 2)
@@ -648,9 +637,7 @@ class Command(BaseCommand):
                 abundance_averages.values()
             )
 
-            # TODO - why does it get the values for the second one?
             curve_fold_change, curve_peak = self._calculate_curve_fold_change(
-                # TODO - could just get non-mean abundances earlier
                 abundances_non_mean,
                 replicates,
             )
@@ -690,7 +677,7 @@ class Command(BaseCommand):
         residuals_all = None
         r_squared_all = None
 
-        x, y, _ = self._generate_xs_ys_abundances(abundances, replicates)
+        x, y, _ = self._generate_xs_ys(abundances, replicates)
 
         if len(x) != len(y):
             return residuals_all, r_squared_all
@@ -707,7 +694,7 @@ class Command(BaseCommand):
         curve_fold_change = None
         curve_peak = None
 
-        x, y, stage_names_map = self._generate_xs_ys_abundances(
+        x, y, stage_names_map = self._generate_xs_ys(
             abundances,
             replicates,
         )
@@ -1004,10 +991,6 @@ class Command(BaseCommand):
     def _get_abundance(self, statistic, replicate, sample_stage):
         return Abundance.objects.get(statistic=statistic, replicate=replicate, sample_stage=sample_stage)
 
-    # TODO - only used once, remove
-    def _delete_abundances(self, statistic):
-        Abundance.objects.filter(statistic=statistic).delete()
-
     def _calculate_normalised_medians(self, protein = None, phospho = None):
         _, stat_normalised_medians = self._clear_and_fetch_stats(
             ABUNDANCES_NORMALISED_MEDIAN,
@@ -1108,19 +1091,16 @@ class Command(BaseCommand):
             )
 
 
-    # TODO - think this could be tidied
-    def _generate_xs_ys_abundances(self, abundances, replicates):
+    def _generate_xs_ys(self, abundances, replicates):
         # TODO - why do we use the second replicate?
         abundances = abundances.filter(replicate=replicates[1])
 
         stage_names_map = {}
 
-        i = 0
         x = []
         y = []
-        for abundance in abundances:
+        for i, abundance in enumerate(abundances):
             stage_names_map[abundance.sample_stage.name] = i
-            i += 1
 
             x.append(stage_names_map[abundance.sample_stage.name])
             if abundance.reading is not None:
@@ -1291,8 +1271,8 @@ class Command(BaseCommand):
 
         self._generate_protein_oscillation_metrics(project, replicates, sample_stages, with_bugs)
 
-        # fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
-        fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = True)
+        fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
+        # fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
@@ -1409,9 +1389,8 @@ class Command(BaseCommand):
 
         self._generate_phospho_regression_metrics(project, replicates, sample_stages, with_bugs)
 
-        # Fisher G Statistic - Phospho
-        # time_course_fisher_dict = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
-        time_course_fisher_dict = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        time_course_fisher_dict = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        # time_course_fisher_dict = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
 
@@ -2109,22 +2088,6 @@ class Command(BaseCommand):
         time_course_fisher = self._create_abundance_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
         time_course_fisher = time_course_fisher.dropna()
 
-        # ptest = importr("ptest")
-
-        # for index, row in time_course_fisher.iterrows():
-        #     row_z = [i for i in row.tolist()]
-        #     z = FloatVector(row_z)
-
-        #     ptestg_res = ptest.ptestg(z, method="Fisher")
-
-        #     g_stat = ptestg_res.rx2("obsStat")[0]
-        #     p_value = ptestg_res.rx2("pvalue")[0]
-        #     freq = ptestg_res.rx2("freq")
-
-        #     time_course_fisher.loc[index, G_STATISTIC] = g_stat
-        #     time_course_fisher.loc[index, P_VALUE] = p_value
-        #     time_course_fisher.loc[index, FREQUENCY] = list(freq)
-
         for index, row in time_course_fisher.iterrows():
             row_z = [i for i in row.tolist()]
 
@@ -2211,7 +2174,7 @@ class Command(BaseCommand):
         else:
             raise Exception(f"_clear_and_fetch_stats needs a project, protein or phospho")
 
-        self._delete_abundances(stat)
+        Abundance.objects.filter(statistic=stat).delete()
 
         return statistic_type, stat
 
