@@ -310,7 +310,8 @@ class Command(BaseCommand):
         logger.info("Calculating phospho q and fisher G values")
         # TODO - blank all q_values in DB?
 
-        fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True)
+        # fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True)
+        fisher_g_stats = self.calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True)
 
         # Get all phospho abundances for this project for log2 mean
         statistics = Statistic.objects.filter(
@@ -363,7 +364,8 @@ class Command(BaseCommand):
             protein__project = project
         )
 
-        fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages)
+        # fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages)
+        fisher_g_stats = self.calculate_fisher_g_r_version(project, replicates, sample_stages)
 
         anova_stats: dict = {}
 
@@ -1326,7 +1328,8 @@ class Command(BaseCommand):
 
         self._generate_protein_oscillation_metrics(project, replicates, sample_stages, with_bugs)
 
-        fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
+        # fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
+        fisher_g_stats = self.calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
@@ -1444,7 +1447,8 @@ class Command(BaseCommand):
         self._generate_phospho_regression_metrics(project, replicates, sample_stages, with_bugs)
 
         # Fisher G Statistic - Phospho
-        time_course_fisher_dict = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        # time_course_fisher_dict = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        time_course_fisher_dict = self.calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
 
@@ -2068,6 +2072,74 @@ class Command(BaseCommand):
 
 
 
+    def calculate_fisher_g_r_version(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
+        logger.info("Calculate Fisher G Statistics (R Version)")
+
+        # R part for Fisher G-Statistic
+        import rpy2.robjects as ro
+        from rpy2.robjects.packages import importr
+        import rpy2.robjects.packages as rpackages
+        # R vector of strings
+        from rpy2.robjects.vectors import StrVector
+
+        # import R's utility package
+        utils = rpackages.importr('utils')
+        # select a mirror for R packages
+        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+        utils.install_packages("pak")
+        ro.r('library(pak)')
+        ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
+        packnames = ('perARMA', 'quantreg')
+        # Selectively install what needs to be install.
+        names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+        if len(names_to_install) > 0:
+            utils.install_packages(StrVector(names_to_install))
+
+        not_in_cran = ("ptest")
+        not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
+        if len(not_in_crac_names_to_install) > 0:
+            ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
+
+        time_course_fisher = self._create_abundance_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
+        time_course_fisher = time_course_fisher.dropna()
+
+        for index, row in time_course_fisher.iterrows():
+            row_z = row.tolist()
+            row_z = [str(i) for i in row_z]
+            ro.r('''
+                library(ptest)
+                z <- c(''' + ','.join(row_z) + ''')
+                # p_value <- ptestg(z,method="Fisher")$pvalue
+                # # freq <- ptestg(z,method="Fisher")$freq
+                # # g_stat <- ptestg(z,method="Fisher")$$obsStat
+                ptestg_res <- ptestg(z,method="Fisher")
+            '''
+            )
+            ptestg_res = ro.globalenv['ptestg_res']
+            g_stat = ptestg_res[0]
+            p_value = ptestg_res[1]
+            freq = ptestg_res[2]
+
+            time_course_fisher.loc[[index],['G_statistic']] = g_stat
+            time_course_fisher.loc[[index],['p_value']] = p_value
+            time_course_fisher.loc[[index],['frequency']] = freq
+
+        # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
+        q_value = p_adjust_bh(time_course_fisher['p_value'])
+
+        time_course_fisher[Q_VALUE] = q_value
+    
+        cols = time_course_fisher.columns
+        fisher_cols = [G_STATISTIC, P_VALUE, FREQUENCY, Q_VALUE]
+        ab_col = [x for x in cols if x not in fisher_cols]
+        time_course_fisher = time_course_fisher.drop(columns=ab_col)
+        time_course_fisher_dict = time_course_fisher.to_dict('index')
+
+        return time_course_fisher_dict
+
+
+
+
     def calculate_fisher_g(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics")
 
@@ -2247,3 +2319,14 @@ def ptestg(z):
         "freq": freqs,
         "class": "Htest"
     }
+
+def p_adjust_bh(p):
+    """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
+    logger.info("Calculate Benjamini-Hochberg p-value correction")
+    p = np.asarray(p, dtype=float)
+    by_descend = p.argsort()[::-1]
+    by_orig = by_descend.argsort()
+    steps = float(len(p)) / np.arange(len(p), 0, -1)
+    q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
+
+    return q[by_orig]
