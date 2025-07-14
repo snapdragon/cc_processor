@@ -310,8 +310,8 @@ class Command(BaseCommand):
         logger.info("Calculating phospho q and fisher G values")
         # TODO - blank all q_values in DB?
 
-        # fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True)
-        fisher_g_stats = self.calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True)
+        # fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True)
+        fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True)
 
         # Get all phospho abundances for this project for log2 mean
         statistics = Statistic.objects.filter(
@@ -364,8 +364,8 @@ class Command(BaseCommand):
             protein__project = project
         )
 
-        # fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages)
-        fisher_g_stats = self.calculate_fisher_g_r_version(project, replicates, sample_stages)
+        # fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages)
+        fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages)
 
         anova_stats: dict = {}
 
@@ -567,6 +567,8 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error("Error in _calculate_ANOVA")
             logger.error(e)
+
+
 
     # TODO - lifted from ICR, change names
     def _calculate_metrics(
@@ -1222,7 +1224,7 @@ class Command(BaseCommand):
         #   failed due to lack of access to the variable. This bug is in the
         #   original, how did it ever work? Was it never called?
         #   Why did it suddenly start erroring? It happened just after I
-        #   first removed some of the R code from calculate_fisher_g.
+        #   first removed some of the R code from _calculate_fisher_g.
         #   It's something to do with P04264, one of the duplicated proteins
         #   for ICR. It's the reason I made it like get_or_create in import_protein
         #   on duplicate, not just continue.
@@ -1330,8 +1332,8 @@ class Command(BaseCommand):
 
         self._generate_protein_oscillation_metrics(project, replicates, sample_stages, with_bugs)
 
-        # fisher_g_stats = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
-        fisher_g_stats = self.calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = True)
+        # fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
+        fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
@@ -1449,8 +1451,8 @@ class Command(BaseCommand):
         self._generate_phospho_regression_metrics(project, replicates, sample_stages, with_bugs)
 
         # Fisher G Statistic - Phospho
-        # time_course_fisher_dict = self.calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
-        time_course_fisher_dict = self.calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        # time_course_fisher_dict = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
+        time_course_fisher_dict = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
 
@@ -1956,13 +1958,13 @@ class Command(BaseCommand):
         info_df = info_df.T
 
         info_df[Q_VALUE] = stats.false_discovery_control(info_df[P_VALUE])
-        # info_df[Q_VALUE] = self.p_adjust_bh(info_df[P_VALUE])
+        # info_df[Q_VALUE] = self._p_adjust_bh(info_df[P_VALUE])
 
         return info_df.to_dict('index')
 
     # TODO - lifted from ICR, rewrite
     # TODO - does it really need to be a dataframe? Write tests and change if possible.
-    def p_adjust_bh(self, p):
+    def _p_adjust_bh(self, p):
         """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
         p = np.asarray(p, dtype=float)
         by_descend = p.argsort()[::-1]
@@ -2074,7 +2076,7 @@ class Command(BaseCommand):
 
 
 
-    def calculate_fisher_g_r_version(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
+    def _calculate_fisher_g_r_version(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics (R Version)")
 
         # R part for Fisher G-Statistic
@@ -2127,7 +2129,7 @@ class Command(BaseCommand):
             time_course_fisher.loc[[index],['frequency']] = freq
 
         # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
-        q_value = p_adjust_bh(time_course_fisher['p_value'])
+        q_value = self._p_adjust_bh(time_course_fisher['p_value'])
 
         time_course_fisher[Q_VALUE] = q_value
     
@@ -2142,7 +2144,7 @@ class Command(BaseCommand):
 
 
 
-    def calculate_fisher_g(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
+    def _calculate_fisher_g(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics")
 
         time_course_fisher = self._create_abundance_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
@@ -2173,7 +2175,9 @@ class Command(BaseCommand):
             time_course_fisher.loc[index, P_VALUE] = result["pvalue"]
             time_course_fisher.loc[index, FREQUENCY] = result["freq"]
 
-        q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
+        # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
+        # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
+        q_value = self._p_adjust_bh(time_course_fisher['p_value'])
 
         time_course_fisher[Q_VALUE] = q_value
     
@@ -2325,15 +2329,4 @@ def ptestg(z):
         "freq": freqs,
         "class": "Htest"
     }
-
-def p_adjust_bh(p):
-    """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
-    logger.info("Calculate Benjamini-Hochberg p-value correction")
-    p = np.asarray(p, dtype=float)
-    by_descend = p.argsort()[::-1]
-    by_orig = by_descend.argsort()
-    steps = float(len(p)) / np.arange(len(p), 0, -1)
-    q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
-
-    return q[by_orig]
 
