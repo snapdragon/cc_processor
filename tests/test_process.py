@@ -503,6 +503,36 @@ def test_calculate_metrics(basic_project_setup):
     assert metrics['peak_average'] == 'Nocodozole'
 
 
+@pytest.mark.django_db
+def test_calculate_curve_fold_change(basic_project_setup):
+    command = Command()
+
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    _, stat = create_readings(
+        ABUNDANCES_RAW,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
+
+    abundances = Abundance.objects.filter(statistic=stat)
+
+    curve_fold_change, curve_peak = command._calculate_curve_fold_change(
+        abundances,
+        replicates,
+        sample_stages,
+    )
+
+    print("++++++")
+    print("++++++")
+    print("++++++")
+    print("++++++")
+    print(curve_fold_change)
+    print(curve_peak)
 
 # def test_polyfit():
     

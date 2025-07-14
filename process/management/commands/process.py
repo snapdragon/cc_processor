@@ -584,7 +584,7 @@ class Command(BaseCommand):
         else:
             stat = self._get_statistic(statistic_type_name, phospho = phospho)
 
-        abundances_for_readings = Abundance.objects.filter(
+        abundances_all = Abundance.objects.filter(
             statistic=stat
         ).order_by(
             "replicate__id",
@@ -597,40 +597,26 @@ class Command(BaseCommand):
 
         # TODO - converts abundances to the old format used by this function.
         #   Refactor this function to use abundances directly.
-        readings = {}
-
-        abundances = []
+        abundances_non_mean = abundances_all.filter(replicate__mean=False)
         abundance_averages = {}
         abundance_averages_list = []
 
-        for abfr in abundances_for_readings:
-            if not abfr.replicate.mean:
-                abundances.append(abfr.reading)
-
+        for abfr in abundances_all:
             if abfr.replicate.mean and abfr.reading is not None:
                 abundance_averages[abfr.sample_stage.name] = abfr.reading
                 abundance_averages_list.append(abfr.reading)
 
-            if readings.get(abfr.replicate.name) is None:
-                readings[abfr.replicate.name] = {}
-
-            readings[abfr.replicate.name][abfr.sample_stage.name] = abfr.reading
-
-        if len(readings) < 3:
-            # There aren't two replicates to calculate (one is the mean), give up
+        if len(abundances_all.values("replicate__id").distinct()) < 3:
+            # There aren't as least two replicates to calculate (one is the mean), give up
             return
 
-        # TODO - is this the right thing to do? Go through all of this function
-        #   to check the behaviour of its various parts.
-        #   Almost all of the warnings output are from this function.
-        if not len(abundance_averages_list):
+        if not len(abundance_averages_list) or not len(abundances_non_mean):
+            # Nothing to work with
             return
 
-        if not len(abundances):
-            # Nothing to do
-            return
-        
-        std = statistics.stdev(abundances)
+        std = statistics.stdev(
+            [a.reading for a in abundances_non_mean if a.reading is not None]
+        )
 
         try:
             # TODO - rename variable
@@ -641,12 +627,13 @@ class Command(BaseCommand):
                 full=True,
             )
 
-            # TODO - what? And get rid of comment below.
-            # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
-            residuals = 5
-
+            
+            
             if len(poly[1]):
                 residuals = poly[1][0]
+            else:
+                # TODO - is this a meaningful value? It's just the mean.
+                residuals = int(len(sample_stages) / 2)
 
             r_squared = self._polyfit(
                 range(0, len(abundance_averages)), abundance_averages_list, 2
@@ -663,10 +650,15 @@ class Command(BaseCommand):
 
             # TODO - why does it get the values for the second one?
             curve_fold_change, curve_peak = self._calculate_curve_fold_change(
-                readings, replicates
+                # TODO - could just get non-mean abundances earlier
+                abundances_non_mean,
+                replicates,
             )
 
-            residuals_all, r_squared_all = self._calculate_residuals_R2_all(readings, replicates)
+            residuals_all, r_squared_all = self._calculate_residuals_R2_all(
+                abundances_non_mean,
+                replicates,
+            )
 
             metrics = {
                 "standard_deviation": std, 
@@ -694,11 +686,11 @@ class Command(BaseCommand):
     # TODO - this is straight up lifted from ICR, change and ideally use a library
     # _calcResidualsR2All
     # TODO - tested
-    def _calculate_residuals_R2_all(self, readings, replicates):
+    def _calculate_residuals_R2_all(self, abundances, replicates):
         residuals_all = None
         r_squared_all = None
 
-        x, y, _ = self._generate_xs_ys(readings, replicates)
+        x, y, _ = self._generate_xs_ys_abundances(abundances, replicates)
 
         if len(x) != len(y):
             return residuals_all, r_squared_all
@@ -711,15 +703,14 @@ class Command(BaseCommand):
         return residuals_all.item(), r_squared_all
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
-    # TODO - tested (ish)
-    def _calculate_curve_fold_change(self, readings, replicates):
-        """
-        Calculates the curve_fold_change and curve peaks for the three or two replicates normalised abundance for each protein.
-        """
+    def _calculate_curve_fold_change(self, abundances, replicates):
         curve_fold_change = None
         curve_peak = None
 
-        x, y, stage_names_map = self._generate_xs_ys(readings, replicates)
+        x, y, stage_names_map = self._generate_xs_ys_abundances(
+            abundances,
+            replicates,
+        )
 
         if len(x) == len(y):
             p = np.poly1d(np.polyfit(x, y, 2))
@@ -1118,28 +1109,27 @@ class Command(BaseCommand):
 
 
     # TODO - think this could be tidied
-    def _generate_xs_ys(self, readings, replicates):
-        # TODO - why do we use the second replicate? It's in ICR
-        second_replicate = list(replicates)[1]
+    def _generate_xs_ys_abundances(self, abundances, replicates):
+        # TODO - why do we use the second replicate?
+        abundances = abundances.filter(replicate=replicates[1])
 
         stage_names_map = {}
 
-        # TODO - change this to use samples_stages list
-        for i, stage_name in enumerate(readings[second_replicate.name].keys()):
-            stage_names_map[stage_name] = i
-
+        i = 0
         x = []
-        for stage_name in readings.get(second_replicate.name, {}):
-            x.append(stage_names_map[stage_name])
+        y = []
+        for abundance in abundances:
+            stage_names_map[abundance.sample_stage.name] = i
+            i += 1
+
+            x.append(stage_names_map[abundance.sample_stage.name])
+            if abundance.reading is not None:
+                y.append(abundance.reading)
         x.sort()
 
-        y = []
-        for stage_name in stage_names_map:
-            value = readings.get(second_replicate.name, {}).get(stage_name)
-            if value is not None:
-                y.append(value)
-
         return x, y, stage_names_map
+
+
     
     # TODO - lifted from ICR, change
     def _get_consensus_kinase_pred(self, uniprot_accession, phosphosite):
