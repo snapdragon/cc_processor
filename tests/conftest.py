@@ -8,6 +8,7 @@ from process.factories import (
     ReplicateFactory,
     SampleStageFactory,
     ProteinFactory,
+    PhosphoFactory,
 )
 
 from process.models import (
@@ -46,11 +47,24 @@ def basic_project_setup():
         ProteinFactory(project=project),
     ]
 
+    phosphos = [
+        PhosphoFactory(protein=proteins[0]),
+        PhosphoFactory(protein=proteins[0]),
+        PhosphoFactory(protein=proteins[1]),
+        PhosphoFactory(protein=proteins[1]),
+        PhosphoFactory(protein=proteins[1]),
+        PhosphoFactory(protein=proteins[2]),
+        PhosphoFactory(protein=proteins[2]),
+        PhosphoFactory(protein=proteins[2]),
+        PhosphoFactory(protein=proteins[2]),
+    ]
+
     return {
         "project": project,
         "replicates": replicates,
         "sample_stages": sample_stages,
         "proteins": proteins,
+        "phosphos": phosphos,
     }
 
 # TODO - get rid of this later

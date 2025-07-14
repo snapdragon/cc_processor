@@ -396,6 +396,8 @@ class Command(BaseCommand):
 
 
 
+    # TODO - this can probably be refactored. All it does is get the readings in one
+    #   form and then change them to another. Might as well go straight to the other.
     # createAbundanceDf
     def _create_abundance_dataframe(self, project, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
         abundance_table = {}
@@ -435,9 +437,9 @@ class Command(BaseCommand):
                 if abundance_table.get(site_key) is None:
                     abundance_table[site_key] = {}
 
-                rep_timepoint = self._rep_stage_name(abundance)
+                rep_stage_name = self._rep_stage_name(abundance)
 
-                abundance_table[site_key][rep_timepoint] = abundance.reading
+                abundance_table[site_key][rep_stage_name] = abundance.reading
         else:
             # Get all log2 mean abundances for all proteins for this project
             abundances = Abundance.objects.filter(

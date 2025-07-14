@@ -25,6 +25,8 @@ from process.constants import (
     ABUNDANCES_NORMALISED_LOG2_MEAN,
     ABUNDANCES_NORMALISED_MIN_MAX,
     ABUNDANCES_NORMALISED_ZERO_MAX,
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
 )
 
 @pytest.mark.django_db
@@ -362,37 +364,55 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
 
 
 
-
+@pytest.mark.parametrize("statistic_type_name, phospho, phospho_ab, phospho_reg", [
+    (ABUNDANCES_NORMALISED_LOG2_MEAN, False, False, False),
+    (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
+    (PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, True, True, False),
+    (PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, True),
+])
 @pytest.mark.django_db
-def test_create_abundance_dataframe(basic_project_setup):
+def test_create_abundance_dataframe(statistic_type_name, phospho, phospho_ab, phospho_reg, basic_project_setup):
     command = Command()
 
     project = basic_project_setup["project"]
     replicates = basic_project_setup["replicates"]
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
+    phosphos = basic_project_setup["phosphos"]
 
     reading = 0
 
-    for protein in proteins:
-        create_readings(
-            ABUNDANCES_NORMALISED_LOG2_MEAN,
-            replicates,
-            sample_stages,
-            reading = reading,
-            protein=protein
-        )
+    if phospho:
+        for ph in phosphos:
+            create_readings(
+                statistic_type_name,
+                replicates,
+                sample_stages,
+                reading = reading,
+                protein = None,
+                phospho = ph
+            )
 
-        reading += 30
+            reading += 30
+    else:
+        for protein in proteins:
+            create_readings(
+                statistic_type_name,
+                replicates,
+                sample_stages,
+                reading = reading,
+                protein=protein
+            )
 
+            reading += 30
 
     df = command._create_abundance_dataframe(
         project,
         replicates,
         sample_stages,
-        False,
-        False,
-        False
+        phospho,
+        phospho_ab,
+        phospho_reg
     )
 
     column_names = df.columns
@@ -425,8 +445,6 @@ def test_create_abundance_dataframe(basic_project_setup):
             if dec == 3:
                 count += 1
                 dec = 0
-
-
 
 
 # @pytest.mark.django_db

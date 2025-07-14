@@ -8,7 +8,8 @@ from process.models import (
     SampleStage,
     StatisticType,
     Statistic,
-    Abundance
+    Abundance,
+    Phospho
 )
 
 class ProjectFactory(DjangoModelFactory):
@@ -45,6 +46,16 @@ class ProteinFactory(DjangoModelFactory):
         model = Protein
 
     accession_number = factory.Faker("word")
+
+
+class PhosphoFactory(DjangoModelFactory):
+    class Meta:
+        model = Phospho
+
+    protein = factory.SubFactory(ProteinFactory)
+    mod = factory.Faker("word")
+    phosphosite = factory.Faker("word")
+
 
 
 class StatisticTypeFactory(DjangoModelFactory):
