@@ -435,7 +435,7 @@ class Command(BaseCommand):
                 if abundance_table.get(site_key) is None:
                     abundance_table[site_key] = {}
 
-                rep_timepoint = f"{abundance.replicate.name}_{abundance.sample_stage.name}"
+                rep_timepoint = self._rep_stage_name(abundance)
 
                 abundance_table[site_key][rep_timepoint] = abundance.reading
         else:
@@ -463,7 +463,7 @@ class Command(BaseCommand):
                 if abundance_table.get(pan) is None:
                     abundance_table[pan] = {}
 
-                rep_stage_name = f"{abundance.replicate.name}_{abundance.sample_stage.name}"
+                rep_stage_name = self._rep_stage_name(abundance)
 
                 abundance_table[pan][rep_stage_name] = abundance.reading
 
@@ -2261,7 +2261,11 @@ class Command(BaseCommand):
 
     def _get_site_key(self, statistic: Statistic):
         return f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
-    
+
+    # TODO - consolidate with any others
+    def _rep_stage_name(self, abundance):
+        return f"{abundance.replicate.name}_{abundance.sample_stage.name}"
+
 import numpy as np
 from scipy.signal import periodogram
 from scipy.special import comb
@@ -2330,3 +2334,4 @@ def p_adjust_bh(p):
     q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
 
     return q[by_orig]
+

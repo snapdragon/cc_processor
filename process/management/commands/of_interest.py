@@ -120,6 +120,7 @@ class Command(BaseCommand):
             match = True
 
             if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] >= max_q:
+                # print(f"q value {statistic.metrics[ANOVA][Q_VALUE]}")
                 match = False
 
             if statistic.metrics is None or statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] <= 1.2:

@@ -1,6 +1,8 @@
 ICR is what I've been referring to the most so it'll be mentioned a lot here.
 The questions are wide ranging.
 
+Re analysed data according to code
+
 Why are there so many missing values? Their abscence makes it difficult to calculate
 meaningful results.
     Should they be considered zero or none?

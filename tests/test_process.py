@@ -362,6 +362,104 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
 
 
 
+
+@pytest.mark.django_db
+def test_create_abundance_dataframe(basic_project_setup):
+    command = Command()
+
+    project = basic_project_setup["project"]
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
+
+    reading = 0
+
+    for protein in proteins:
+        create_readings(
+            ABUNDANCES_NORMALISED_LOG2_MEAN,
+            replicates,
+            sample_stages,
+            reading = reading,
+            protein=protein
+        )
+
+        reading += 30
+
+
+    df = command._create_abundance_dataframe(
+        project,
+        replicates,
+        sample_stages,
+        False,
+        False,
+        False
+    )
+
+    column_names = df.columns
+
+    column_num = 0
+
+    for sample_stage in sample_stages:
+        for replicate in replicates:
+            rep_stage_name = f"{replicate.name}_{sample_stage.name}"
+
+            assert column_names[column_num] == rep_stage_name
+
+            column_num += 1
+
+    dec = 0
+    count = 1
+    extra = 0
+
+    for index, row in df.iterrows():
+        for col in df.columns:
+            reading = (dec * 10) + count + extra
+
+            assert float(row[col]) == reading
+
+            if not reading % 30:
+                extra += 20
+
+            dec += 1
+
+            if dec == 3:
+                count += 1
+                dec = 0
+
+
+
+
+# @pytest.mark.django_db
+# def test_generate_xs_ys(basic_project_setup):
+#     command = Command()
+
+#     replicates = basic_project_setup["replicates"]
+#     sample_stages = basic_project_setup["sample_stages"]
+
+#     readings = {}
+#     reading = 50
+
+#     for replicate in replicates:
+#         reading -= 1
+
+#         readings[replicate.name] = {}
+#         for sample_stage in sample_stages:
+#             readings[replicate.name][sample_stage.name] = reading
+
+#     x, y, stage_names_map = command._generate_xs_ys(
+#         replicates,
+#         readings,
+#         None,
+#         True,
+#     )
+
+#     assert x == [0, 1, 2, 3, 4, 5, 6, 7]
+#     assert y == [0.1586, 0.1537, 0.1503, 0.0468, 0.1054, 0.1219, 0.0836, 0.1045]
+
+
+
+
+# TODO - finish this
 @pytest.mark.skip(reason="Not complete yet")
 @pytest.mark.django_db
 def test_calculate_metrics(basic_project_setup_ICR):
@@ -790,48 +888,6 @@ def test_calculate_metrics(basic_project_setup_ICR):
 
 #     assert isclose(residuals_all, 0.0056324395238095265, rel_tol=1e-5) == True
 #     assert isclose(r_squared_all, 0.47, rel_tol=1e-5) == True
-
-
-# # TODO - more of these
-# # TODO - do SL version
-# @pytest.mark.django_db
-# def test_generate_xs_ys():
-#     command = Command()
-
-#     project = ProjectFactory()
-
-#     replicate1 = ReplicateFactory(name="rep_1", project=project)
-#     replicate2 = ReplicateFactory(name="rep_2", project=project)
-
-#     readings = {
-#         'rep_1': {
-#             'Palbo': -0.2308,
-#             'Late G1_1': 0.4059,
-#             'G1/S': -0.7048,
-#             'S': 0.0117,
-#             'S/G2': -0.4986,
-#             'G2_2': -0.3323,
-#             'G2/M_1': -0.232,
-#             'M/Early G1': 0.6562
-#         },
-#         'rep_2': {
-#             'Palbo': 0.1586,
-#             'Late G1_1': 0.1537,
-#             'G1/S': 0.1503,
-#             'S': 0.0468,
-#             'S/G2': 0.1054,
-#             'G2_2': 0.1219,
-#             'G2/M_1': 0.0836,
-#             'M/Early G1': 0.1045
-#         },
-#     }
-
-#     # TODO - add test for stage_names_map
-#     x, y, stage_names_map = command._generate_xs_ys(readings, [replicate1, replicate2])
-
-#     assert x == [0, 1, 2, 3, 4, 5, 6, 7]
-#     assert y == [0.1586, 0.1537, 0.1503, 0.0468, 0.1054, 0.1219, 0.0836, 0.1045]
-
 
 # # TODO - write a deliberate, miniature version of this
 # # TODO - do one for SL as well
