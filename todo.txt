@@ -1,5 +1,3 @@
-NEXT - write tests for all functions
-
 position_abundances imputed values are slightly too high.
     Due to empty values perhaps?
 
@@ -14,10 +12,7 @@ Check all constraints
 Lots of protein q value matches like this:
 ANOVA metrics match for abundances normalised log2_mean for Q13505 for q_value reading 0.6462170052202973 vs 0.7023935403984614
 
-Ptest has been archived, get rid of it
 Add code to return a message if no flags are supplied
-Study and get rid of total_protein_index.json? It seems to be a mishmash of various
-    sources downloaded. Probably not all of it is required.
 Study all the SL phospho errors
 _add_protein_annotations and _get_kinase_predictions should be excluded unless I can
     figure out what they do.
@@ -27,15 +22,18 @@ _add_protein_annotations and _get_kinase_predictions should be excluded unless I
 Compare proteins metrics for Q09666 has not very good q-value:
 ANOVA metrics match for abundances normalised log2_mean for Q09666 for q_value reading 0.6470752162303733 vs 0.7033535395638385
 
+Should we really be calculating averages with the mean replicate in _calculate_metrics?
+    Investigate!
+
+
+If a cell has a value for phospho but not for protein, something is wrong
+Change SL import_protein and import_phospho to be zero, not nothing
 Replace the linear imputation with a better version and with-bugs for the old
 Wrap all code that have the not i % 1000 in a function then wrap that in a decorator?
 Add admin app
-Write unit tests for _calculate_metrics and _calculate_ANOVA
 Go through the code and make it work with no records created for empty values
     in import_protein and import_phospho
-Move fetching of gene_name and protein_name to import_protein
-Review the code to decide if imports should set missing values to no record, None or 0
-Study all the SL phospho errors
+Move fetching of gene_name and protein_name to import_protein, or get rid of them?
 Find a way to assess how sparse the data sets are
 min-max and imputed values are calculated differently between protein and phospho in ICR
     Which way is the correct way?
@@ -48,9 +46,6 @@ Find out which functions aren't actually needed
 Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.
-I have no idea what PepTools_annotations is about
-    or protein-phospho-correlation
-    or phosho-protein-cfc_ratio
 
 
 ### Later

@@ -15,12 +15,10 @@ from scipy.stats import f_oneway, moment
 from sklearn.metrics import r2_score
 from sklearn import linear_model
 from scipy import stats
-
-# from rpy2.robjects.packages import importr
-# from rpy2.robjects.vectors import FloatVector
+from scipy.signal import periodogram
+from scipy.special import comb
 
 from process.models import (
-    ColumnName,
     Project,
     Phospho,
     Protein,
@@ -600,46 +598,27 @@ class Command(BaseCommand):
         # TODO - converts abundances to the old format used by this function.
         #   Refactor this function to use abundances directly.
         readings = {}
-        readings_averages = {}
+
+        abundances = []
+        abundance_averages = {}
+        abundance_averages_list = []
 
         for abfr in abundances_for_readings:
-            if abfr.replicate.mean:
-                readings_averages[abfr.sample_stage.name] = abfr.reading
+            if not abfr.replicate.mean:
+                abundances.append(abfr.reading)
+
+            if abfr.replicate.mean and abfr.reading is not None:
+                abundance_averages[abfr.sample_stage.name] = abfr.reading
+                abundance_averages_list.append(abfr.reading)
 
             if readings.get(abfr.replicate.name) is None:
                 readings[abfr.replicate.name] = {}
 
             readings[abfr.replicate.name][abfr.sample_stage.name] = abfr.reading
 
-
-        # TODO - all old code below. Tidy this.        
-        metrics = {}
-
-        abundances = []
-        # TODO - how does ICR cope with Nones but not this? Does it use imputed values?
-        abundance_averages = {
-            key:val for key, val in readings_averages.items() if val is not None
-        }
-        abundance_averages_list = [
-            val for val in abundance_averages.values()
-        ]
-
-        for replicate in replicates:
-            for sample_stage in sample_stages:
-                # Not all replicates are populated. The qc process removes any replicates
-                #   with sample stage values that are all None.
-                if readings.get(replicate.name) and not replicate.mean:
-                    if abundance := readings[replicate.name].get(sample_stage.name):
-                        # TODO - sometimes the sample_stage.name isn't set. Why?
-                        #   Is there something wrong with the populate script?
-                        # TODO - why does this add all reps for standard deviation calculation?
-                        #   Why isn't it on a per-replicate basis?
-                        abundances.append(abundance)
-
-        std = None
-
-        if len(abundances) > 1:
-            std = statistics.stdev(abundances)
+        if len(readings) < 3:
+            # There aren't two replicates to calculate (one is the mean), give up
+            return
 
         # TODO - is this the right thing to do? Go through all of this function
         #   to check the behaviour of its various parts.
@@ -647,25 +626,27 @@ class Command(BaseCommand):
         if not len(abundance_averages_list):
             return
 
+        if not len(abundances):
+            # Nothing to do
+            return
+        
+        std = statistics.stdev(abundances)
+
         try:
-            residuals_array = np.polyfit(
+            # TODO - rename variable
+            poly = np.polyfit(
                 range(0, len(abundance_averages)),
                 abundance_averages_list,
                 2,
                 full=True,
-            )[1]
+            )
 
-            if len(residuals_array) == 0:
-                # TODO - what? And get rid of comment below.
-                # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
-                residuals = 5
-            else:
-                residuals = np.polyfit(
-                    range(0, len(abundance_averages)),
-                    abundance_averages_list,
-                    2,
-                    full=True,
-                )[1][0]
+            # TODO - what? And get rid of comment below.
+            # eg Q9HBL0 {'G2_2': 0.4496, 'G2/M_1': 0.7425, 'M/Early G1': 1.0}
+            residuals = 5
+
+            if len(poly[1]):
+                residuals = poly[1][0]
 
             r_squared = self._polyfit(
                 range(0, len(abundance_averages)), abundance_averages_list, 2
@@ -680,39 +661,27 @@ class Command(BaseCommand):
                 abundance_averages.values()
             )
 
-            metrics = {
-                "variance": moment(abundance_averages_list, moment=2),
-                "skewness": moment(abundance_averages_list, moment=3),
-                "kurtosis": moment(abundance_averages_list, moment=4),
-                "peak": max(abundance_averages, key=abundance_averages.get),
-                "max_fold_change": max_fold_change,
-                "residuals": residuals,
-                "R_squared": r_squared,
-            }
-
-            # if we have info for at least 2 replicates
             # TODO - why does it get the values for the second one?
-            if len(readings) >= 2:
-                curve_fold_change, curve_peak = self._calculate_curve_fold_change(
-                    readings, replicates
-                )
+            curve_fold_change, curve_peak = self._calculate_curve_fold_change(
+                readings, replicates
+            )
 
-                residuals_all, r_squared_all = self._calculate_residuals_R2_all(readings, replicates)
+            residuals_all, r_squared_all = self._calculate_residuals_R2_all(readings, replicates)
 
-                metrics = {
-                    "standard_deviation": std, 
-                    "variance_average": round(moment(abundance_averages_list, moment=2),2),
-                    "skewness_average": moment(abundance_averages_list, moment=3),
-                    "kurtosis_average": moment(abundance_averages_list, moment=4),
-                    "peak_average": max(abundance_averages, key=abundance_averages.get),
-                    "max_fold_change_average": max_fold_change,
-                    "residuals_average": residuals,
-                    "R_squared_average": r_squared,
-                    "residuals_all": residuals_all,
-                    "R_squared_all": r_squared_all,
-                    CURVE_FOLD_CHANGE: curve_fold_change,
-                    "curve_peak": curve_peak,
-                }
+            metrics = {
+                "standard_deviation": std, 
+                "variance_average": round(moment(abundance_averages_list, moment=2),2),
+                "skewness_average": moment(abundance_averages_list, moment=3),
+                "kurtosis_average": moment(abundance_averages_list, moment=4),
+                "peak_average": max(abundance_averages, key=abundance_averages.get),
+                "max_fold_change_average": max_fold_change,
+                "residuals_average": residuals,
+                "R_squared_average": r_squared,
+                "residuals_all": residuals_all,
+                "R_squared_all": r_squared_all,
+                CURVE_FOLD_CHANGE: curve_fold_change,
+                "curve_peak": curve_peak,
+            }
 
         except Exception as e:
             logger.error("Error in _calculate_metrics")
@@ -2271,10 +2240,6 @@ class Command(BaseCommand):
     # TODO - consolidate with any others
     def _rep_stage_name(self, abundance):
         return f"{abundance.replicate.name}_{abundance.sample_stage.name}"
-
-import numpy as np
-from scipy.signal import periodogram
-from scipy.special import comb
 
 def fisher_g_test(z):
     """
