@@ -1,12 +1,30 @@
 Todo
 ====
 
-Create charts like 1.A, 1.C. 1.D and 1.E
+Cite Gene Ontology
+
+Include links to github and data files in 'Additional Information'
+
+Include database dump files? Or json? Or both?
+    Maybe adapt 'import_original' to import json
+
 
 
 Intro
 =====
 
+How is this done?
+
+'We validate degradation mechanisms for under characterised cell cycle proteins and show
+that a signi cant proportion of proteins with CCD oscillation patterns
+have no clear mechanism for targeted degradation.'
+
+How is this done?
+
+'we characterise the context of CCD phosphorylation sites to predict protein
+interactions modulated in a CCD manner.'
+
+Get django admin working and add sections for searching results
 
 Results
 =======
@@ -14,14 +32,61 @@ Results
 High resolution time course proteomic and phosphoproteomic analysis of cell cycle progression in RPE-1 cells
 ------------------------------------------------------------------------------------------------------------
 
-How does fig 1.B work? What are the horizontal axes?
+Reproduce all of figure 1.
+
+Ignore fig 1.B as we have no flow cytometry data, although maybe mention that flow
+    cytometry was done.
+
 How does the principal component analysis for 1.B and 1.C work?
     The figure note says 'See supplementary data 1'
+
+Publish various data files
+
+Search GO for 'mitotic cell cycle process' or similar and count proteins associated
+    with it (Fig 1.E)
+
+Compare with other dataset(s)
+
+
+
 
 Defining protein and phosphorylation oscillations during the cell cycle
 -----------------------------------------------------------------------
 
-'The cutoffs ...', see questions.
+'The curve fitting models take advantage of the continuous nature of the temporal data'
+    Ours isn't. :(
+
+'The cut-offs applied to define each category were calculated based on GO term enrichment analysis to
+determine biologically significant changes (Supplementary Data 3).'
+    What does this mean? How does it determine the cutoffs? SD 3 isn't very helpful.
+
+List the significant and non-significant proteins and phosphos.
+
+Identify our version of 'several cyclins (i.e.
+CCND1, CCND3, CCNE2, CCNA2, CCNB1) (Fig. 2D, E) and other well-
+known cell cycle regulators including CDK inhibitors (CDKN1A and
+CDKN1B), kinases (PLK1, AURKA and AURKB) and proteins regulating
+cell cycle checkpoints including WEE1, PKMYT1, CDC25A, CDC20 and PTTG1 (Supplementary Fig. 2A, B)1.'
+
+Ditto for 'Within the oscillating phosphor-
+ylation events, we observed numerous well characterised cell cycle-
+regulated phosphorylation events including the activating Thr161 and
+inhibitory Tyr15 phosphorylation sites of CDK1 increasing in G2/M16
+(Fig. 2H, I). As expected, oscillating proteins and phosphorylation
+events were enriched for cell cycle-related GO terms (Fig. 2F, L, Sup-
+plementary Data 4).'
+
+Compare to other dataset(s), ICR first.
+
+Might the below be related to the bug with the medians? Medians are only calculated
+incorrectly for preoteins, not phosphos.
+
+'however, we noted that the majority of
+proteins from this study were not observed in other datasets (55.6%)
+and these unique proteins were not enriched for‘cell cycle’ GO terms
+(16 proteins, sig = 0.0023). The phosphoproteomic dataset revealed a
+greater amount of heterogeneity across various studies compared to
+proteomic data'
 
 Do all the Fig 2 charts except for the ones related to Western Blot, which we don't have.
 
@@ -36,11 +101,99 @@ Skipped as we're not doing it
 Comparing time course and mitotic exit datasets
 -----------------------------------------------
 
-Also skipped
+Also skipped. Also ignore figure 3.
 
 
 
 Biological role of cell cycle-dependent proteins
 ------------------------------------------------
 
-Very interesting! Study in detail and reproduce.
+TODO
+
+Phosphorylation dynamics driving cell cycle progression
+-------------------------------------------------------
+
+TODO
+
+Degradation mechanisms of CCD proteins
+--------------------------------------
+
+TODO
+
+Database
+--------
+
+Nothing to do
+
+Discussion
+==========
+
+
+
+
+Methods
+=======
+
+Cell lines
+Cell synchronisation
+Sample preparation for proteomics and phosphoproteomics analysis
+High-pH Reversed-Phase peptide fractionation
+Phosphopeptide enrichment
+Liquid Chromatography (LC) Mass Spectrometry (MS) analysis
+Flow cytometry analysis
+ANAPC4 depletion assay
+Western blot analysis
+Immunofluorescence
+--------------------------------------------
+
+Ignore, but add a short section containing whatever Tanya sends
+
+MS Data Processing
+------------------
+
+Decipher and include this, if it's needed:
+
+'Abundances from
+Proteome Discoverer were processed in Python and R for the Time
+Course, Mitotic Exit and Serum Starvation datasets. The protein and
+phosphorylation abundances were normalised by dividing the median
+intensity for each sample to account for changes in the total cell
+content during the cell cycle. Abundances of phospho-peptides that
+corresponded to the same phosphorylation site in the same protein
+were added to produce a single abundance for each phosphorylation
+site. Protein and phosphorylation site abundances were subsequently
+normalised using further approaches to allow speci c analyses
+(described in Supplementary Information).'
+
+Defining cell cycle-dependent (CCD) proteins and phosphorylation sites
+----------------------------------------------------------------------
+
+ALL OF THIS. Rephrase it, minus mitotic exit etc.
+
+To define significant protein and phosphorylation changes in the Time Course dataset, we performed one-way ANOVA analysis and corrected p-values using the Benjamini-Hochberg method for multiple hypothesis testing. We then used a polynomial curve to model the oscillation patterns of each protein and phosphorylation site abundance. The 0-max normalised abundance was modelled by a polynomial of degree 2 curve, where y encoded the abundance and x encoded the time points in incrementing steps size 1. The curve was calculated using numpy.poly1d method from the numpy library and curve fold change was calculated, using fitted abundances at the measured timepoints, by dividing the maximum value of the new curve fitted abundance by the minimum curve fitted abundance. Fitted abundances below zero were given a pseudo-abundance of 0.05. CCD proteins and phosphorylation sites were defined for the Time Course dataset based on GO term enrichment analysis on the term ‘cell cycle’ (GO:0007049). Protein curve fold change cut-offs were defined by quantifying the enrichment of the ‘cell cycle’ term at a range of curve fold change or fold change cut-offs in increments of 0.1. Each analysis compared the proteins above that cut-off against all remaining proteins observed in MS data (Supplementary Data 3). Cut-offs were selected so that the CCD set had a significant enrichment of the ‘cell cycle’ term with a p-value less than 0.01. For the Time Course dataset, a curve fold change cut-off of 1.2 (i.e. at least 20% difference between the minimum and maximum abundance) was determined and applied, and further filtering based on adjusted ANOVA p ≤ 0.01 and FDR confidence (FDR ≤ 0.05 for proteins and peptide FDR ≤ 0.01 for phosphorylation) were performed to define the CCD set.
+
+To define significant protein and phosphorylation changes in the Mitotic Exit and Serum Starvation datasets, the three replicates were grouped based on their time points (DMA arrest, DMA release, serum starvation arrest, serum starvation release and palbociclib arrest). First, phosphopeptide abundances in the DMA Arrest were correct to remove the bias introduced by the total intensity in this hyperphosphorylated time point as described in Supplementary Information. Next, time points were paired, and pairwise limma (Linear Models for Microarray Data) analyses were conducted to generate fold changes and adjusted p-values for each protein and phosphorylation site61. Key comparisons included the DMA arrest/release (Mitotic Exit) and Serum Starvation arrest/release. Fold changes and standard errors were estimated by fitting a linear model to the log2 sum-transformed abundance values using the lmFit function in R. The standard errors were then smoothed using the empirical Bayes method with the eBayes function in R. The resulting p-values from the limma analysis were adjusted for multiple testing using the Benjamini-Hochberg method. Protein fold change cut-offs were defined as described for the Time Course dataset. For the Mitotic Exit dataset, a log2 fold change cutoff of 0.5 was determined and applied for proteins and a cutoff of 1 was chosen for phosphorylation sites. The more conservative cut-off for phosphorylation sites reflects the large phosphorylation abundance changes observed in the Mitotic Exit set. Proteins and phosphorylation sites were further filtered with adjusted limma p ≤ 0.01 to define the CCD set.
+
+Stable proteins and phosphorylation sites were defined based on the Time Course data as those with: (i) a standard deviation ≤0.05; (ii) an adjusted ANOVA p > 0.001; and an FDR ≤ 0.05 for proteins and peptide FDR ≤ 0.01 for phosphorylation sites. The standard deviation was calculated on the 0-max normalised abundance data. Finally, for both the Time Course and Mitotic Exit sets, protein-dependent and protein-independent phosphorylation abundance changes were defined. Protein-dependent phosphorylation dynamics refer to phosphorylation events that directly correlate with changes in protein abundance. CCD phosphorylation sites in CCD proteins were characterised as ‘CCD phosphorylation site - protein-dependent’, whereas CCD phosphorylation sites in non-CCD proteins were characterised as ‘CCD phosphorylation site - protein-independent’.
+
+Cluster analysis for protein abundance profiles
+-----------------------------------------------
+
+ALL OF THIS, if you can figure out what the hell it means.
+
+Protein abundance profile clustering was performed with the T-distributed Stochastic Neighbour Embedding (TSNE) approach and using the sklearn.manifold.TSNE function from the Scikit-learn library. The TSNE approach converts high-dimensional data into lower dimensions, allowing relationships in complex datasets to be easily extracted. The min-max normalised abundance was calculated on the Time Course CCD protein set. The min-max abundance normalisation defines the minimum value as 0 and the maximum value as 1, and permits comparison of abundance profiles independent of the amplitude of the abundance change. The 16 min-max abundances were collapsed to one dimension. The distance of each protein in the Time Course CCD protein set was calculated to a set of 6 well-known cell cycle markers: cyclin D1, cyclin E2, MYB, Geminin, cyclin A2 and cyclin B1 and the protein was classified to the closest marker’s cluster.
+
+Protein annotation
+------------------
+
+ALL OF THIS.
+
+A range of sources of data were used to functionally annotate the proteins quantified during the analysis. General protein information was retrieved from the UniProt resource. For protein localisation, ‘Cellular Component’ GO term annotations were retrieved from the QuickGO Gene Ontology and Gene Ontology annotation database62. Protein members of complexes were retrieved from the Complex Portal21. Three key regulatory protein classes were defined as follows: (i) Proteins containing a Pfam kinase domain were defined as kinases63; (ii) Proteins matching with the GO Term ‘DNA-binding transcription factor activity’ (GO:0003700) were defined as transcription factors; and (iii) E3 ubiquitin ligases were derived from manual curation. Protein stability information on the mean protein half-life and the proportion of 0 h protein remaining 8 h after cycloheximide addition was retrieved from cycloheximide chase coupled to MS experiments by Li et al.27. A set of validated degron motifs (degrons) was collected, this included APC/C degrons from Davey et al.64, non-APC/C degrons from the ELM database65 and manually curated motifs. A set of peptides containing sequence-dependent degrons was collected from Zhang et al.48, peptides were annotated by Peptools and inaccessible peptides (AlphaFold Accessibility <0.5) were discarded. The Mean Gene Effect scores from a CRISPR gene knockout and cell viability assays were retrieved from the Cancer Dependency Map resource28. Data on a protein’s association with and role in cancer was retrieved from the Cancer Gene Census database (https://cancer.sanger.ac.uk/census) and 299 DRIVE cancer driver genes derived from a PanCancer and PanSoftware analysis were retrieved for66.
+
+Phosphorylation site annotation
+-------------------------------
+
+ALL OF THIS.
+
+The phosphorylation sites quantified during the analysis were annotated with a range of relevant data. Phosphorylation site accessibility and disorder scores are calculated from the DSSP residue accessible surface area of AlphaFold2 models67. Accessibility is the surface accessibility score derived from AlphaFold2 models for the single phosphorylated residue normalised by the maximum possible accessibility for that residue (described in Supplementary Information). The disorder score is a windowed version of the accessibility score, disordered regions contain many contiguous highly accessible residues, and is calculated as the mean accessibility for a region overlapping a given site with flanking regions of 15 amino acids. The cutoff for considering a phosphorylation site as accessible and located in a disordered region was set at 0.4. The taxonomic range of each phosphorylation site was calculated using the PepTools peptide annotation tool31. The taxonomic range was derived from orthologue alignments created using the GOPHER algorithm against the Quest of Orthologs (QFO) protein set. The taxonomic range of each phosphorylation site was annotated based on their conservation in the following model organisms H.sapiens, P.troglodytes, M.musculus, D.rerio, X.tropicalis, D.melanogaster, C.elegans, S.cerevisiae and A.thaliana. A phosphorylation site was defined as conserved in a species when a serine, threonine or tyrosine was present in the same position as the human site in Metazoan ProViz alignments68. The conservation scores used in the analysis were Metazoan WCS_W_p scores calculated using Peptools31,69. The phosphorylation site functional region overlap was tested on two datasets: (i) domain-domain interfaces and (ii) domain-motif interfaces. The set of interaction interfaces was derived from the structurally characterised complexes from the PDB database70. Interface residues were determined as residues with heavy atoms within less than 6 Å distance from another protein chain in structures of protein complexes with 2 or more subunits. Binding partners defined as motifs using in-house software were added to the domain-motif interfaces and the remaining were added to the domain-domain interfaces set. The majority of the domain-motif interfaces set of validated short linear motifs were derived from ELM65 and in-house curated motifs. Finally, phosphorylation sites were annotated for similarity to the specificity determinants of key cell cycle-related kinases. Optimal substrate phosphorylation motifs for each kinase were defined as follows: PLK: ‘[DNE].[ST][FGAVLIMW][GAVLIPFMW]’, CDK: ‘[ST]P.[RK]’, Aurora kinase: ‘R.[ST][GAVLIFMW]’ and PIKK ‘[ST]Q’71. Each phosphorylation site was compared to the regular expressions and matches to one or more consensus was annotated.
+

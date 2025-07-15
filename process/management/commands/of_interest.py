@@ -16,6 +16,7 @@ from process.constants import (
     CURVE_FOLD_CHANGE,
 )
 
+OUTPUT_DIR = "output/lists"
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -36,7 +37,9 @@ class Command(BaseCommand):
         project_name = options["project"]
 
         if project_name:
-            self._run_project(project_name)
+            project = Project.objects.get(name=project_name)
+
+            self._run_project(project)
             return
 
         projects = Project.objects.all()
@@ -45,7 +48,7 @@ class Command(BaseCommand):
 
         for project in projects:
             all_matches[project.name] = self._run_project(
-                project.name
+                project
             )
 
         for pr1 in all_matches:
@@ -71,10 +74,11 @@ class Command(BaseCommand):
 
 
 
-    def _run_project(self, project_name):
-        print(f"Project: {project_name}")
-
-        project = Project.objects.get(name=project_name)
+    def _run_project(self, project):
+        if project.name == "ICR":
+            print(f"Project: {project.name} with_bugs {project.with_bugs}")
+        else:
+            print(f"Project: {project.name}")
 
         # if accession_number:
         #     statistics = Statistic.objects.filter(
@@ -88,7 +92,7 @@ class Command(BaseCommand):
             protein__project=project
         )
 
-        protein_matches = self._run_stats(statistics, 0.05)
+        protein_matches = self._run_stats(statistics, project, 0.05)
 
         # if accession_number:
         #     statistics = Statistic.objects.filter(
@@ -102,17 +106,17 @@ class Command(BaseCommand):
             phospho__protein__project=project
         )
 
-        print("Phosphos of interest")
+        phospho_matches = self._run_stats(statistics, project, 0.02)
 
-        phospho_matches = self._run_stats(statistics, 0.02)
+        print("")
 
         return protein_matches, phospho_matches
 
 
-    def _run_stats(self, statistics, max_q):
+    def _run_stats(self, statistics, project, max_q):
         total = 0
+        matches = set()
         num_matches = 0
-        matches = []
 
         for statistic in statistics:
             total += 1
@@ -130,9 +134,9 @@ class Command(BaseCommand):
                 num_matches += 1
 
                 if statistic.protein:
-                    matches.append(statistic.protein.accession_number)
+                    matches.add(statistic.protein.accession_number)
                 else:
-                    matches.append(statistic.phospho.protein.accession_number)
+                    matches.add(statistic.phospho.protein.accession_number)
 
             # if statistic.protein:
             #     print(f"Match for {statistic.protein.accession_number}")
@@ -140,10 +144,23 @@ class Command(BaseCommand):
             #     print(f"Match for {statistic.phospho.protein.accession_number}")
 
         if statistic.protein:
-            print(f"Total protein matches {num_matches} of {total}")
+            output = "Total protein"
         else:
-            print(f"Total phospho matches {num_matches} of {total}")
+            output = "Total phospho"
 
-        print("")
+        print(f"{output} matches {len(matches)} of {total} ({num_matches} not distinct)")
+
+        file = project.name
+
+        if project.name == "ICR":
+            file = f"{file}_with_bugs_{project.with_bugs}"
+
+        if statistic.protein:
+            file = f"{file}_protein"
+        else:
+            file = f"{file}_phospho"
+
+        with open(f"{OUTPUT_DIR}/{file}.json", "w") as f:
+            json.dump(list(matches), f, indent = 4)
 
         return matches

@@ -343,8 +343,6 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
         protein=proteins[0]
     )
 
-    return
-
     abundances = Abundance.objects.filter(statistic=stat_zero)
 
     # replicate one: min is 0, max is 10, so denominator is 10
@@ -457,7 +455,7 @@ def test_calculate_metrics(basic_project_setup):
 
     statistic_type_name = ABUNDANCES_NORMALISED_LOG2_MEAN
 
-    stat_type, stat = create_readings(
+    _, stat = create_readings(
         statistic_type_name,
         replicates,
         sample_stages,
@@ -503,6 +501,7 @@ def test_calculate_metrics(basic_project_setup):
     assert metrics['peak_average'] == 'Nocodozole'
 
 
+# TODO - unfinished
 @pytest.mark.django_db
 def test_calculate_curve_fold_change(basic_project_setup):
     command = Command()
@@ -541,7 +540,7 @@ def test_calculate_curve_fold_change(basic_project_setup):
 # TODO - unfinished
 @pytest.mark.parametrize("statistic_type_name, phospho, phospho_ab, phospho_reg", [
     (ABUNDANCES_NORMALISED_LOG2_MEAN, False, False, False),
-    # (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
+    (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
     # (PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, True, True, False),
     # (PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, True),
 ])
@@ -608,34 +607,39 @@ def test_calculate_fisher_g(statistic_type_name, phospho, phospho_ab, phospho_re
 
 
 
-# @pytest.mark.django_db
-# def test_generate_xs_ys(basic_project_setup):
-#     command = Command()
+@pytest.mark.django_db
+def test_generate_xs_ys(basic_project_setup):
+    command = Command()
 
-#     replicates = basic_project_setup["replicates"]
-#     sample_stages = basic_project_setup["sample_stages"]
+    replicates = basic_project_setup["replicates"]
+    sample_stages = basic_project_setup["sample_stages"]
+    proteins = basic_project_setup["proteins"]
 
-#     readings = {}
-#     reading = 50
+    _, stat = create_readings(
+        ABUNDANCES_RAW,
+        replicates,
+        sample_stages,
+        reading = 0,
+        protein=proteins[0]
+    )
 
-#     for replicate in replicates:
-#         reading -= 1
+    abundances = Abundance.objects.filter(statistic=stat)
 
-#         readings[replicate.name] = {}
-#         for sample_stage in sample_stages:
-#             readings[replicate.name][sample_stage.name] = reading
+    x, y, stage_names_map = command._generate_xs_ys(
+        abundances,
+        replicates,
+    )
 
-#     x, y, stage_names_map = command._generate_xs_ys(
-#         replicates,
-#         readings,
-#         None,
-#         True,
-#     )
-
-#     assert x == [0, 1, 2, 3, 4, 5, 6, 7]
-#     assert y == [0.1586, 0.1537, 0.1503, 0.0468, 0.1054, 0.1219, 0.0836, 0.1045]
+    assert x == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    assert y == list(range(11, 21))
+    assert stage_names_map == {s.name:i for i, s in enumerate(sample_stages)}
 
 
+
+@pytest.mark.skip(reason="Broken")
+@pytest.mark.django_db
+def test__add_oscillations():
+    pass
 
 
 @pytest.mark.skip(reason="Broken")

@@ -14,22 +14,33 @@ ANOVA metrics match for abundances normalised log2_mean for Q13505 for q_value r
 
 Add code to return a message if no flags are supplied
 Study all the SL phospho errors
-_add_protein_annotations and _get_kinase_predictions should be excluded unless I can
-    figure out what they do.
+_add_protein_annotations might not be needed.
+_get_kinase_predictions should be excluded unless I can
+    figure out what it does and if it's needed.
 
 
 
 Compare proteins metrics for Q09666 has not very good q-value:
 ANOVA metrics match for abundances normalised log2_mean for Q09666 for q_value reading 0.6470752162303733 vs 0.7033535395638385
 
-Should we really be calculating averages with the mean replicate in _calculate_metrics?
-    Investigate!
+
+Add tests for
+    _calculate_protein_q_and_fisher_g
+    _calculate_phospho_q_and_fisher_g
+    _add_oscillations
+
+Add _add_phospho_regression?
 
 
+All the zeros for SL make log2 impossible to calculate. Should the values be set to None or
+    missed out?
+
+Changing _generate_xs_ys to use whichever replicate has more values might
+    improve the results
 If a cell has a value for phospho but not for protein, something is wrong
 Change SL import_protein and import_phospho to be zero, not nothing
 Replace the linear imputation with a better version and with-bugs for the old
-Wrap all code that have the not i % 1000 in a function then wrap that in a decorator?
+Wrap all code that has the not i % 1000 in a function then wrap that in a decorator?
 Add admin app
 Go through the code and make it work with no records created for empty values
     in import_protein and import_phospho
@@ -42,6 +53,7 @@ When looking up gene names, try all the uniprot accessions for the protein.
     They all refer to the same protein.
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
+    SL will have no imputed values (I guess) as it will have no Nones.
 Find out which functions aren't actually needed
 Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
@@ -50,7 +62,6 @@ process/management/commands/process.py:44: note: By default the bodies of untype
 
 ### Later
 
-Validate all the various statistical calculations
 Change dockerfile to not have to run the env after start
 The docker config for the cc_processor keeps the shell alive, but it then does nothing.
     How to improve this?

@@ -159,6 +159,11 @@ class Command(BaseCommand):
             help="Calculate and store all values",
             action="store_true"
         )
+        parser.add_argument(
+            "--fetch-references",
+            help="Fetch references",
+            action="store_true"
+        )
 
     def handle(self, *args, **options):
         project_name = options["project"]
@@ -170,6 +175,7 @@ class Command(BaseCommand):
         calculate_phosphos = options["calculate_phosphos"]
         calculate_batch = options["calculate_batch"]
         calculate_all = options["calculate_all"]
+        fetch_references = options["fetch_references"]
 
         if not project_name:
             raise Exception("You must provide a project name.")
@@ -271,8 +277,6 @@ class Command(BaseCommand):
                     )
 
         if calculate_batch or calculate_all:
-        #     self._add_protein_annotations(run)
-
             self._calculate_protein_q_and_fisher_g(project, replicates, sample_stages)
 
             self._calculate_phospho_q_and_fisher_g(project, replicates, sample_stages)
@@ -286,6 +290,10 @@ class Command(BaseCommand):
             #   P04264 somehow
             # self._generate_kinase_predictions(run)
 
+        if calculate_all or fetch_references:
+            # self._add_protein_annotations(run)
+
+            pass
 
 
 
@@ -566,7 +574,6 @@ class Command(BaseCommand):
 
 
 
-    # TODO - lifted from ICR, change names
     def _calculate_metrics(
         self,
         statistic_type_name: str,
@@ -599,7 +606,7 @@ class Command(BaseCommand):
         abundance_averages_list = [val for val in abundance_averages.values()]
 
         if len(abundances_non_mean.values("replicate__id").distinct()) < 2:
-            # There aren't as least two replicates to calculate (one is the mean), give up
+            # There aren't as least two replicates to calculate, give up
             return
 
         if not len(abundance_averages_list) or not len(abundances_non_mean):
@@ -672,7 +679,6 @@ class Command(BaseCommand):
 
     # TODO - this is straight up lifted from ICR, change and ideally use a library
     # _calcResidualsR2All
-    # TODO - tested
     def _calculate_residuals_R2_all(self, abundances, replicates):
         residuals_all = None
         r_squared_all = None
@@ -718,7 +724,6 @@ class Command(BaseCommand):
         return curve_fold_change, curve_peak
 
     # TODO - this is straight up lifted from ICR. Replace it, ideally with a library call
-    # TODO - write a test for it first
     def _polyfit(self, x, y, degree):
         coeffs = np.polyfit(x, y, degree)
         p = np.poly1d(coeffs)
@@ -728,6 +733,7 @@ class Command(BaseCommand):
         sstot = np.sum((y - ybar) ** 2)
         r_squared = 1 - (ssres / sstot)
         return round(r_squared, 2)
+
 
     # TODO - what is this for? Why does it work on ABUNDANCES_NORMALISED_MIN_MAX?
     def _impute(
@@ -881,7 +887,6 @@ class Command(BaseCommand):
             phospho = phospho
         )
 
-
         abundances = self._get_abundances(
             ABUNDANCES_NORMALISED_MEDIAN,
             protein = protein,
@@ -892,7 +897,7 @@ class Command(BaseCommand):
         total_lengths = 0
 
         for abundance in abundances:
-            if abundance.reading is not None:
+            if abundance.reading is not None and abundance.reading != 0:
                 total_abundances += math.log2(abundance.reading)
                 total_lengths += 1
 
@@ -902,6 +907,9 @@ class Command(BaseCommand):
             mean = total_abundances / total_lengths
 
         for abundance in abundances:
+            if abundance.reading is None or abundance.reading == 0:
+                continue
+
             normalised_abundance = self._round(math.log2(abundance.reading) - mean)
 
             Abundance.objects.create(
@@ -947,7 +955,7 @@ class Command(BaseCommand):
 
             # Not all replicates have an arresting agent value
             # TODO - do we need to check for the other two Nones?
-            if reading is not None and arrest_abundance is not None and arrest_abundance.reading is not None:
+            if reading is not None and arrest_abundance is not None and arrest_abundance.reading is not None and reading != 0 and arrest_abundance.reading != 0:
                 log2_reading = self._round(math.log2(
                     reading / arrest_abundance.reading
                 ))
@@ -973,21 +981,16 @@ class Command(BaseCommand):
         elif phospho:
             stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, phospho=phospho)
         else:
-            raise Exception(f"_get_protein_medians needs a project, protein or phospho")
+            raise Exception(f"_get_statistic needs a project, protein or phospho")
 
         return stat
-
-    def _get_protein_readings(self, protein):
-        return self._get_abundances(ABUNDANCES_RAW, protein=protein)
-
-    def _get_protein_medians(self, project):
-        return self._get_abundances(PROTEIN_MEDIAN, project=project)
 
     def _get_abundances(self, statistic_type_name, project=None, protein=None, phospho=None):
         statistic = self._get_statistic(statistic_type_name, project, protein, phospho)
 
         return Abundance.objects.filter(statistic=statistic)
 
+    # TODO - not used for much?
     def _get_abundance(self, statistic, replicate, sample_stage):
         return Abundance.objects.get(statistic=statistic, replicate=replicate, sample_stage=sample_stage)
 
@@ -1004,8 +1007,6 @@ class Command(BaseCommand):
             stat_medians = self._get_statistic(PHOSPHO_MEDIAN, project = phospho.protein.project)
 
         readings = self._get_abundances(ABUNDANCES_RAW, protein=protein, phospho=phospho)
-
-        # TODO - get rid of _get_protein_readings? It may not be that useful
 
         for prr in readings:
             reading = prr.reading
@@ -1276,8 +1277,6 @@ class Command(BaseCommand):
 
         ps_and_qs = {}
 
-        # run_results = self._fetch_run_results(run)
-
         num_proteins = 0
 
         statistics = Statistic.objects.filter(
@@ -1285,43 +1284,22 @@ class Command(BaseCommand):
             phospho__protein__project=project
         ).iterator(chunk_size=100)
 
-        # for rr in run_results:
         for statistic in statistics:
             if not num_proteins % 1000:
                 print(f"Calculating protein oscillation {num_proteins} {statistic.phospho.protein.accession_number}")
  
             num_proteins += 1
 
-            # for mod in pprpa:
             # TODO - generate with a site_key function?
             phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
 
             if phospho_key not in ps_and_qs:
                 ps_and_qs[phospho_key] = {}
 
-            # print("++++ STAT")
-            # print(statistic)
-            # print(statistic.metrics)
-
             if (statistic.metrics.get(ANOVA) is not None) and (statistic.metrics[ANOVA].get(P_VALUE) is not None):
-                # print(f"Match {statistic.metrics[ANOVA][P_VALUE]}")
-
                 ps_and_qs[phospho_key][P_VALUE] = statistic.metrics[ANOVA][P_VALUE]
 
-            # pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-            # # for mod in pprpa:
-            # # TODO - generate with a site_key function?
-            # phospho_key = f"{phospho.protein.accession_number}_{phospho.phosphosite}"
-
-            # if phospho_key not in ps_and_qs:
-            #     ps_and_qs[phospho_key] = {}
-
-            # ps_and_qs[phospho_key][P_VALUE] = pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
-
         ps_and_qs = self._add_q_value(ps_and_qs)
-
-        # run_results = self._fetch_run_results(run)
 
         num_proteins = 0
 
@@ -1330,24 +1308,12 @@ class Command(BaseCommand):
             phospho__protein__project=project
         ).iterator(chunk_size=100)
 
-        # for rr in run_results:
         # TODO - this code is very similar to others, consolidate?
         for statistic in statistics:
             if not num_proteins % 1000:
-                print(f"Calculating protein oscillation {num_proteins} {statistic.phospho.protein.accession_number}")
+                print(f"Calculating phospho oscillation {num_proteins} {statistic.phospho.protein.accession_number}")
  
             num_proteins += 1
-
-        # for rr in run_results:
-        #     pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-        #     # TODO - why check for raw?
-        #     if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
-        #         continue
-
-            # for mod in pprpa:
-            #     if pprpa[mod].get(PROTEIN_OSCILLATION_ABUNDANCES) is None:
-            #         continue
 
             # mod_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
             phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
@@ -1367,10 +1333,6 @@ class Command(BaseCommand):
             statistic.metrics[FISHER_G] = fisher_output
 
             statistic.save()
-
-            #     pprpa[mod][PROTEIN_OSCILLATION_ABUNDANCES][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_output
-
-            # rr.save()
 
 
 
@@ -1500,26 +1462,13 @@ class Command(BaseCommand):
         if not protein and not phospho:
             logger.error("Either a protein or a phospho must be provided.")
 
-        # Clear all abundances other than non-average raw
         if protein:
-            # Abundance.objects.exclude(
-            #     statistic__statistic_type__name=ABUNDANCES_RAW,
-            # ).filter(
-            #     statistic__protein=protein
-            # ).delete()
-
             Abundance.objects.filter(
                 statistic__statistic_type__name=ABUNDANCES_RAW,
                 statistic__protein=protein,
                 replicate__mean = True
             ).delete()
         else:
-            # Abundance.objects.exclude(
-            #     statistic__statistic_type__name=ABUNDANCES_RAW
-            # ).filter(
-            #     statistic__phospho=phospho
-            # ).delete()
-
             Abundance.objects.filter(
                 statistic__statistic_type__name=ABUNDANCES_RAW,
                 statistic__phospho=phospho,
@@ -1644,14 +1593,7 @@ class Command(BaseCommand):
             phospho
         )
 
-        # # TODO - this is needed in batch processing
-        # # relative_log2_readings_by_protein[
-        # #     protein
-        # # ] = log2_readings
 
-
-
-    # TODO - tested
     def _generate_phospho_regression_metrics(self, run, replicates, sample_stages, with_bugs):
         run_results = self._fetch_run_results(run)
 
@@ -1776,7 +1718,6 @@ class Command(BaseCommand):
 
             rr.save()
 
-    # TODO - tested
     def _generate_protein_oscillation_metrics(self, project, replicates, sample_stages, with_bugs):
         # run_results = self._fetch_run_results(run)
 
@@ -2160,8 +2101,6 @@ class Command(BaseCommand):
             # TODO - consider adding bulk updating
             rr.save()
 
-    # TODO - all records are cleared at the top of _calcualte_abundance_metrics, this is no
-    #   longer needed
     def _clear_and_fetch_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
         statistic_type = self._get_statistic_type(statistic_type_name)
 
