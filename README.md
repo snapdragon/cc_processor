@@ -162,3 +162,8 @@ python manage.py createsuperuser
 python manage.py runserver 0.0.0.0:8000
 # Then go to 0.0.0.0:8000/admin in your browser
 ```
+
+### Dump the uniprot data table to save retrieving again
+```sh
+pg_dump -d main -t process_uniprotdata > uniprot_data.sql
+```

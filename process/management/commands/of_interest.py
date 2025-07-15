@@ -121,22 +121,19 @@ class Command(BaseCommand):
         for statistic in statistics:
             total += 1
 
-            match = True
-
             if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] >= max_q:
                 # print(f"q value {statistic.metrics[ANOVA][Q_VALUE]}")
-                match = False
+                continue
 
-            if statistic.metrics is None or statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] <= 1.2:
-                match = False
+            if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] < 1.2:
+                continue
 
-            if match:
-                num_matches += 1
+            num_matches += 1
 
-                if statistic.protein:
-                    matches.add(statistic.protein.accession_number)
-                else:
-                    matches.add(statistic.phospho.protein.accession_number)
+            if statistic.protein:
+                matches.add(statistic.protein.accession_number)
+            else:
+                matches.add(statistic.phospho.protein.accession_number)
 
             # if statistic.protein:
             #     print(f"Match for {statistic.protein.accession_number}")

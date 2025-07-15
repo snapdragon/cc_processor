@@ -7,6 +7,7 @@ class Project(models.Model):
     proteome_file = models.CharField(max_length=255)
     phosphoproteome_file = models.CharField(max_length=255)
     proteome_file_accession_number_column_name = models.CharField(max_length=255)
+    protein_list = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"Project {self.name}"

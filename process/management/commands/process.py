@@ -293,9 +293,79 @@ class Command(BaseCommand):
             # self._generate_kinase_predictions(run)
 
         if calculate_all or fetch_references:
-            self._get_uniprot_data(project)
+            # self._get_uniprot_data(project)
 
-            self._get_genome_oncology_data(project)
+            self._generate_protein_list(project)
+
+            self._fetch_go_enrichment(project)
+
+
+    def _generate_protein_list(self, project):
+        max_q = 0.06
+
+        statistics = Statistic.objects.filter(
+            statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein__project=project
+        )
+
+        matches = set()
+
+        for statistic in statistics:
+            if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] >= max_q:
+                continue
+
+            if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] < 1.2:
+                continue
+
+            matches.add(statistic.protein.accession_number)
+
+        project.protein_list = list(matches)
+        project.save()
+
+
+
+    def _fetch_go_enrichment(self, project):
+        protein_list = project.protein_list
+
+        if not len(protein_list):
+            logger.info(f"Project {project.name} has an empty protein list for GO enrichment")
+            return
+
+        genes = []
+
+        for accession_number in protein_list:
+            try:
+                gene = self._get_gene_name(accession_number)
+
+                genes.append(gene)
+            except Exception:
+                # Some proteins just don't have a gene in uniprot, skip
+                # TODO - surely they should? Clean the data.
+                print(f"Can't find uniprot for {accession_number}")
+                pass
+
+        if not len(genes):
+            logger.info(f"Project {project.name} can't find any genes for GO enrichment")
+            return
+
+        payload = {
+            "organism": "hsapiens",  # human
+            "query": [genes],
+            "sources": ["GO:BP", "GO:MF", "GO:CC"],  # Choose GO categories
+        }
+
+        response = requests.post("https://biit.cs.ut.ee/gprofiler/api/gost/profile/", json=payload)
+
+        if response.ok:
+            results = response.json()
+
+            print("++++ RESULTS")
+            print(results)
+
+            for result in results["result"]:
+                print(f"{result['source']} | {result['name']} | p={result['p_value']:.2e} | genes: {', '.join(result['intersection'])}")
+        else:
+           print("Error:", response.status_code, response.text)
 
 
 
@@ -2055,53 +2125,15 @@ class Command(BaseCommand):
         return time_course_fisher_dict
 
 
-    def _get_genome_oncology_data(self, project):
-        logger.info("Fetching genome oncology data")
-
-        proteins = Protein.objects.filter(project=project)[:10]
-
-        for protein in proteins:
-            gene_name = self._get_gene_name(protein)
-        
-            try:
-                GenomeOntologyData.objects.get(accession_number=protein.accession_number)
-
-                print(f"Already have GO data for {protein.accession_number} {gene_name}")
-            except Exception:
-                url = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
-
-                payload = {
-                   "organism": "hsapiens",
-                    "query": [gene_name],
-                    "sources": ["GO:BP", "GO:MF", "GO:CC"]
-                }
-    
-                response = requests.post(url, json=payload)
-
-                if response.status_code == 200:
-                    data = response.json()
-
-                    GenomeOntologyData.objects.create(
-                        accession_number = protein.accession_number,
-                        data = data
-                    )
-                else:
-                    logger.error(f"Failed to retrieve data from Genome Oncology. Status code: {response.status_code}")
-
-                    return
-
-
 
     def _get_uniprot_data(self, project):
         logger.info("Fetching uniprot data")
 
-        proteins = Protein.objects.filter(project=project)[:10]
+        proteins = Protein.objects.filter(project=project)
 
         for protein in proteins:
             try:
                 UniprotData.objects.get(accession_number=protein.accession_number)
-
-                print(f"Already have uniprot data for {protein.accession_number}")
             except Exception:
                 url = f"https://rest.uniprot.org/uniprotkb/{protein.accession_number}.json"
     
@@ -2122,68 +2154,68 @@ class Command(BaseCommand):
                             "gene_name": gene_name,
                             "protein_name": protein_name
                         }
-                    )
+                )
                 else:
-                    logger.error(f"Failed to retrieve data from UniProt. Status code: {response.status_code}")
+                    logger.error(f"Failed to retrieve data from UniProt for {protein.accession_number}. Status code: {response.status_code}")
 
 
 
-    def _get_gene_name(self, protein):
-        uniprot_data = UniprotData.objects.get(accession_number = protein.accession_number)
+    def _get_gene_name(self, accession_number):
+        uniprot_data = UniprotData.objects.get(accession_number = accession_number)
 
-        uniprot_data.data["gene_name"]
-
-
+        return uniprot_data.data["gene_name"]
 
 
-    def _add_protein_annotations(self, run):
-        logger.info("Adding protein annotations")
 
-        run_results = self._fetch_run_results(run)
 
-        num_proteins = 0
+    # def _add_protein_annotations(self, run):
+    #     logger.info("Adding protein annotations")
 
-        for rr in run_results:
-            if not num_proteins % 1000:
-                print(f"Adding annotation {num_proteins} {rr.protein.accession_number}")
+    #     run_results = self._fetch_run_results(run)
 
-            num_proteins += 1
+    #     num_proteins = 0
 
-            pan = rr.protein.accession_number
+    #     for rr in run_results:
+    #         if not num_proteins % 1000:
+    #             print(f"Adding annotation {num_proteins} {rr.protein.accession_number}")
 
-            if index_protein_names.get(pan) is None:
-                # TODO - fetch protein info remotely
-                # basic_localisation, localisation_keyword = getProteinLocalisation(pan)
-                continue
+    #         num_proteins += 1
 
-            ipnan = index_protein_names[pan]
+    #         pan = rr.protein.accession_number
 
-            # Not all entries have a value for basic_localisation
-            basic_localisation = index_protein_names[pan].get("basic_localisation")
-            localisation_keyword = index_protein_names[pan].get("localisation_keyword")
+    #         if index_protein_names.get(pan) is None:
+    #             # TODO - fetch protein info remotely
+    #             # basic_localisation, localisation_keyword = getProteinLocalisation(pan)
+    #             continue
 
-            protein_info = {}
+    #         ipnan = index_protein_names[pan]
 
-            protein_info["localisation_info"] = {
-                "basic_localisation": basic_localisation,
-                "localisation_keyword": localisation_keyword
-            }
+    #         # Not all entries have a value for basic_localisation
+    #         basic_localisation = index_protein_names[pan].get("basic_localisation")
+    #         localisation_keyword = index_protein_names[pan].get("localisation_keyword")
 
-            if "halflife_mean" in ipnan:
-                for field in PROTEIN_INFO_FIELDS:
-                    protein_info[field] = ipnan[field]     
+    #         protein_info = {}
 
-            rr.combined_result[PROTEIN_INFO] = protein_info
+    #         protein_info["localisation_info"] = {
+    #             "basic_localisation": basic_localisation,
+    #             "localisation_keyword": localisation_keyword
+    #         }
 
-            rr.combined_result[GENE_NAME] = ipnan[GENE_NAME]
-            rr.combined_result[PROTEIN_NAME] = ipnan[PROTEIN_NAME]
+    #         if "halflife_mean" in ipnan:
+    #             for field in PROTEIN_INFO_FIELDS:
+    #                 protein_info[field] = ipnan[field]     
 
-            # TODO - put in later
-            # else:
-            #     gene_name, protein_name = getProteinInfo(pan)
+    #         rr.combined_result[PROTEIN_INFO] = protein_info
 
-            # TODO - consider adding bulk updating
-            rr.save()
+    #         rr.combined_result[GENE_NAME] = ipnan[GENE_NAME]
+    #         rr.combined_result[PROTEIN_NAME] = ipnan[PROTEIN_NAME]
+
+    #         # TODO - put in later
+    #         # else:
+    #         #     gene_name, protein_name = getProteinInfo(pan)
+
+    #         # TODO - consider adding bulk updating
+    #         rr.save()
 
     def _clear_and_fetch_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
         statistic_type = self._get_statistic_type(statistic_type_name)
