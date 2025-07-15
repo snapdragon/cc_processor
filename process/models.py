@@ -66,8 +66,6 @@ class Protein(models.Model):
     )
     accession_number = models.CharField(max_length=255)
     is_contaminant = models.BooleanField(default=False)
-    gene_name = models.CharField(max_length=255, null=True, blank=True)
-    protein_name = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -169,3 +167,27 @@ class Abundance(models.Model):
 
     def __str__(self):
         return f"Abundance: replicate '{self.replicate.name}' stage '{self.sample_stage.name}' statistic type '{self.statistic.statistic_type.name}' reading: {self.reading}"
+
+class UniprotData(models.Model):
+    accession_number = models.CharField(max_length=255)
+    data = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['accession_number'], name='unique_uniprot_data_accession_number')
+        ]
+
+    def __str__(self):
+        return f"Uniprot data for  {self.accession_number}"
+
+class GenomeOntologyData(models.Model):
+    accession_number = models.CharField(max_length=255)
+    data = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['accession_number'], name='unique_genome_ontology_data_accession_number')
+        ]
+
+    def __str__(self):
+        return f"Genome ontology data for {self.accession_number}"

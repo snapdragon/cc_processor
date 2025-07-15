@@ -26,7 +26,9 @@ from process.models import (
     SampleStage,
     StatisticType,
     Statistic,
-    Abundance
+    Abundance,
+    UniprotData,
+    GenomeOntologyData
 )
 
 from process.constants import (
@@ -291,9 +293,9 @@ class Command(BaseCommand):
             # self._generate_kinase_predictions(run)
 
         if calculate_all or fetch_references:
-            # self._add_protein_annotations(run)
+            self._get_uniprot_data(project)
 
-            pass
+            self._get_genome_oncology_data(project)
 
 
 
@@ -2051,6 +2053,88 @@ class Command(BaseCommand):
         time_course_fisher_dict = time_course_fisher.to_dict('index')
 
         return time_course_fisher_dict
+
+
+    def _get_genome_oncology_data(self, project):
+        logger.info("Fetching genome oncology data")
+
+        proteins = Protein.objects.filter(project=project)[:10]
+
+        for protein in proteins:
+            gene_name = self._get_gene_name(protein)
+        
+            try:
+                GenomeOntologyData.objects.get(accession_number=protein.accession_number)
+
+                print(f"Already have GO data for {protein.accession_number} {gene_name}")
+            except Exception:
+                url = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
+
+                payload = {
+                   "organism": "hsapiens",
+                    "query": [gene_name],
+                    "sources": ["GO:BP", "GO:MF", "GO:CC"]
+                }
+    
+                response = requests.post(url, json=payload)
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    GenomeOntologyData.objects.create(
+                        accession_number = protein.accession_number,
+                        data = data
+                    )
+                else:
+                    logger.error(f"Failed to retrieve data from Genome Oncology. Status code: {response.status_code}")
+
+                    return
+
+
+
+    def _get_uniprot_data(self, project):
+        logger.info("Fetching uniprot data")
+
+        proteins = Protein.objects.filter(project=project)[:10]
+
+        for protein in proteins:
+            try:
+                UniprotData.objects.get(accession_number=protein.accession_number)
+
+                print(f"Already have uniprot data for {protein.accession_number}")
+            except Exception:
+                url = f"https://rest.uniprot.org/uniprotkb/{protein.accession_number}.json"
+    
+                response = requests.get(url)
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    protein_name = data.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value", "Unknown")
+                    gene_name = (
+                        data.get("genes", [{}])[0].get("geneName", {}).get("value", "Unknown")
+                        if data.get("genes") else "Unknown"
+                    )
+
+                    UniprotData.objects.create(
+                        accession_number = protein.accession_number,
+                        data = {
+                            "gene_name": gene_name,
+                            "protein_name": protein_name
+                        }
+                    )
+                else:
+                    logger.error(f"Failed to retrieve data from UniProt. Status code: {response.status_code}")
+
+
+
+    def _get_gene_name(self, protein):
+        uniprot_data = UniprotData.objects.get(accession_number = protein.accession_number)
+
+        uniprot_data.data["gene_name"]
+
+
+
 
     def _add_protein_annotations(self, run):
         logger.info("Adding protein annotations")

@@ -8,6 +8,8 @@ Include links to github and data files in 'Additional Information'
 Include database dump files? Or json? Or both?
     Maybe adapt 'import_original' to import json
 
+How is protein degredation identified?
+
 
 
 Intro

@@ -59,7 +59,7 @@ class Command(BaseCommand):
         project = Project.objects.get(name=PROJECT_NAME)
         stats_type_rp = StatisticType.objects.get(name=ABUNDANCES_RAW)
 
-        file_path = f"data/ICR/TimeCourse_Full_info_full_indented.json"
+        file_path = f"data/ICR/TimeCourse_Full_info_indented.json"
 
         Abundance.objects.filter(statistic__project=project).delete()
         Abundance.objects.filter(statistic__protein__project=project).delete()
