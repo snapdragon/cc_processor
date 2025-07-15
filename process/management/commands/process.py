@@ -293,7 +293,7 @@ class Command(BaseCommand):
             # self._generate_kinase_predictions(run)
 
         if calculate_all or fetch_references:
-            # self._get_uniprot_data(project)
+            self._get_uniprot_data(project)
 
             self._generate_protein_list(project)
 
@@ -340,7 +340,6 @@ class Command(BaseCommand):
                 genes.append(gene)
             except Exception:
                 # Some proteins just don't have a gene in uniprot, skip
-                # TODO - surely they should? Clean the data.
                 print(f"Can't find uniprot for {accession_number}")
                 pass
 
@@ -349,23 +348,27 @@ class Command(BaseCommand):
             return
 
         payload = {
-            "organism": "hsapiens",  # human
-            "query": [genes],
-            "sources": ["GO:BP", "GO:MF", "GO:CC"],  # Choose GO categories
+            "organism": "hsapiens",
+            "query": genes,
+            "sources": ["GO:BP", "GO:MF", "GO:CC"],
         }
 
-        response = requests.post("https://biit.cs.ut.ee/gprofiler/api/gost/profile/", json=payload)
+        try:
+            response = requests.post("https://biit.cs.ut.ee/gprofiler/api/gost/profile/", json=payload)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logger.error(f"g:Profiler API request failed: {e}")
+            return
 
-        if response.ok:
-            results = response.json()
+        data = response.json()
 
-            print("++++ RESULTS")
-            print(results)
+        for result in data.get("result", []):
+            source = result.get("source")
+            name = result.get("name")
+            p_value = result.get("p_value")
+            intersecting_genes = result.get("intersection", [])
+            print(f"{source} | {name} | p={p_value:.2e} | genes: {', '.join(intersecting_genes)}")
 
-            for result in results["result"]:
-                print(f"{result['source']} | {result['name']} | p={result['p_value']:.2e} | genes: {', '.join(result['intersection'])}")
-        else:
-           print("Error:", response.status_code, response.text)
 
 
 

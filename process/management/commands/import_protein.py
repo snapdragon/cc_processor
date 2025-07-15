@@ -75,6 +75,16 @@ class Command(BaseCommand):
 
             accession_number = row[project.proteome_file_accession_number_column_name]
 
+            # SL contaminants start with 'CON_'. I think.
+            #   They can't be looked up in uniprot anyway.
+            if accession_number.startswith("CON_"):
+                is_contaminant = True
+
+            # We don't want the readings for contaminants
+            if is_contaminant:
+                print(f"Skipping contaminant {accession_number}")
+                continue
+
             if protein := Protein.objects.filter(project=project, accession_number=accession_number).first():
                 print(f"DUPLICATE ACCESSION NUMBER {accession_number}")
 
@@ -93,11 +103,6 @@ class Command(BaseCommand):
                 statistic = Statistic.objects.create(
                     statistic_type=stats_type_rp, protein=protein
                 )
-
-            # We don't want the readings for contaminants
-            if is_contaminant:
-                continue
-
 
             if project_name == "SL":
                 for col in df.columns:

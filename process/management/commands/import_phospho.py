@@ -81,6 +81,10 @@ class Command(BaseCommand):
             for index, row in df.iterrows():
                 accession_number = row[project.proteome_file_accession_number_column_name]
 
+                if accession_number.startswith("CON_"):
+                    print(f"Skipping contaminant {accession_number}")
+                    continue
+
                 if not row_no % 1000:
                     logger.info(f"Adding phospho row {row_no} {accession_number}")
 
