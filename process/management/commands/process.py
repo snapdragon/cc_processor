@@ -295,18 +295,29 @@ class Command(BaseCommand):
         if calculate_all or fetch_references:
             self._get_uniprot_data(project)
 
-            self._generate_protein_list(project)
+            # self._generate_protein_list(project, True)
+            self._generate_protein_list(project, False)
 
-            self._fetch_go_enrichment(project)
+            # self._fetch_go_enrichment(project, True)
+            self._fetch_go_enrichment(project, False)
 
 
-    def _generate_protein_list(self, project):
-        max_q = 0.06
+    def _generate_protein_list(self, project, is_protein):
+        if is_protein:
+            max_q = 0.06
 
-        statistics = Statistic.objects.filter(
-            statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
-            protein__project=project
-        )
+            statistics = Statistic.objects.filter(
+                statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
+                protein__project=project
+            )
+        else:
+            max_q = 0.02
+
+            statistics = Statistic.objects.filter(
+                statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
+                phospho__protein__project=project
+            )
+
 
         matches = set()
 
@@ -317,15 +328,25 @@ class Command(BaseCommand):
             if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] < 1.2:
                 continue
 
-            matches.add(statistic.protein.accession_number)
+            if is_protein:
+                matches.add(statistic.protein.accession_number)
+            else:
+                matches.add(statistic.phospho.protein.accession_number)
 
-        project.protein_list = list(matches)
+        if is_protein:
+            project.protein_list = list(matches)
+        else:
+            project.phospho_protein_list = list(matches)
+
         project.save()
 
 
 
-    def _fetch_go_enrichment(self, project):
-        protein_list = project.protein_list
+    def _fetch_go_enrichment(self, project, is_protein):
+        if is_protein:
+            protein_list = project.protein_list
+        else:
+            protein_list = project.phospho_protein_list
 
         if not len(protein_list):
             logger.info(f"Project {project.name} has an empty protein list for GO enrichment")
