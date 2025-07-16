@@ -20,11 +20,12 @@ python manage.py import_phospho --project "ICR"
 python manage.py process --project "ICR" --with-bugs --calculate-all
 
 # Or the long route
-python manage.py process --project "ICR" --with-bugs --calculate-protein-medians --calculate-phospho-medians
+python manage.py process --project "ICR" --with-bugs --calculate-protein-medians
 python manage.py process --project "ICR" --with-bugs --calculate-proteins
+python manage.py process --project "ICR" --with-bugs --calculate-phospho-medians
 python manage.py process --project "ICR" --with-bugs --calculate-phosphos
-python manage.py process --project "ICR" --with-bugs --merge-protein-phospho
 python manage.py process --project "ICR" --with-bugs --calculate-batch
+python manage.py process --project "ICR" --with-bugs --fetch-references
 
 ```
 
@@ -150,9 +151,10 @@ SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM pro
 python manage.py import_original
 ```
 
-### Compare a protein from the original output with new output
+### Compare a protein from the original output with new output, or compare all
 ```sh
 python manage.py compare --accession-number Q93075
+python manage.py compare
 ```
 
 ### To get the admin site working

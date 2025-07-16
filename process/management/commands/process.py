@@ -99,6 +99,9 @@ from process.constants import (
 
     ICR_ABUNDANCE_REP_1,
     ICR_ABUNDANCE_REP_2,
+
+    PROTEIN_MAX_Q,
+    PHOSPHO_MAX_Q
 )
 
 logging.basicConfig(
@@ -108,8 +111,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# TOOD - what is this file? Where did it come from?
-# TODO - whatever it is, a lot of it could be trimmed, and maybe put in the DB
+# TODO - remove on completion, it shouldn't be used
 with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
     index_protein_names = json.load(outfile)
 
@@ -292,40 +294,40 @@ class Command(BaseCommand):
             #   P04264 somehow
             # self._generate_kinase_predictions(run)
 
-        if calculate_all or fetch_references:
-            self._get_uniprot_data(project)
+        # if calculate_all or fetch_references:
+        #     self._get_uniprot_data(project)
 
-            # self._generate_protein_list(project, True)
-            self._generate_protein_list(project, False)
+        #     self._generate_protein_list(project, True)
+        #     self._generate_protein_list(project, False)
 
-            # self._fetch_go_enrichment(project, True)
-            self._fetch_go_enrichment(project, False)
+        #     self._fetch_go_enrichment(project, True)
+        #     self._fetch_go_enrichment(project, False)
 
 
     def _generate_protein_list(self, project, is_protein):
         if is_protein:
-            max_q = 0.06
+            max_q = PROTEIN_MAX_Q
 
             statistics = Statistic.objects.filter(
                 statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
                 protein__project=project
             )
         else:
-            max_q = 0.02
+            max_q = PHOSPHO_MAX_Q
 
             statistics = Statistic.objects.filter(
                 statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
                 phospho__protein__project=project
             )
 
-
         matches = set()
 
         for statistic in statistics:
-            if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] >= max_q:
+            # Apparently q_values are rounded down, so no 'round' here
+            if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] > max_q:
                 continue
 
-            if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] < 1.2:
+            if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 1.2:
                 continue
 
             if is_protein:
@@ -604,16 +606,8 @@ class Command(BaseCommand):
             if abundance.reading is not None:
                 res.append(abundance.reading)
 
-        # for replicate in replicates:
-        #     if stage_name in readings[replicate.name]:
-        #         reading = readings[replicate.name][stage_name]
-
-        #         if reading is not None:
-        #             res.append(float(reading))
-
         return res
     
-    # TODO - straight up lifted from ICR, simplify ideally using a library
     def _calculate_ANOVA(self, statistic_type_name, sample_stages, protein = None, phospho = None):
         # Defaults if not enough replicates
         p_value = 1
@@ -885,6 +879,7 @@ class Command(BaseCommand):
                     for j in range(i + 1, len(abs)):
                         # TODO - is it right that it loops back to the beginning?
                         #   Why doesn't going backwards loop too?
+                        #   Make this a 'with_bugs'?
                         next_abundance = abs[j % len(abs)]
 
                         if next_abundance.reading is not None:

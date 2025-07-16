@@ -63,8 +63,6 @@ class Command(BaseCommand):
 
         cns_by_name = {}
 
-        num = 0
-
         if project_name == "SL":
             for cn in column_names:
                 cns_by_name[cn.name] = cn
@@ -131,9 +129,6 @@ class Command(BaseCommand):
         if project_name != "ICR":
             raise Exception(f"Unknown project name {project_name}")
 
-        # TODO - split this into two scripts
-        # TODO - at least tidy it up
-
         cns_by_replicate_and_column_name = {}
         time_course_phospho_full = {}
         time_course_phospho_reps = parseTimeCoursePhosphoProteomics(file_path, contaminants)
@@ -143,6 +138,8 @@ class Command(BaseCommand):
                 cns_by_replicate_and_column_name[cn.replicate.name] = {}
 
             cns_by_replicate_and_column_name[cn.replicate.name][cn.sample_stage.name] = cn
+
+        num_phosphos = 0
 
         for uniprot_accession in time_course_phospho_reps:
             if not proteins.get(uniprot_accession):
@@ -163,7 +160,10 @@ class Command(BaseCommand):
                         "phosphorylation_abundances"
                     ]
                 ):
-                    num += 1
+                    if not num_phosphos % 1000:
+                        print(f"Importing ICR phospho {num_phosphos} {uniprot_accession} {mod_key}")
+
+                    num_phosphos += 1
 
                     # TODO - is this really needed?
                     time_course_phospho_full[uniprot_accession][

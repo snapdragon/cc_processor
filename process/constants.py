@@ -108,9 +108,9 @@ PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN = "protein_oscillation_abundances log2_
 
 SL_SAMPLE_STAGE_NAME_1 = "RO sample 15 min"
 SL_SAMPLE_STAGE_NAME_2 = "RO sample 30 min"
-SL_SAMPLE_STAGE_NAME_3 = "Palb sample 1h"
+SL_SAMPLE_STAGE_NAME_3 = "Palb sample, 1h"
 SL_SAMPLE_STAGE_NAME_4 = "RO sample 2h"
-SL_SAMPLE_STAGE_NAME_5 = "Palb sample, 2,5h"
+SL_SAMPLE_STAGE_NAME_5 = "Palb sample, 2.5h"
 SL_SAMPLE_STAGE_NAME_6 = "Palb sample, 4h"
 SL_SAMPLE_STAGE_NAME_7 = "RO sample 5h"
 SL_SAMPLE_STAGE_NAME_8 = "Palb sample, 8h"
@@ -119,3 +119,6 @@ SL_SAMPLE_STAGE_NAME_10 = "Nocodozole"
 
 ICR_ABUNDANCE_REP_1 = "abundance_rep_1"
 ICR_ABUNDANCE_REP_2 = "abundance_rep_2"
+
+PROTEIN_MAX_Q = 0.5
+PHOSPHO_MAX_Q = 0.1

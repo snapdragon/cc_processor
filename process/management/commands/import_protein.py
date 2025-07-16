@@ -68,21 +68,23 @@ class Command(BaseCommand):
 
             is_contaminant = False
 
+            accession_number = row[project.proteome_file_accession_number_column_name]
+
             # TODO - this is a hack for ICR. Maybe make it a DB config?
             if contaminant := row.get("Contaminant"):
                 if contaminant == "Yes" or contaminant == "TRUE":
+                    print(f"is_contaminant set to {contaminant} for {accession_number}")
                     is_contaminant = True
-
-            accession_number = row[project.proteome_file_accession_number_column_name]
 
             # SL contaminants start with 'CON_'. I think.
             #   They can't be looked up in uniprot anyway.
             if accession_number.startswith("CON_"):
+                print(f"Protein starts with CON_: {accession_number}")
                 is_contaminant = True
 
             # We don't want the readings for contaminants
             if is_contaminant:
-                print(f"Skipping contaminant {accession_number}")
+                # print(f"Skipping contaminant {accession_number}")
                 continue
 
             if protein := Protein.objects.filter(project=project, accession_number=accession_number).first():

@@ -130,7 +130,7 @@ class Command(BaseCommand):
             return
 
         # Don't compare protein medians as they're not stored in the ICR json
-        self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
+        # self._compare_numbers(ABUNDANCES_RAW, protein_original, protein_process, None, None)
         self._compare_numbers(ABUNDANCES_NORMALISED_MEDIAN, protein_original, protein_process, None, None)
         self._compare_numbers(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None)
         self._compare_numbers(ABUNDANCES_NORMALISED_MIN_MAX, protein_original, protein_process, None, None)
@@ -138,6 +138,8 @@ class Command(BaseCommand):
         self._compare_numbers(ABUNDANCES_IMPUTED, protein_original, protein_process, None, None)
         self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
         self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
+
+        return
 
         # Compare phosphos
         phosphos_original = Phospho.objects.filter(
@@ -402,9 +404,9 @@ class Command(BaseCommand):
                     print(f"No phospho match {statistic_type_name} for {phospho_original.protein.accession_number} mod {phospho_original.mod} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
             # else:
             #     if protein_original:
-            #         print(f"Match for protein {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            #         print(f"Match for protein {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
             #     else:
-            #         print(f"Match for phospho {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {round(ab_original.reading, 1)} vs {round(ab_process.reading, 1)}")
+            #         print(f"Match for phospho {statistic_type_name} for {ab_original.replicate.name} for {ab_original.sample_stage.name} reading {ab_original.reading} vs {ab_process.reading}")
 
 
     # TODO - copied from import_original

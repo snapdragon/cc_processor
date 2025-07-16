@@ -32,25 +32,21 @@ Add tests for
 Add _add_phospho_regression?
 
 
-All the zeros for SL make log2 impossible to calculate. Should the values be set to None or
-    missed out?
-
+Improve colour scheme for d3
+Add legends to d3 diagrams
+Have venn diagram intersect on gene names not protein names?
+SL has no phosphosite (so far). Don't populate it?
+Add non-selected genes to GO enrichment calls?
 Changing _generate_xs_ys to use whichever replicate has more values might
     improve the results
 If a cell has a value for phospho but not for protein, something is wrong
-Change SL import_protein and import_phospho to be zero, not nothing
 Replace the linear imputation with a better version and with-bugs for the old
 Wrap all code that has the not i % 1000 in a function then wrap that in a decorator?
 Add admin app
-Go through the code and make it work with no records created for empty values
-    in import_protein and import_phospho
-Move fetching of gene_name and protein_name to import_protein, or get rid of them?
 Find a way to assess how sparse the data sets are
 min-max and imputed values are calculated differently between protein and phospho in ICR
     Which way is the correct way?
 Add 'peptide_abundances' to phospho output?
-When looking up gene names, try all the uniprot accessions for the protein.
-    They all refer to the same protein.
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
     SL will have no imputed values (I guess) as it will have no Nones.
