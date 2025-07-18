@@ -12,11 +12,14 @@
           font-family: "Arial", sans-serif;
           font-size: 18px;
         }
+        svg {
+            margin-bottom: 20px
+        }
     </style>
 </head>
 <body>
-<svg id="protein_heatmap" width="1000" height="400"></svg>
-<svg id="phospho_heatmap" width="1000" height="400"></svg>
+<svg id="protein_heatmap" width="1000" height="450"></svg>
+<svg id="phospho_heatmap" width="1000" height="450"></svg>
 
 {{ protein_genes|json_script:"protein-genes" }}
 {{ protein_readings_data|json_script:"protein-readings-data" }}
@@ -44,7 +47,7 @@
 
         const colorScale = d3.scaleLinear()
             .domain([0, colourRange])
-            .range(["white", "darkblue"]);
+            .range(["white", "#0072B2"]);
 
         genes.forEach((gene, rowIndex) => {
             samples.forEach((sample, colIndex) => {
@@ -77,13 +80,58 @@
     .append("text")
     .attr("x", (d, i) => margin.left + i * cellSize + cellSize / 2)
     .attr("y", margin.top - 10)
-    .attr("text-anchor", "start") // or "end", depending on desired alignment
+    .attr("text-anchor", "start")
     .attr("transform", (d, i) => {
         const x = margin.left + i * cellSize + cellSize / 2;
         const y = margin.top - 10;
-        return `rotate(-90, ${x}, ${y})`; // rotate around the label's position
+        return `rotate(-90, ${x}, ${y})`;
     })
     .text(d => d);
+
+    const legend_svg = d3.select(id);
+    const defs = legend_svg.append("defs");
+
+    // Create linear gradient
+    const gradient = defs.append("linearGradient")
+      .attr("id", "legend-gradient")
+      .attr("x1", "0%")
+      .attr("x2", "100%")
+      .attr("y1", "0%")
+      .attr("y2", "0%");
+
+    // Add color stops
+    gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#ffffff"); // white (low)
+
+    gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#0072B2"); // blue (high)
+
+    // Draw gradient rectangle
+    legend_svg.append("rect")
+      .attr("x", 320)
+      .attr("y", 380)
+      .attr("width", 120)
+      .attr("height", 20)
+      .style("fill", "url(#legend-gradient)")
+      .style("stroke", "black");
+
+    // Add text labels
+    legend_svg.append("text")
+      .attr("x", 297)
+      .attr("y", 393)
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text("Low");
+
+    legend_svg.append("text")
+      .attr("x", 465)
+      .attr("y", 393)
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text("High");
+
     }
 
 </script>

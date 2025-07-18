@@ -70,8 +70,8 @@ def heatmap(request):
         protein_readings.append(row)
 
 
-    phospho_phosphosites = ['pT4', 'pT5', 'pY6']
-    phospho_peptides = ['ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2', 'IGEGTY(UniMod:21)GVVYK2', 'P24385']
+    phospho_phosphosites = ['pY6', 'pT4', 'pT5']
+    phospho_peptides = ['IGEGTY(UniMod:21)GVVYK2', 'ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2']
 
     phospho_readings = []
 
