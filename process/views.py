@@ -81,7 +81,44 @@ def pca(request):
 
 
 def barchart(request):
-    return render(request, "barchart.html", {})
+    project = Project.objects.get(name=PROJECT_SL)
+
+    protein_go = project.protein_go_list
+    phospho_go = project.phospho_protein_go_list
+
+    protein_bar_data = process_bar_data(protein_go)
+    phospho_bar_data = process_bar_data(phospho_go)
+
+    return render(request, "barchart.html", {
+        "protein_data": protein_bar_data,
+        "phospho_data": phospho_bar_data,
+    })
+
+def process_bar_data(go_list):
+    top = {
+        'CC': [],
+        'BP': [],
+        'MF': []
+    }
+
+    groups = {
+        'GO:CC': 'CC',
+        'GO:BP': 'BP',
+        'GO:MF': 'MF',
+    }
+
+    for go in go_list:
+        source = go['source']
+        p_value = go['p_value']
+
+        if len(top[groups[source]]) < 3:
+            top[groups[source]].append({
+                "group": groups[source],
+                "name": go["name"],
+                "value": -log10(p_value)
+            })
+
+    return [item for sublist in top.values() for item in sublist]
 
 
 def scatterplot(request):

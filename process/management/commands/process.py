@@ -3,7 +3,6 @@ import json
 import logging
 import math
 import statistics
-import copy
 import requests
 from scipy import stats
 
@@ -492,7 +491,6 @@ class Command(BaseCommand):
         # TODO - blank all q_values in DB?
 
         fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True)
-        # fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True)
 
         # Get all phospho abundances for this project for log2 mean
         statistics = Statistic.objects.filter(
@@ -546,7 +544,6 @@ class Command(BaseCommand):
         )
 
         fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages)
-        # fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages)
 
         anova_stats: dict = {}
 
@@ -1441,7 +1438,6 @@ class Command(BaseCommand):
         self._generate_protein_oscillation_metrics(project, replicates, sample_stages, with_bugs)
 
         fisher_g_stats = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = True)
-        # fisher_g_stats = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = True)
 
         ps_and_qs = {}
 
@@ -1483,7 +1479,6 @@ class Command(BaseCommand):
  
             num_proteins += 1
 
-            # mod_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
             phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
 
             q_value = 1
@@ -1520,7 +1515,6 @@ class Command(BaseCommand):
         self._generate_phospho_regression_metrics(project, replicates, sample_stages, with_bugs)
 
         time_course_fisher_dict = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
-        # time_course_fisher_dict = self._calculate_fisher_g_r_version(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
 
         regression_info = {}
 
@@ -1646,31 +1640,31 @@ class Command(BaseCommand):
         # firstLevelNormalisationProteomics
         # firstLevelNormalisationPhospho
         # TODO - remove all returned values, e.g. normalised_medians
-        normalised_medians = self._calculate_normalised_medians(
+        self._calculate_normalised_medians(
             protein, phospho
         )
 
         # calclog2PalboNormalisation
-        arrest_readings = self._calculate_arrest_log2_normalisation(
+        self._calculate_arrest_log2_normalisation(
             protein, phospho
         )
 
         # calclog2RelativeAbundance
-        log2_readings = self._calculate_relative_log2_normalisation(
+        self._calculate_relative_log2_normalisation(
             protein, phospho
         )
 
         # normaliseData
-        min_max_readings = self._calculate_zero_or_min_normalisation(
+        self._calculate_zero_or_min_normalisation(
             replicates, protein, phospho, False
         )
 
         # normaliseData
-        zero_max_readings = self._calculate_zero_or_min_normalisation(
+        self._calculate_zero_or_min_normalisation(
             replicates, protein, phospho, True
         )
 
-        imputed_readings = self._impute(
+        self._impute(
             replicates, protein, phospho, 
         )
 
@@ -1728,17 +1722,15 @@ class Command(BaseCommand):
             )
         )
 
-        imputed_averages = (
-            self._calculate_means(
-                ABUNDANCES_IMPUTED,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs,
-                imputed = True,
-            )
+        self._calculate_means(
+            ABUNDANCES_IMPUTED,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs,
+            imputed = True,
         )
 
-        log2_mean_metrics = self._calculate_metrics(
+        self._calculate_metrics(
             ABUNDANCES_NORMALISED_LOG2_MEAN,
             replicates,
             sample_stages,
@@ -1746,7 +1738,7 @@ class Command(BaseCommand):
             phospho,
         )
 
-        zero_max_mean_metrics = self._calculate_metrics(
+        self._calculate_metrics(
             ABUNDANCES_NORMALISED_ZERO_MAX,
             replicates,
             sample_stages,
@@ -1754,7 +1746,7 @@ class Command(BaseCommand):
             phospho,
         )
 
-        anova = self._calculate_ANOVA(
+        self._calculate_ANOVA(
             ABUNDANCES_NORMALISED_LOG2_MEAN,
             sample_stages,
             protein,
@@ -1941,8 +1933,9 @@ class Command(BaseCommand):
 
         return info_df.to_dict('index')
 
-    # TODO - lifted from ICR, rewrite
-    # TODO - does it really need to be a dataframe? Write tests and change if possible.
+
+
+    # TODO - delete
     def _p_adjust_bh(self, p):
         """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
         p = np.asarray(p, dtype=float)
@@ -2055,74 +2048,6 @@ class Command(BaseCommand):
 
 
 
-    def _calculate_fisher_g_r_version(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
-        logger.info("Calculate Fisher G Statistics (R Version)")
-
-        # R part for Fisher G-Statistic
-        import rpy2.robjects as ro
-        from rpy2.robjects.packages import importr
-        import rpy2.robjects.packages as rpackages
-        # R vector of strings
-        from rpy2.robjects.vectors import StrVector
-
-        # import R's utility package
-        utils = rpackages.importr('utils')
-        # select a mirror for R packages
-        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
-        utils.install_packages("pak")
-        ro.r('library(pak)')
-        ro.r('pak::pkg_install(c("Matrix@1.6-5", "MatrixModels"), ask = FALSE)')
-        packnames = ('perARMA', 'quantreg')
-        # Selectively install what needs to be install.
-        names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-        if len(names_to_install) > 0:
-            utils.install_packages(StrVector(names_to_install))
-
-        not_in_cran = ("ptest")
-        not_in_crac_names_to_install = [x for x in not_in_cran if not rpackages.isinstalled(x)]
-        if len(not_in_crac_names_to_install) > 0:
-            ro.r('install.packages("https://cran.r-project.org/src/contrib/Archive/ptest/ptest_1.0-8.tar.gz", repos = NULL, type = "source")')
-
-        time_course_fisher = self._create_abundance_dataframe(project, replicates, sample_stages, phospho, phospho_ab, phospho_reg)
-        time_course_fisher = time_course_fisher.dropna()
-
-        for index, row in time_course_fisher.iterrows():
-            row_z = row.tolist()
-            row_z = [str(i) for i in row_z]
-            ro.r('''
-                library(ptest)
-                z <- c(''' + ','.join(row_z) + ''')
-                # p_value <- ptestg(z,method="Fisher")$pvalue
-                # # freq <- ptestg(z,method="Fisher")$freq
-                # # g_stat <- ptestg(z,method="Fisher")$$obsStat
-                ptestg_res <- ptestg(z,method="Fisher")
-            '''
-            )
-            ptestg_res = ro.globalenv['ptestg_res']
-            g_stat = ptestg_res[0]
-            p_value = ptestg_res[1]
-            freq = ptestg_res[2]
-
-            time_course_fisher.loc[[index],['G_statistic']] = g_stat
-            time_course_fisher.loc[[index],['p_value']] = p_value
-            time_course_fisher.loc[[index],['frequency']] = freq
-
-        # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
-        q_value = self._p_adjust_bh(time_course_fisher['p_value'])
-
-        time_course_fisher[Q_VALUE] = q_value
-    
-        cols = time_course_fisher.columns
-        fisher_cols = [G_STATISTIC, P_VALUE, FREQUENCY, Q_VALUE]
-        ab_col = [x for x in cols if x not in fisher_cols]
-        time_course_fisher = time_course_fisher.drop(columns=ab_col)
-        time_course_fisher_dict = time_course_fisher.to_dict('index')
-
-        return time_course_fisher_dict
-
-
-
-
     def _calculate_fisher_g(self, project, replicates, sample_stages, phospho = False, phospho_ab = False, phospho_reg = False):
         logger.info("Calculate Fisher G Statistics")
 
@@ -2138,9 +2063,8 @@ class Command(BaseCommand):
             time_course_fisher.loc[index, P_VALUE] = result["pvalue"]
             time_course_fisher.loc[index, FREQUENCY] = result["freq"]
 
-        # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
-        # q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
-        q_value = self._p_adjust_bh(time_course_fisher['p_value'])
+        q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
+        # q_value = self._p_adjust_bh(time_course_fisher['p_value'])
 
         time_course_fisher[Q_VALUE] = q_value
     
@@ -2193,57 +2117,6 @@ class Command(BaseCommand):
 
         return uniprot_data.data["gene_name"]
 
-
-
-
-    # def _add_protein_annotations(self, run):
-    #     logger.info("Adding protein annotations")
-
-    #     run_results = self._fetch_run_results(run)
-
-    #     num_proteins = 0
-
-    #     for rr in run_results:
-    #         if not num_proteins % 1000:
-    #             print(f"Adding annotation {num_proteins} {rr.protein.accession_number}")
-
-    #         num_proteins += 1
-
-    #         pan = rr.protein.accession_number
-
-    #         if index_protein_names.get(pan) is None:
-    #             # TODO - fetch protein info remotely
-    #             # basic_localisation, localisation_keyword = getProteinLocalisation(pan)
-    #             continue
-
-    #         ipnan = index_protein_names[pan]
-
-    #         # Not all entries have a value for basic_localisation
-    #         basic_localisation = index_protein_names[pan].get("basic_localisation")
-    #         localisation_keyword = index_protein_names[pan].get("localisation_keyword")
-
-    #         protein_info = {}
-
-    #         protein_info["localisation_info"] = {
-    #             "basic_localisation": basic_localisation,
-    #             "localisation_keyword": localisation_keyword
-    #         }
-
-    #         if "halflife_mean" in ipnan:
-    #             for field in PROTEIN_INFO_FIELDS:
-    #                 protein_info[field] = ipnan[field]     
-
-    #         rr.combined_result[PROTEIN_INFO] = protein_info
-
-    #         rr.combined_result[GENE_NAME] = ipnan[GENE_NAME]
-    #         rr.combined_result[PROTEIN_NAME] = ipnan[PROTEIN_NAME]
-
-    #         # TODO - put in later
-    #         # else:
-    #         #     gene_name, protein_name = getProteinInfo(pan)
-
-    #         # TODO - consider adding bulk updating
-    #         rr.save()
 
     def _clear_and_fetch_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
         statistic_type = self._get_statistic_type(statistic_type_name)
