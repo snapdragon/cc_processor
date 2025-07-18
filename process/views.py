@@ -6,6 +6,8 @@ from process.models import (
     SampleStage,
     Abundance,
     Statistic,
+    Protein,
+    Phospho,
 )
 
 from process.constants import (
@@ -88,6 +90,9 @@ def scatterplot(request):
 
     project = Project.objects.get(name=PROJECT_SL)
 
+    protein_num = Protein.objects.filter(project=project).count()
+    phospho_num = Phospho.objects.filter(protein__project=project).count()
+
     oscillating_protein_num = len(project.protein_list)
     oscillating_phospho_num = len(project.phospho_protein_list)
 
@@ -106,8 +111,10 @@ def scatterplot(request):
 
     return render(request, "scatterplot.html", {
         "protein_data": protein_data,
+        "protein_num": protein_num,
         "oscillating_protein_num": oscillating_protein_num,
         "phospho_data": phospho_data,
+        "phospho_num": phospho_num,
         "oscillating_phospho_num": oscillating_phospho_num,
     })
 

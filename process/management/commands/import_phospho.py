@@ -68,8 +68,6 @@ class Command(BaseCommand):
             for cn in column_names:
                 cns_by_name[cn.name] = cn
 
-            # file_path = f"data/{project.phosphoproteome_file}"
-
             excel_file = pd.ExcelFile(file_path)
 
             # Sheet two is the phosphoproteome sheet, apparently
@@ -90,10 +88,12 @@ class Command(BaseCommand):
                 row_no += 1
 
                 if not proteins.get(accession_number):
-                    new_protein = Protein.objects.create(
-                        project=project, accession_number=accession_number, is_contaminant=False
-                    )
-                    proteins[accession_number] = new_protein
+                    # new_protein = Protein.objects.create(
+                    #     project=project, accession_number=accession_number, is_contaminant=False
+                    # )
+                    # proteins[accession_number] = new_protein
+                    print(f"{accession_number} not found in proteins, skipping")
+                    continue
 
                 protein, _ = Protein.objects.get_or_create(
                     project=project, accession_number=accession_number, is_contaminant=False

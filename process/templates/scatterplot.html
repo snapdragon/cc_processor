@@ -8,28 +8,38 @@
         .bar {
             fill: steelblue;
         }
+
+        text {
+          font-family: "Arial", sans-serif;
+          font-size: 18px;
+        }
     </style>
-</head>
+</style></head>
 <body>
   <svg width="500" height="500" id="proteins"></svg>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <svg width="500" height="500" id="phosphos"></svg>
 
   {{ protein_data|json_script:"protein-data" }}
   {{ phospho_data|json_script:"phospho-data" }}
+  {{ protein_num|json_script:"protein_num" }}
+  {{ phospho_num|json_script:"phospho-num" }}
   {{ oscillating_protein_num|json_script:"oscillating-protein_num" }}
   {{ oscillating_phospho_num|json_script:"oscillating-phospho-num" }}
 
   <script>
     protein_data = JSON.parse(document.getElementById('protein-data').textContent);
     phospho_data = JSON.parse(document.getElementById('phospho-data').textContent);
+    protein_num = JSON.parse(document.getElementById('protein_num').textContent);
+    phospho_num = JSON.parse(document.getElementById('phospho-num').textContent);
     oscillating_protein_num = JSON.parse(document.getElementById('oscillating-protein_num').textContent);
     oscillating_phospho_num = JSON.parse(document.getElementById('oscillating-phospho-num').textContent);
 
-    scatterplot("#proteins", protein_data, oscillating_protein_num)
-    scatterplot("#phosphos", phospho_data, oscillating_phospho_num)
+    scatterplot("#proteins", protein_data, protein_num, oscillating_protein_num)
+    scatterplot("#phosphos", phospho_data, phospho_num, oscillating_phospho_num)
 
-    function scatterplot(id, data, oscillating_num) {
-      const margin = { top: 20, right: 30, bottom: 50, left: 50 },
+    function scatterplot(id, data, num, oscillating_num) {
+      const margin = { top: 20, right: 10, bottom: 60, left: 70 },
             width = 500 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
 
@@ -101,20 +111,20 @@
         .attr("x", width - 120)
         .attr("y", height - 10)
         .attr("fill", "black")
-        .text(data.length + " total")
+        .text(num + " total")
         .style("font-size", "18px")
 
       // Axis labels
       svg.append("text")
         .attr("x", width / 2)
-        .attr("y", height + 40)
+        .attr("y", height + 45)
         .attr("text-anchor", "middle")
         .text("log₂ Curve Fold Change");
 
       svg.append("text")
         .attr("transform", "rotate(-90)")
         .attr("x", -height / 2)
-        .attr("y", -35)
+        .attr("y", -55)
         .attr("text-anchor", "middle")
         .text("-log₁₀ ANOVA q-value");
     }

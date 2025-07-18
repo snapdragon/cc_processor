@@ -1,8 +1,6 @@
 position_abundances imputed values are slightly too high.
     Due to empty values perhaps?
 
-most of the warnings are from _calculate_metrics SL
-
 
 
 Check all constraints
@@ -32,21 +30,17 @@ Add tests for
 Add _add_phospho_regression?
 
 
-Add a 'processable' field to projects, so that they can run certain flags?
-    Or an array of permitted flags?
 Study PCA to find out how to improve the graphs, if they can be improved
 Improve colour scheme for d3
 Add legends to d3 diagrams
 Have venn diagram intersect on gene names not protein names?
 SL has no phosphosite (so far). Don't populate it?
-Add non-selected genes to GO enrichment calls?
 Changing _generate_xs_ys to use whichever replicate has more values might
     improve the results
 If a cell has a value for phospho but not for protein, something is wrong
 Replace the linear imputation with a better version and with-bugs for the old
 Wrap all code that has the not i % 1000 in a function then wrap that in a decorator?
 Add admin app
-Find a way to assess how sparse the data sets are
 min-max and imputed values are calculated differently between protein and phospho in ICR
     Which way is the correct way?
 Add 'peptide_abundances' to phospho output?
