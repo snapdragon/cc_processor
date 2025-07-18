@@ -42,7 +42,9 @@ from process.constants import (
     SL_SAMPLE_STAGE_NAME_10,
 
     ICR_ABUNDANCE_REP_1,
-    ICR_ABUNDANCE_REP_2
+    ICR_ABUNDANCE_REP_2,
+
+    PROJECT_SL
 )
 
 
@@ -50,10 +52,11 @@ class Migration(migrations.Migration):
     def add_initial_data(apps, schema_editor):
         Project = apps.get_model("process", "Project")
         proj = Project.objects.create(
-            name="SL",
+            name=PROJECT_SL,
             proteome_file="Soliman/results-request-2023MK001-proteome.xlsx",
             phosphoproteome_file="Soliman/results-request-2023MK004-phosphoproteome.xlsx",
             proteome_file_accession_number_column_name="Protein.Group",
+            processable = True
         )
 
         Replicate = apps.get_model("process", "Replicate")
@@ -254,6 +257,7 @@ class Migration(migrations.Migration):
             proteome_file="ICR/CR07_TMT16plex_FullProt_Proteins.xlsx",
             phosphoproteome_file="ICR/20210610_CR07_IMAC_PeptideGroups.tdt",
             proteome_file_accession_number_column_name="Accession",
+            processable = True
         )
 
         replicate_ICR_1 = Replicate.objects.create(
@@ -382,6 +386,7 @@ class Migration(migrations.Migration):
             proteome_file="N/A",
             phosphoproteome_file="N/A",
             proteome_file_accession_number_column_name="N/A",
+            processable = False
         )
 
         replicate_original_1 = Replicate.objects.create(

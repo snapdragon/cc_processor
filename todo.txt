@@ -32,6 +32,9 @@ Add tests for
 Add _add_phospho_regression?
 
 
+Add a 'processable' field to projects, so that they can run certain flags?
+    Or an array of permitted flags?
+Study PCA to find out how to improve the graphs, if they can be improved
 Improve colour scheme for d3
 Add legends to d3 diagrams
 Have venn diagram intersect on gene names not protein names?

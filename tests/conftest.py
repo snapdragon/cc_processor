@@ -17,6 +17,10 @@ from process.models import (
     SampleStage,
 )
 
+from process.constants import (
+    PROJECT_SL
+)
+
 @pytest.fixture
 def load_json():
     def _load(file_name):
@@ -36,7 +40,7 @@ def load_pickle():
 
 @pytest.fixture
 def basic_project_setup():
-    project = Project.objects.get(name="SL")
+    project = Project.objects.get(name=PROJECT_SL)
     replicates = Replicate.objects.filter(project=project, mean=False)
     sample_stages = SampleStage.objects.filter(project=project)
 

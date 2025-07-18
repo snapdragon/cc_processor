@@ -17,6 +17,11 @@ from sklearn import linear_model
 from scipy import stats
 from scipy.signal import periodogram
 from scipy.special import comb
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import logging
+from sklearn.impute import SimpleImputer
 
 from process.models import (
     Project,
@@ -28,7 +33,6 @@ from process.models import (
     Statistic,
     Abundance,
     UniprotData,
-    GenomeOntologyData
 )
 
 from process.constants import (
@@ -187,9 +191,14 @@ class Command(BaseCommand):
         if with_bugs and project_name != "ICR":
             raise CommandError("Only an ICR project can run --with-bugs")
 
+        project = Project.objects.get(name=project_name)
+
+        if not project.processable:
+            if calculate_protein_medians or calculate_proteins or calculate_phospho_medians or calculate_phosphos or calculate_batch or calculate_all:
+                raise Exception(f"Project {project.name} is non-processable, only --fetch-references can be run against it.")
+
         logger.info(f"Processing for project {project_name}, with bugs {with_bugs}")
 
-        project = Project.objects.get(name=project_name)
         replicates = Replicate.objects.filter(project=project, mean=False)
         sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
@@ -294,14 +303,16 @@ class Command(BaseCommand):
             #   P04264 somehow
             # self._generate_kinase_predictions(run)
 
-        # if calculate_all or fetch_references:
+        if calculate_all or fetch_references:
         #     self._get_uniprot_data(project)
 
         #     self._generate_protein_list(project, True)
         #     self._generate_protein_list(project, False)
 
-        #     self._fetch_go_enrichment(project, True)
-        #     self._fetch_go_enrichment(project, False)
+            self._fetch_go_enrichment(project, True)
+            self._fetch_go_enrichment(project, False)
+
+            # self._generate_pcas(project)
 
 
     def _generate_protein_list(self, project, is_protein):
@@ -354,6 +365,11 @@ class Command(BaseCommand):
             logger.info(f"Project {project.name} has an empty protein list for GO enrichment")
             return
 
+        if is_protein:
+            logger.info(f"Fetching protein GO enrichment for project {project.name}")
+        else:
+            logger.info(f"Fetching phospho protein GO enrichment for project {project.name}")
+
         genes = []
 
         for accession_number in protein_list:
@@ -385,12 +401,75 @@ class Command(BaseCommand):
 
         data = response.json()
 
+        output = []
+
         for result in data.get("result", []):
             source = result.get("source")
             name = result.get("name")
             p_value = result.get("p_value")
             intersecting_genes = result.get("intersection", [])
-            print(f"{source} | {name} | p={p_value:.2e} | genes: {', '.join(intersecting_genes)}")
+
+            output.append({
+                "source": source,
+                "name": name,
+                "p_value": p_value,
+                "intersecting_genes": intersecting_genes,
+            })
+
+            # print(f"{source} | {name} | p={p_value:.2e} | genes: {', '.join(intersecting_genes)}")
+
+        if is_protein:
+            project.protein_go_list = output
+        else:
+            project.phospho_protein_go_list = output
+
+        project.save()
+
+
+
+
+    def _generate_pcas(self, project):
+        abundances = Abundance.objects.filter(
+            statistic__statistic_type__name = ABUNDANCES_NORMALISED_LOG2_MEAN,
+            statistic__protein__project__name = "Original",
+            replicate__name = "abundance_rep_2",
+            reading__isnull=False,
+        ).iterator(chunk_size=100)
+
+        abundance_table = {}
+
+        for abundance in abundances:
+            pan = abundance.statistic.protein.accession_number
+
+            if abundance.reading != abundance.reading:
+                reading = 0
+            else:
+                reading = abundance.reading
+
+            if abundance_table.get(pan) is None:
+                abundance_table[pan] = {}
+
+            abundance_table[pan][abundance.sample_stage.name] = reading
+
+        df = pd.DataFrame(abundance_table)
+
+        imputer = SimpleImputer(strategy='mean')
+        imputed_data = imputer.fit_transform(df)
+
+        # Standardize the data
+        scaled_data = StandardScaler().fit_transform(imputed_data)
+
+        # Perform PCA
+        pca = PCA(n_components=2)
+        pca_result = pca.fit_transform(scaled_data)
+
+        # Prepare data for D3
+        pca_df = pd.DataFrame(data=pca_result, columns=['PC1', 'PC2'])
+        pca_df['sample'] = df.index
+
+        pca_json = pca_df.to_json(orient='records')
+
+        print(pca_json)
 
 
 
@@ -561,6 +640,7 @@ class Command(BaseCommand):
 
                 # Not all proteins have protein results, some are phospho only
                 # TODO - is this necessary? Would phospho-only results have a record?
+                # TODO - can remove this by putting value__isnull=False in the query
                 if abundance.reading is None:
                     continue
 
@@ -586,9 +666,6 @@ class Command(BaseCommand):
             time_course_abundance_df = time_course_abundance_df[new_cols]
         except Exception as e:
             logger.error("DF FAILED")
-            logger.error(phospho)
-            logger.error(new_cols)
-            logger.error(time_course_abundance_df.columns)
             logger.error(time_course_abundance_df)
             logger.error(e)
             exit()
@@ -1810,60 +1887,18 @@ class Command(BaseCommand):
             rr.save()
 
     def _generate_protein_oscillation_metrics(self, project, replicates, sample_stages, with_bugs):
-        # run_results = self._fetch_run_results(run)
-
-        # proteins = Protein.objects.filter(project=project).iterator(chunk_size=100)
-
-        # # TODO - could maybe just loop through phosphos here:
-        # #   phosphos = Phospho.objects.filter(protein__project=project)
-        # #   as checks for values are done in calculate_protein_oscillation
-        # # for rr in run_results:
-        # for protein in proteins:
-        #     # prpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-        #     # Not all samples have both protein and phosphorylation abundances
-        #     stat_protein_raw = self._get_statistic(ABUNDANCES_RAW, protein=protein)
-
-        #     print(stat_protein_raw)
-
-        #     # TODO - probably inefficient
-        #     if not self._get_abundances(stat_protein_raw).count():
-        #         continue
-
-        #     # if not len(prpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
-        #     #     continue
-
-        #     phosphos = Phospho.objects.get(protein=protein)
-
         phosphos = Phospho.objects.filter(
             protein__project = project
         ).iterator(chunk_size=100)
 
-        # phosphos = Phospho.objects.filter(
-        #     protein__project = project
-        # )[:100]
-
         num_phosphos = 0
 
-            # for mod in prpa:
         for phospho in phosphos:
             if not num_phosphos % 1000:
                 logger.info(f"Processing oscillation {num_phosphos} {phospho.protein.accession_number} {phospho.mod}")
 
             num_phosphos += 1
         
-            # # Not all samples have both protein and phosphorylation abundances
-            # stat_phospho_raw = self._get_statistic(ABUNDANCES_RAW, phospho=phospho)
-            # print("+++++ SPR")
-            # print(stat_phospho_raw)
-
-            # # TODO - probably inefficient
-            # if not self._get_abundances(stat_phospho_raw).count():
-            #     continue
-
-            # prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES] = {}
-            # prpampoa = prpa[mod][PROTEIN_OSCILLATION_ABUNDANCES]
-
             for zero_or_log2, statistic_type_name in [
                 [ABUNDANCES_NORMALISED_ZERO_MAX, PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX], 
                 [ABUNDANCES_NORMALISED_LOG2_MEAN, PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN]
@@ -1871,19 +1906,9 @@ class Command(BaseCommand):
                 # TODO - should this be passing phosphosite, not mod?
                 #   In the original the two seem to be interchangeable to an extent.
 
-                # phospho_oscillations = self._calculat_protein_oscillation(
-                #     pr, norm_method, mod, replicates, sample_stages
-                # )
-
                 self._calculate_protein_oscillation(
                     phospho.protein, phospho, replicates, sample_stages, zero_or_log2, statistic_type_name
                 )
-
-                # prpampoa[norm_method] = phospho_oscillations
-
-                # prpampoa[norm_method][ABUNDANCE_AVERAGE] = self._calculate_means(
-                #     prpampoa[norm_method], imputed = False, with_bugs = with_bugs
-                # )
 
                 self._calculate_means(
                     statistic_type_name,
@@ -1900,14 +1925,6 @@ class Command(BaseCommand):
                     phospho
                 )
 
-                    # for norm_method in [ZERO_MAX, LOG2_MEAN]:
-                    #     prpampoa[norm_method][METRICS] = self._calculate_metrics(
-                    #         prpampoa[norm_method],
-                    #         prpampoa[norm_method][ABUNDANCE_AVERAGE],
-                    #         replicates,
-                    #         sample_stages
-                    #     )
-
                 self._calculate_ANOVA(
                     statistic_type_name,
                     sample_stages,
@@ -1915,20 +1932,12 @@ class Command(BaseCommand):
                     phospho
                 )
 
-                    # anovas = self._calculate_ANOVA(prpampoa[LOG2_MEAN], replicates, sample_stages)
 
-            #         prpampoa[LOG2_MEAN][METRICS][ANOVA] = anovas
-
-            # rr.save()
-
-
-    # TODO - test
     def _add_q_value(self, info):
         info_df = pd.DataFrame(info)
         info_df = info_df.T
 
         info_df[Q_VALUE] = stats.false_discovery_control(info_df[P_VALUE])
-        # info_df[Q_VALUE] = self._p_adjust_bh(info_df[P_VALUE])
 
         return info_df.to_dict('index')
 

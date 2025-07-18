@@ -11,7 +11,8 @@ from process.models import ColumnName, Project, Protein, Phospho, StatisticType,
 from static_mapping import time_points, data_files, data_files_datakeys, time_points_mapping
 
 from process.constants import (
-    ABUNDANCES_RAW
+    ABUNDANCES_RAW,
+    PROJECT_SL
 )
 
 logging.basicConfig(
@@ -63,7 +64,7 @@ class Command(BaseCommand):
 
         cns_by_name = {}
 
-        if project_name == "SL":
+        if project_name == PROJECT_SL:
             for cn in column_names:
                 cns_by_name[cn.name] = cn
 

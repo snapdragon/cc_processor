@@ -7,7 +7,8 @@ from django.core.management.base import BaseCommand
 from process.models import ColumnName, Project, Protein, Abundance, Phospho, StatisticType, Statistic
 
 from process.constants import (
-    ABUNDANCES_RAW
+    ABUNDANCES_RAW,
+    PROJECT_SL
 )
 
 logging.basicConfig(
@@ -106,7 +107,7 @@ class Command(BaseCommand):
                     statistic_type=stats_type_rp, protein=protein
                 )
 
-            if project_name == "SL":
+            if project_name == PROJECT_SL:
                 for col in df.columns:
                     col_short = re.search(r'IITI_\d{3}', col)
 

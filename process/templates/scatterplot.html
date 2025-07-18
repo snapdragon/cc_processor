@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+</head>
+<body>
+  <svg width="500" height="500" id="proteins"></svg>
+  <svg width="500" height="500" id="phosphos"></svg>
+
+  {{ protein_data|json_script:"protein-data" }}
+  {{ phospho_data|json_script:"phospho-data" }}
+  {{ oscillating_protein_num|json_script:"oscillating-protein_num" }}
+  {{ oscillating_phospho_num|json_script:"oscillating-phospho-num" }}
+
+  <script>
+    protein_data = JSON.parse(document.getElementById('protein-data').textContent);
+    phospho_data = JSON.parse(document.getElementById('phospho-data').textContent);
+    oscillating_protein_num = JSON.parse(document.getElementById('oscillating-protein_num').textContent);
+    oscillating_phospho_num = JSON.parse(document.getElementById('oscillating-phospho-num').textContent);
+
+    scatterplot("#proteins", protein_data, oscillating_protein_num)
+    scatterplot("#phosphos", phospho_data, oscillating_phospho_num)
+
+    function scatterplot(id, data, oscillating_num) {
+      const margin = { top: 20, right: 30, bottom: 50, left: 50 },
+            width = 500 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+      const svg = d3.select(id)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Add some labeled points (manually chosen to match plot)
+      // TODO - put back in
+      const labels = [
+        // { x: 1.8, y: 3.2, label: "CCND1" },
+        // { x: 2.5, y: 4.2, label: "CCNE2" },
+        // { x: 2.8, y: 4.5, label: "CCNB1" },
+        // { x: 3.0, y: 5.0, label: "CCNA2" },
+        // { x: 1.2, y: 1.8, label: "CCND3" }
+      ];
+
+      labels.forEach(l => data.push({ ...l, oscillating: l.x > 1 && l.y > 2 }));
+
+      const xScale = d3.scaleLinear().domain([0, 5]).range([0, width]);
+      const yScale = d3.scaleLinear().domain([0, 7]).range([height, 0]);
+
+      // Axes
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale));
+      svg.append("g").call(d3.axisLeft(yScale));
+
+      // Threshold lines
+      svg.append("line")
+        .attr("x1", xScale(.263)).attr("x2", xScale(.263))
+        .attr("y1", 0).attr("y2", height)
+        .attr("stroke", "gray").attr("stroke-width", 1);
+
+      svg.append("line")
+        .attr("x1", 0).attr("x2", width)
+        .attr("y1", yScale(2)).attr("y2", yScale(2))
+        .attr("stroke", "gray").attr("stroke-width", 1);
+
+      // Scatter points
+      svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 3)
+        .attr("fill", d => d.oscillating ? "steelblue" : "lightgray");
+
+      // Labels
+      svg.selectAll(".label")
+        .data(data.filter(d => d.label))
+        .enter()
+        .append("text")
+        .attr("x", d => xScale(d.x) + 5)
+        .attr("y", d => yScale(d.y))
+        .text(d => d.label)
+        .attr("class", "label");
+
+      // Annotation text
+      svg.append("text")
+        .attr("x", width - 120)
+        .attr("y", height - 30)
+        .attr("fill", "black")
+        .text(oscillating_num + " oscillating")
+        .style("font-size", "18px")
+
+      svg.append("text")
+        .attr("x", width - 120)
+        .attr("y", height - 10)
+        .attr("fill", "black")
+        .text(data.length + " total")
+        .style("font-size", "18px")
+
+      // Axis labels
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 40)
+        .attr("text-anchor", "middle")
+        .text("log₂ Curve Fold Change");
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -35)
+        .attr("text-anchor", "middle")
+        .text("-log₁₀ ANOVA q-value");
+    }
+  
+  </script>
+</body>
+</html>

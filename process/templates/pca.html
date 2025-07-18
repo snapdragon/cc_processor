@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="{% static 'js/venn.js' %}"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+</head>
+<body>
+    <svg width="440" height="440" id="SL_replicate_one"></svg>
+    <svg width="440" height="440" id="SL_replicate_two"></svg>
+    <svg width="440" height="440" id="SL_replicate_three"></svg>
+    <svg width="440" height="440" id="Original_replicate_one"></svg>
+    <svg width="440" height="440" id="Original_replicate_two"></svg>
+
+    {{ pca_data|json_script:"pca-data" }}
+
+    <script>
+      const width = 400, height = 400, margin = 20;
+  
+    //   const data = JSON.parse(document.getElementById('pca-data').textContent);
+    const SL_data_one = [{"PC1":15.7670325168,"PC2":-31.8954523888,"sample":"RO sample 15 min"},{"PC1":-49.6285320398,"PC2":-32.7247539001,"sample":"RO sample 30 min"},{"PC1":43.0760047589,"PC2":9.8762775648,"sample":"Palb sample 1h"},{"PC1":-52.416476458,"PC2":-51.7301182934,"sample":"RO sample 2h"},{"PC1":11.8894091215,"PC2":15.6321057945,"sample":"Palb sample, 2,5h"},{"PC1":21.1554515419,"PC2":2.8203855353,"sample":"Palb sample, 4h"},{"PC1":2.0425712615,"PC2":2.4397977451,"sample":"RO sample 5h"},{"PC1":24.1679958006,"PC2":5.3672069588,"sample":"Palb sample, 8h"},{"PC1":57.4802308424,"PC2":9.6182499827,"sample":"Palb sample, 10h"},{"PC1":-73.5336873459,"PC2":70.5963010012,"sample":"Nocodozole"}]
+    const SL_data_two = [{"PC1":37.4688082644,"PC2":9.3308881367,"sample":"RO sample 15 min"},{"PC1":51.2268326505,"PC2":8.1065226704,"sample":"RO sample 30 min"},{"PC1":13.5087499462,"PC2":-14.6736711445,"sample":"Palb sample 1h"},{"PC1":-116.2299299477,"PC2":-29.9512083242,"sample":"RO sample 2h"},{"PC1":12.7570517464,"PC2":-15.6595021485,"sample":"Palb sample, 2,5h"},{"PC1":8.8935616646,"PC2":-15.6654901044,"sample":"Palb sample, 4h"},{"PC1":5.157759703,"PC2":-5.2935016259,"sample":"RO sample 5h"},{"PC1":3.921264193,"PC2":-7.2867933997,"sample":"Palb sample, 8h"},{"PC1":22.0107632358,"PC2":-14.8303011249,"sample":"Palb sample, 10h"},{"PC1":-38.7148614562,"PC2":85.9230570649,"sample":"Nocodozole"}]
+    const SL_data_three = [{"PC1":36.3329552968,"PC2":51.3078688305,"sample":"RO sample 15 min"},{"PC1":23.2369699762,"PC2":41.8296880791,"sample":"RO sample 30 min"},{"PC1":47.4102987792,"PC2":-14.6670860498,"sample":"Palb sample 1h"},{"PC1":-26.8110508602,"PC2":21.6406238188,"sample":"RO sample 2h"},{"PC1":-56.1245505722,"PC2":-34.9404221241,"sample":"Palb sample, 2,5h"},{"PC1":27.9551108303,"PC2":-19.6731147589,"sample":"Palb sample, 4h"},{"PC1":-15.7894124863,"PC2":6.5210372346,"sample":"RO sample 5h"},{"PC1":31.1812143512,"PC2":-30.5668250079,"sample":"Palb sample, 8h"},{"PC1":25.0662947835,"PC2":-33.1756934209,"sample":"Palb sample, 10h"},{"PC1":-92.4578300986,"PC2":11.7239233986,"sample":"Nocodozole"}]
+
+    const Original_data_one = [{"PC1":-31.2634572573,"PC2":-16.4237189016,"sample":"Palbo"},{"PC1":107.0796488617,"PC2":-21.1300647588,"sample":"Late G1_1"},{"PC1":-127.2262600388,"PC2":-6.9879497832,"sample":"G1\/S"},{"PC1":26.8949427551,"PC2":-0.95828398,"sample":"S"},{"PC1":-81.6110571895,"PC2":6.4903365701,"sample":"S\/G2"},{"PC1":-39.376317007,"PC2":11.5507132987,"sample":"G2_2"},{"PC1":-16.1820165513,"PC2":14.445225376,"sample":"G2\/M_1"},{"PC1":161.6845164272,"PC2":13.0137421788,"sample":"M\/Early G1"}]
+    const Original_data_two = [{"PC1":-64.6539037721,"PC2":30.9194167374,"sample":"Palbo"},{"PC1":-86.4357682286,"PC2":20.0287200368,"sample":"Late G1_1"},{"PC1":-36.2428059609,"PC2":4.5612671167,"sample":"G1\/S"},{"PC1":-6.9599977425,"PC2":-87.4877782298,"sample":"S"},{"PC1":22.3273489571,"PC2":-27.2086621322,"sample":"S\/G2"},{"PC1":38.0701867517,"PC2":8.9734540968,"sample":"G2_2"},{"PC1":60.6383256823,"PC2":9.9810396353,"sample":"G2\/M_1"},{"PC1":73.2566143129,"PC2":40.232542739,"sample":"M\/Early G1"}]
+
+    pca("#SL_replicate_one", SL_data_one)
+    pca("#SL_replicate_two", SL_data_two)
+    pca("#SL_replicate_three", SL_data_three)
+
+    pca("#Original_replicate_one", Original_data_one)
+    pca("#Original_replicate_two", Original_data_two)
+
+    function pca(id, data) {
+        const svg = d3.select(id);
+  
+        // Define scales
+        const x = d3.scaleLinear()
+          .domain(d3.extent(data, d => d.PC1)).nice()
+          .range([margin, width - margin]);
+  
+        const y = d3.scaleLinear()
+          .domain(d3.extent(data, d => d.PC2)).nice()
+          .range([height - margin, margin]);
+  
+        // Axes
+        svg.append("g")
+          .attr("transform", `translate(0, ${height - margin})`)
+          .call(d3.axisBottom(x));
+  
+        svg.append("g")
+          .attr("transform", `translate(${margin}, 0)`)
+          .call(d3.axisLeft(y));
+  
+        // Points
+        svg.selectAll("circle")
+          .data(data)
+          .enter().append("circle")
+            .attr("cx", d => x(d.PC1))
+            .attr("cy", d => y(d.PC2))
+            .attr("r", 5)
+            .attr("fill", "steelblue");
+  
+        // Labels (optional)
+        svg.selectAll("text.label")
+          .data(data)
+          .enter().append("text")
+            .attr("x", d => x(d.PC1) + 6)
+            .attr("y", d => y(d.PC2))
+            .text(d => d.sample)
+            .attr("class", "label");
+    }
+
+    </script>
+
+</body>
+</html>

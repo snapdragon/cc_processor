@@ -139,8 +139,6 @@ class Command(BaseCommand):
         self._compare_metrics(ABUNDANCES_NORMALISED_LOG2_MEAN, protein_original, protein_process, None, None, True, True)
         self._compare_metrics(ABUNDANCES_NORMALISED_ZERO_MAX, protein_original, protein_process, None, None, False, False)
 
-        return
-
         # Compare phosphos
         phosphos_original = Phospho.objects.filter(
             protein = protein_original
@@ -242,7 +240,7 @@ class Command(BaseCommand):
 
             if metrics_original[field] != metrics_process[field]:
                 if protein_original:
-                    print(f"Nom-matching original protein metrics string {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
+                    print(f"Non-matching original protein metrics string {statistic_type_name} for {protein_original.accession_number} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
                 else:
                     print(f"Non-matching original phospho metrics string {statistic_type_name} for {phospho_original.protein.accession_number} mode {phospho_original.mod} for {field} reading {metrics_original[field]} vs {metrics_process[field]}")
             # else:

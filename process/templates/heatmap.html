@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+</head>
+<body>
+<svg id="heatmap" width="1000" height="400"></svg>
+
+{{ accession_numbers_data|json_script:"accession-numbers-data" }}
+{{ samples_data|json_script:"samples-data" }}
+{{ readings_data|json_script:"readings-data" }}
+
+<script>
+    const genes = JSON.parse(document.getElementById('accession-numbers-data').textContent);
+    const samples = JSON.parse(document.getElementById('samples-data').textContent);
+    const expressionMatrix = JSON.parse(document.getElementById('readings-data').textContent);
+
+    const cellSize = 80;
+    const margin = { top: 50, right: 50, bottom: 50, left: 100 };
+
+    const svg = d3.select("#heatmap")
+        .attr("width", margin.left + samples.length * cellSize + margin.right)
+        .attr("height", margin.top + genes.length * cellSize + margin.bottom);
+
+    const colorScale = d3.scaleSequential()
+        .domain([0, d3.max(expressionMatrix.flat())])
+        .interpolator(d3.interpolateViridis);
+
+    // Draw cells
+    genes.forEach((gene, rowIndex) => {
+        samples.forEach((sample, colIndex) => {
+            svg.append("rect")
+                .attr("x", margin.left + colIndex * cellSize)
+                .attr("y", margin.top + rowIndex * cellSize)
+                .attr("width", cellSize)
+                .attr("height", cellSize)
+                .attr("class", "cell")
+                .attr("fill", colorScale(expressionMatrix[rowIndex][colIndex]));
+        });
+    });
+
+    // Row labels (genes)
+    svg.selectAll(".row-label")
+        .data(genes)
+        .enter()
+        .append("text")
+        .attr("x", margin.left - 10)
+        .attr("y", (d, i) => margin.top + i * cellSize + cellSize / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .text(d => d);
+
+    // Column labels (samples)
+    svg.selectAll(".col-label")
+        .data(samples)
+        .enter()
+        .append("text")
+        .attr("x", (d, i) => margin.left + i * cellSize + cellSize / 2)
+        .attr("y", margin.top - 10)
+        .attr("text-anchor", "middle")
+        .text(d => d);
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+</head>
+<body>
+
+    <svg id="chart" width="900" height="500"></svg>
+
+    <script>
+    const data = [
+      { group: "Reactome", name: "Cell cycle checkpoints", value: 40 },
+      { group: "Reactome", name: "Cell cycle, mitotic", value: 50 },
+      { group: "Reactome", name: "Cell cycle", value: 55 },
+      { group: "BP", name: "Mitotic cell cycle", value: 70 },
+      { group: "BP", name: "Cell cycle", value: 65 },
+      { group: "BP", name: "Cell cycle process", value: 75 },
+      { group: "MF", name: "Catalytic activity, acting on DNA", value: 20 },
+      { group: "MF", name: "Chromatin binding", value: 15 },
+      { group: "MF", name: "DNA binding", value: 10 },
+      { group: "CC", name: "Chromosomal region", value: 30 },
+      { group: "CC", name: "Chromosome, centromeric region", value: 25 },
+      { group: "CC", name: "Chromosome", value: 40 }
+    ];
+    
+    const svg = d3.select("#chart"),
+          margin = { top: 20, right: 120, bottom: 30, left: 250 },
+          width = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom;
+    
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    
+    const y = d3.scaleBand()
+      .domain(data.map(d => d.name))
+      .rangeRound([0, height])
+      .padding(0.2);
+    
+    const x = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.value)])
+      .range([0, width]);
+    
+    const color = d3.scaleOrdinal()
+      .domain(["Reactome", "BP", "MF", "CC"])
+      .range(["#888", "#999", "#aaa", "#bbb"]);
+    
+    // Bars
+    g.append("g")
+      .selectAll("rect")
+      .data(data)
+      .join("rect")
+        .attr("y", d => y(d.name))
+        .attr("height", y.bandwidth())
+        .attr("x", 0)
+        .attr("width", d => x(d.value))
+        .attr("fill", d => color(d.group));
+    
+    // Left Y-axis labels
+    g.append("g")
+      .call(d3.axisLeft(y).tickSize(0))
+      .selectAll("text")
+        .style("text-anchor", "end");
+    
+    // X-axis
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x).ticks(5))
+      .append("text")
+        .attr("x", width)
+        .attr("y", -10)
+        .attr("fill", "#000")
+        .attr("text-anchor", "end")
+        .text("-log10 (p-value)");
+    
+    // Group labels on the right
+    const groupPositions = [];
+    let lastGroup = null;
+    
+    data.forEach((d, i) => {
+      if (d.group !== lastGroup) {
+        groupPositions.push({ group: d.group, index: i });
+        lastGroup = d.group;
+      }
+    });
+    
+    // Add group labels
+    svg.append("g")
+      .selectAll("text")
+      .data(groupPositions)
+      .enter()
+      .append("text")
+        .attr("x", margin.left + width + 10)
+        .attr("y", d => margin.top + y(data[d.index].name) + y.bandwidth() / 2)
+        .attr("class", "group-label")
+        .text(d => d.group);
+    
+    // Add horizontal dividers between groups
+    svg.append("g")
+      .selectAll("line")
+      .data(groupPositions.slice(1))  // skip the first group (no divider above it)
+      .enter()
+      .append("line")
+        .attr("x1", margin.left - 10)
+        .attr("x2", margin.left + width + 100)
+        .attr("y1", d => margin.top + y(data[d.index].name) - y.paddingInner() * y.step() / 2)
+        .attr("y2", d => margin.top + y(data[d.index].name) - y.paddingInner() * y.step() / 2)
+        .attr("class", "divider-line");
+    </script>
+
+</body>
+</html>

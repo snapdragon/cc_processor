@@ -3,12 +3,19 @@ from django.db.models import Q, UniqueConstraint
 
 class Project(models.Model):
     name = models.CharField(max_length=255, unique=True)
+
     with_bugs = models.BooleanField(default=False)
+    # Whether the project has abundance data that can be processed.
+    #   Currently only applies to ICR and SL.
+    processable = models.BooleanField(default=False)
     proteome_file = models.CharField(max_length=255)
     phosphoproteome_file = models.CharField(max_length=255)
     proteome_file_accession_number_column_name = models.CharField(max_length=255)
     protein_list = models.JSONField(null=True, blank=True)
     phospho_protein_list = models.JSONField(null=True, blank=True)
+    # GO is lowercase as postgres automatically folds unquoted identifiers to lowercase
+    protein_go_list =  models.JSONField(null=True, blank=True)
+    phospho_protein_go_list =  models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"Project {self.name}"
@@ -181,15 +188,3 @@ class UniprotData(models.Model):
 
     def __str__(self):
         return f"Uniprot data for  {self.accession_number}"
-
-class GenomeOntologyData(models.Model):
-    accession_number = models.CharField(max_length=255)
-    data = models.JSONField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['accession_number'], name='unique_genome_ontology_data_accession_number')
-        ]
-
-    def __str__(self):
-        return f"Genome ontology data for {self.accession_number}"
