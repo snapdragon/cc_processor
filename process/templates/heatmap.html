@@ -8,64 +8,84 @@
         .bar {
             fill: steelblue;
         }
+        text {
+          font-family: "Arial", sans-serif;
+          font-size: 18px;
+        }
     </style>
 </head>
 <body>
-<svg id="heatmap" width="1000" height="400"></svg>
+<svg id="protein_heatmap" width="1000" height="400"></svg>
+<svg id="phospho_heatmap" width="1000" height="400"></svg>
 
-{{ accession_numbers_data|json_script:"accession-numbers-data" }}
+{{ protein_genes|json_script:"protein-genes" }}
+{{ protein_readings_data|json_script:"protein-readings-data" }}
+{{ phospho_phosphosites|json_script:"phospho-phosphosites" }}
+{{ phospho_readings_data|json_script:"phospho-readings-data" }}
 {{ samples_data|json_script:"samples-data" }}
-{{ readings_data|json_script:"readings-data" }}
 
 <script>
-    const genes = JSON.parse(document.getElementById('accession-numbers-data').textContent);
+    const protein_genes = JSON.parse(document.getElementById('protein-genes').textContent);
+    const protein_expressionMatrix = JSON.parse(document.getElementById('protein-readings-data').textContent);
+    const phospho_phosphosites = JSON.parse(document.getElementById('phospho-phosphosites').textContent);
+    const phospho_expressionMatrix = JSON.parse(document.getElementById('phospho-readings-data').textContent);
     const samples = JSON.parse(document.getElementById('samples-data').textContent);
-    const expressionMatrix = JSON.parse(document.getElementById('readings-data').textContent);
 
-    const cellSize = 80;
-    const margin = { top: 50, right: 50, bottom: 50, left: 100 };
+    heatmap("#protein_heatmap", protein_genes, protein_expressionMatrix, samples, 7000000)
+    heatmap("#phospho_heatmap", phospho_phosphosites, phospho_expressionMatrix, samples, 27000000)
 
-    const svg = d3.select("#heatmap")
-        .attr("width", margin.left + samples.length * cellSize + margin.right)
-        .attr("height", margin.top + genes.length * cellSize + margin.bottom);
+    function heatmap(id, genes, expressionMatrix, samples, colourRange) {
+        const cellSize = 60;
+        const margin = { top: 120, right: 50, bottom: 50, left: 100 };
 
-    const colorScale = d3.scaleSequential()
-        .domain([0, d3.max(expressionMatrix.flat())])
-        .interpolator(d3.interpolateViridis);
+        const svg = d3.select(id)
+            .attr("width", margin.left + samples.length * cellSize + margin.right)
+            .attr("height", margin.top + genes.length * cellSize + margin.bottom);
 
-    // Draw cells
-    genes.forEach((gene, rowIndex) => {
-        samples.forEach((sample, colIndex) => {
-            svg.append("rect")
-                .attr("x", margin.left + colIndex * cellSize)
-                .attr("y", margin.top + rowIndex * cellSize)
-                .attr("width", cellSize)
-                .attr("height", cellSize)
-                .attr("class", "cell")
-                .attr("fill", colorScale(expressionMatrix[rowIndex][colIndex]));
+        const colorScale = d3.scaleLinear()
+            .domain([0, colourRange])
+            .range(["white", "darkblue"]);
+
+        genes.forEach((gene, rowIndex) => {
+            samples.forEach((sample, colIndex) => {
+                const value = expressionMatrix[rowIndex][colIndex];
+
+                svg.append("rect")
+                    .attr("x", margin.left + colIndex * cellSize)
+                    .attr("y", margin.top + rowIndex * cellSize)
+                    .attr("width", cellSize)
+                    .attr("height", cellSize)
+                    .attr("class", "cell")
+                    .attr("fill", value == null || isNaN(value) ? "white" : colorScale(value));
+            });
         });
-    });
 
-    // Row labels (genes)
-    svg.selectAll(".row-label")
-        .data(genes)
-        .enter()
-        .append("text")
-        .attr("x", margin.left - 10)
-        .attr("y", (d, i) => margin.top + i * cellSize + cellSize / 2)
-        .attr("dy", "0.35em")
-        .attr("text-anchor", "end")
-        .text(d => d);
+        // Row labels (genes)
+        svg.selectAll(".row-label")
+            .data(genes)
+            .enter()
+            .append("text")
+            .attr("x", margin.left - 10)
+            .attr("y", (d, i) => margin.top + i * cellSize + cellSize / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "end")
+            .text(d => d);
 
-    // Column labels (samples)
-    svg.selectAll(".col-label")
-        .data(samples)
-        .enter()
-        .append("text")
-        .attr("x", (d, i) => margin.left + i * cellSize + cellSize / 2)
-        .attr("y", margin.top - 10)
-        .attr("text-anchor", "middle")
-        .text(d => d);
+            svg.selectAll(".col-label")
+    .data(samples)
+    .enter()
+    .append("text")
+    .attr("x", (d, i) => margin.left + i * cellSize + cellSize / 2)
+    .attr("y", margin.top - 10)
+    .attr("text-anchor", "start") // or "end", depending on desired alignment
+    .attr("transform", (d, i) => {
+        const x = margin.left + i * cellSize + cellSize / 2;
+        const y = margin.top - 10;
+        return `rotate(-90, ${x}, ${y})`; // rotate around the label's position
+    })
+    .text(d => d);
+    }
+
 </script>
 
 

@@ -30,6 +30,8 @@ Add tests for
 Add _add_phospho_regression?
 
 
+Lookup phosphosite in import_phospho for SL?
+The phosphosites chosen for CDK1 (the only ones available) may not be relevant to the cell cycle
 Study PCA to find out how to improve the graphs, if they can be improved
 Improve colour scheme for d3
 Add legends to d3 diagrams

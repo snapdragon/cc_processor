@@ -45,15 +45,17 @@ def venn(request):
 
 
 def heatmap(request):
-    accession_numbers = ['Q8TF01', 'Q8TF05', 'Q8TF42', 'Q8TF68', 'Q8TF72']
+    # CDK1, CDK2, CDK6, CCND1
+    protein_genes = ['CDK1', 'CDK2', 'CDK6', 'CCND1']
+    protein_accession_numbers = ['P06493', 'P24941', 'Q00534', 'P24385']
 
     sample_stages = SampleStage.objects.filter(project__name=PROJECT_SL).order_by('rank')
 
     samples = [s.name.removeprefix("RO sample ").replace("sample, ", "") for s in sample_stages]
 
-    readings = []
+    protein_readings = []
 
-    for accession_number in accession_numbers:
+    for accession_number in protein_accession_numbers:
         abundances = Abundance.objects.filter(
             statistic__statistic_type__name = ABUNDANCES_RAW,
             statistic__protein__accession_number = accession_number,
@@ -65,12 +67,34 @@ def heatmap(request):
 
         row = [a.reading for a in abundances]
 
-        readings.append(row)
+        protein_readings.append(row)
+
+
+    phospho_phosphosites = ['pT4', 'pT5', 'pY6']
+    phospho_peptides = ['ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2', 'IGEGTY(UniMod:21)GVVYK2', 'P24385']
+
+    phospho_readings = []
+
+    for peptide in phospho_peptides:
+        abundances = Abundance.objects.filter(
+            statistic__statistic_type__name = ABUNDANCES_RAW,
+            statistic__phospho__mod = peptide,
+            statistic__phospho__protein__project__name = PROJECT_SL,
+            replicate__mean = True
+        ).order_by(
+            'sample_stage__rank'
+        )
+
+        row = [a.reading for a in abundances]
+
+        phospho_readings.append(row)
 
     return render(request, "heatmap.html", {
-        "accession_numbers_data": accession_numbers,
+        "protein_genes": protein_genes,
+        "protein_readings_data": protein_readings,
+        "phospho_phosphosites": phospho_phosphosites,
+        "phospho_readings_data": phospho_readings,
         "samples_data": samples,
-        "readings_data": readings,
     })
 
 
