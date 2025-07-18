@@ -17,10 +17,44 @@
 <body>
 
 <a href="venn">Venn diagrams</a><p>
-<a href="heatmap">Heatmaps</a><p>
-<a href="pca">PCA diagrams</a><p>
-<a href="barchart">Bar Charts</a><p>
-<a href="scatterplot">Scatterplot</a>
+
+Heatmaps
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'heatmap' project.pk %}">{{ project.name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
+
+PCA
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'pca' project.pk %}">{{ project.name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
+
+Barcharts
+
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'barchart' project.pk %}">{{ project.name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
+
+Scatterplot
+
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'scatterplot' project.pk %}">{{ project.name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
 
 </body>
 </html>

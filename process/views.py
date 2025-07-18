@@ -20,7 +20,29 @@ from process.constants import (
 )
 
 def index(request):
-    return render(request, "index.html", {})
+    projects = Project.objects.all()
+
+    projects_data = []
+
+    for project in projects:
+        name = project.name
+
+        if name == "Original":
+            name = "ICR from original json output"
+        elif name == "ICR":
+            if project.with_bugs:
+                name = "ICR (with bugs)"
+            else:
+                name = "ICR (without bugs)"
+
+        projects_data.append({
+            "id": project.id,
+            "name": name,
+        })
+
+    return render(request, "index.html", {
+        "projects": projects
+    })
 
 
 def venn(request):
@@ -44,28 +66,37 @@ def venn(request):
 
 
 
-def heatmap(request):
+def heatmap(request, id):
+    project = Project.objects.get(id=id)
+
     # CDK1, CDK2, CDK6, CCND1
     protein_genes = ['CDK1', 'CDK2', 'CDK6', 'CCND1']
     protein_accession_numbers = ['P06493', 'P24941', 'Q00534', 'P24385']
 
-    sample_stages = SampleStage.objects.filter(project__name=PROJECT_SL).order_by('rank')
+    sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
     samples = [s.name.removeprefix("RO sample ").replace("sample, ", "") for s in sample_stages]
 
     protein_readings = []
+    protein_reading_max = 0
 
     for accession_number in protein_accession_numbers:
         abundances = Abundance.objects.filter(
             statistic__statistic_type__name = ABUNDANCES_RAW,
             statistic__protein__accession_number = accession_number,
-            statistic__protein__project__name = PROJECT_SL,
+            statistic__protein__project = project,
             replicate__mean = True
         ).order_by(
             'sample_stage__rank'
         )
 
-        row = [a.reading for a in abundances]
+        row = []
+
+        for a in abundances:
+            row.append(a.reading)
+
+            if a.reading > protein_reading_max:
+                protein_reading_max = a.reading                
 
         protein_readings.append(row)
 
@@ -73,27 +104,40 @@ def heatmap(request):
     phospho_phosphosites = ['pY6', 'pT4', 'pT5']
     phospho_peptides = ['IGEGTY(UniMod:21)GVVYK2', 'ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2']
 
-    phospho_readings = []
+    phosphos = Phospho.objects.filter(
+        protein__accession_number = "P06493",
+        protein__project = project
+    )
 
-    for peptide in phospho_peptides:
+    phospho_readings = []
+    phospho_reading_max = 0
+
+    for phospho in phosphos:
         abundances = Abundance.objects.filter(
             statistic__statistic_type__name = ABUNDANCES_RAW,
-            statistic__phospho__mod = peptide,
-            statistic__phospho__protein__project__name = PROJECT_SL,
+            statistic__phospho = phospho,
             replicate__mean = True
         ).order_by(
             'sample_stage__rank'
         )
 
-        row = [a.reading for a in abundances]
+        row = []
+
+        for a in abundances:
+            row.append(a.reading)
+
+            if a.reading > phospho_reading_max:
+                phospho_reading_max = a.reading                
 
         phospho_readings.append(row)
 
     return render(request, "heatmap.html", {
         "protein_genes": protein_genes,
         "protein_readings_data": protein_readings,
-        "phospho_phosphosites": phospho_phosphosites,
+        "protein_reading_max": protein_reading_max,
+        "phospho_phosphosites": [p.mod for p in phosphos],
         "phospho_readings_data": phospho_readings,
+        "phospho_reading_max": phospho_reading_max,
         "samples_data": samples,
     })
 
@@ -104,8 +148,8 @@ def pca(request):
     return render(request, "pca.html", {})
 
 
-def barchart(request):
-    project = Project.objects.get(name=PROJECT_SL)
+def barchart(request, id):
+    project = Project.objects.get(id = id)
 
     protein_go = project.protein_go_list
     phospho_go = project.phospho_protein_go_list
@@ -131,25 +175,26 @@ def process_bar_data(go_list):
         'GO:MF': 'MF',
     }
 
-    for go in go_list:
-        source = go['source']
-        p_value = go['p_value']
+    if go_list:
+        for go in go_list:
+            source = go['source']
+            p_value = go['p_value']
 
-        if len(top[groups[source]]) < 3:
-            top[groups[source]].append({
-                "group": groups[source],
-                "name": go["name"],
-                "value": -log10(p_value)
-            })
+            if len(top[groups[source]]) < 3:
+                top[groups[source]].append({
+                    "group": groups[source],
+                    "name": go["name"],
+                    "value": -log10(p_value)
+                })
 
     return [item for sublist in top.values() for item in sublist]
 
 
-def scatterplot(request):
+def scatterplot(request, id):
+    project = Project.objects.get(id=id)
+
     protein_data = []
     phospho_data = []
-
-    project = Project.objects.get(name=PROJECT_SL)
 
     protein_num = Protein.objects.filter(project=project).count()
     phospho_num = Phospho.objects.filter(protein__project=project).count()

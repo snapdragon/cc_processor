@@ -5,9 +5,9 @@ from process import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('venn/', views.venn, name='venn'),
-    path('heatmap/', views.heatmap, name='heatmap'),
-    path('pca/', views.pca, name='pca'),
-    path('barchart/', views.barchart, name='barchart'),
-    path('scatterplot/', views.scatterplot, name='scatterplot'),
+    path('heatmap/<int:id>/', views.heatmap, name='heatmap'),
+    path('pca/<int:id>/', views.pca, name='pca'),
+    path('barchart/<int:id>/', views.barchart, name='barchart'),
+    path('scatterplot/<int:id>/', views.scatterplot, name='scatterplot'),
     path("admin/", admin.site.urls),
 ]
