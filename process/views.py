@@ -118,7 +118,7 @@ def heatmap(request, id):
         "protein_genes": protein_genes,
         "protein_readings_data": protein_readings,
         "protein_reading_max": protein_reading_max,
-        "phospho_phosphosites": [p.mod for p in phosphos],
+        "phospho_phosphosites": [p.phosphosite for p in phosphos],
         "phospho_readings_data": phospho_readings,
         "phospho_reading_max": phospho_reading_max,
         "samples_data": samples,

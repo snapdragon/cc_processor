@@ -93,7 +93,7 @@ class Phospho(models.Model):
 
     mod = models.CharField(max_length=255)
 
-    phosphosite = models.CharField(max_length=255)
+    phosphosite = models.CharField(max_length=255, null=True)
 
     pep_tools_annotations = models.JSONField(null=True, blank=True)
     kinase_prediction = models.JSONField(null=True, blank=True)

@@ -41,6 +41,7 @@ docker exec -it postgres-db /bin/bash
 psql -U myuser -d mydatabase
 \dt
 # DROP TABLE 'process_' for all tables starting 'process', e.g.
+drop table process_peptidestartposition;
 drop table process_uniprotdata;
 drop table process_abundance;
 drop table process_statistic;
@@ -166,7 +167,13 @@ python manage.py runserver 0.0.0.0:8000
 # Then go to 0.0.0.0:8000/admin in your browser
 ```
 
-### Dump the uniprot data table to save retrieving again
+### Dump tables to save retrieving again
 ```sh
+# From inside postgres_db container
 pg_dump -d main -t process_uniprotdata > uniprot_data.sql
+pg_dump -d main -t process_peptidestartposition > peptidestartposition.sql
+
+# From outside container
+docker cp f09f37276ef6:/process_uniprotdata.sql db_backups/process_uniprotdata.sql
+docker cp f09f37276ef6:/process_peptidestartposition.sql db_backups/process_peptidestartposition.sql
 ```

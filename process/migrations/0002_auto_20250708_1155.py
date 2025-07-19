@@ -53,6 +53,7 @@ class Migration(migrations.Migration):
         Project = apps.get_model("process", "Project")
         proj = Project.objects.create(
             name=PROJECT_SL,
+            full_name="Soliman Labs",
             proteome_file="Soliman/results-request-2023MK001-proteome.xlsx",
             phosphoproteome_file="Soliman/results-request-2023MK004-phosphoproteome.xlsx",
             proteome_file_accession_number_column_name="Protein.Group",
@@ -254,6 +255,7 @@ class Migration(migrations.Migration):
         # Config for Institute of Cancer Research project
         project_ICR = Project.objects.create(
             name="ICR",
+            full_name="C. Rega et al. 2025 (bugs fixed)",
             proteome_file="ICR/CR07_TMT16plex_FullProt_Proteins.xlsx",
             phosphoproteome_file="ICR/20210610_CR07_IMAC_PeptideGroups.tdt",
             proteome_file_accession_number_column_name="Accession",
@@ -383,6 +385,7 @@ class Migration(migrations.Migration):
         # Config for importing ICR results
         project_original = Project.objects.create(
             name="Original",
+            full_name="C. Rega et al. 2025 (original)",
             proteome_file="N/A",
             phosphoproteome_file="N/A",
             proteome_file_accession_number_column_name="N/A",

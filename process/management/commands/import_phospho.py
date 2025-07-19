@@ -101,12 +101,13 @@ class Command(BaseCommand):
 
                     mods = extract_protein_site(modified_peptide, accession_number, start_position)
 
-                    mod = mods[0]['mod']
+                    phosphosite = ','.join(m['mod'] for m in mods)
                 except Exception as e:
                     print(e)
-                    print(f"No mod available for {accession_number} {peptide}")
+                    print(f"No phosphosite available for {accession_number} {peptide}")
+                    phosphosite = None
 
-                    mod = row['Precursor.Id']
+                mod = row['Precursor.Id']
 
                 if not proteins.get(accession_number):
                     new_protein = Protein.objects.create(
@@ -120,9 +121,8 @@ class Command(BaseCommand):
                     project=project, accession_number=accession_number, is_contaminant=False
                 )
 
-                # TODO - what should phosphosite be here?
                 phospho = Phospho.objects.create(
-                    protein = protein, mod = mod, phosphosite = mod
+                    protein = protein, mod = mod, phosphosite = phosphosite
                 )
 
                 statistic = Statistic.objects.create(
@@ -142,8 +142,6 @@ class Command(BaseCommand):
                             Abundance.objects.create(
                                 statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                             )
-
-                            exit()
 
             return
         

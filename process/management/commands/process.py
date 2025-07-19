@@ -388,7 +388,7 @@ class Command(BaseCommand):
             except Exception:
                 # Some proteins just don't have a gene in uniprot, skip
                 print(f"Can't find uniprot for {accession_number}")
-                pass
+                continue
 
         if not len(genes):
             logger.info(f"Project {project.name} can't find any genes for GO enrichment")
@@ -397,7 +397,7 @@ class Command(BaseCommand):
         payload = {
             "organism": "hsapiens",
             "query": genes,
-            "sources": ["GO:BP", "GO:MF", "GO:CC"],
+            "sources": ["GO:BP", "GO:MF", "GO:CC", "Reactome"],
         }
 
         try:
@@ -1644,7 +1644,6 @@ class Command(BaseCommand):
 
         # firstLevelNormalisationProteomics
         # firstLevelNormalisationPhospho
-        # TODO - remove all returned values, e.g. normalised_medians
         self._calculate_normalised_medians(
             protein, phospho
         )
