@@ -6,7 +6,7 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 import utilities_basicReader
 
-from process.models import ColumnName, Project, Protein, Phospho, StatisticType, Abundance, Statistic
+from process.models import ColumnName, Project, Protein, Phospho, StatisticType, Abundance, Statistic, PeptideStartPosition
 
 from static_mapping import time_points, data_files, data_files_datakeys, time_points_mapping
 
@@ -87,19 +87,38 @@ class Command(BaseCommand):
 
                 row_no += 1
 
+                peptide = row['Stripped.Sequence']
+
+                try:
+                    psp = PeptideStartPosition.objects.get(
+                        accession_number = accession_number,
+                        peptide = peptide
+                    )
+
+                    start_position = psp.start_position
+
+                    modified_peptide = row['Modified.Sequence']
+
+                    mods = extract_protein_site(modified_peptide, accession_number, start_position)
+
+                    mod = mods[0]['mod']
+                except Exception as e:
+                    print(e)
+                    print(f"No mod available for {accession_number} {peptide}")
+
+                    mod = row['Precursor.Id']
+
                 if not proteins.get(accession_number):
-                    # new_protein = Protein.objects.create(
-                    #     project=project, accession_number=accession_number, is_contaminant=False
-                    # )
-                    # proteins[accession_number] = new_protein
-                    print(f"{accession_number} not found in proteins, skipping")
-                    continue
+                    new_protein = Protein.objects.create(
+                        project=project, accession_number=accession_number, is_contaminant=False
+                    )
+                    proteins[accession_number] = new_protein
+                    # print(f"{accession_number} not found in proteins, skipping")
+                    # continue
 
                 protein, _ = Protein.objects.get_or_create(
                     project=project, accession_number=accession_number, is_contaminant=False
                 )
-
-                mod = row['Precursor.Id']
 
                 # TODO - what should phosphosite be here?
                 phospho = Phospho.objects.create(
@@ -124,6 +143,7 @@ class Command(BaseCommand):
                                 statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
                             )
 
+                            exit()
 
             return
         
@@ -568,3 +588,59 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
             logger.info(e)
 
     return phospho_rep
+
+
+
+
+
+
+
+
+
+
+import re
+
+def extract_protein_site(peptide, protein_accession, peptide_start):
+    """
+    Extracts modification info from a single peptide string, given the start position in the protein.
+
+    Args:
+        peptide (str): Peptide sequence with modifications (e.g., "AAAS(UniMod:21)PEPTIDE")
+        protein_accession (str): Protein accession string (e.g., "P12345")
+        peptide_start (int): 1-based start position of the peptide in the protein
+
+    Returns:
+        List[dict]: Modification info including mod_key, residue, peptide_position, protein_position, and site_string
+    """
+    mods = []
+    seq_clean = ''
+    idx = 0  # 1-based clean peptide index
+    i = 0
+
+    while i < len(peptide):
+        if peptide[i].isalpha():
+            seq_clean += peptide[i]
+            idx += 1
+            i += 1
+        elif peptide[i] == '(':
+            match = re.match(r'\(([^\)]+)\)', peptide[i:])
+            if match:
+                mod_key = match.group(1)
+                aa = seq_clean[-1]  # last added residue
+                pep_pos = idx       # 1-based peptide position
+                prot_pos = peptide_start + pep_pos - 1  # 1-based protein position
+                mods.append({
+                    "mod_key": mod_key,
+                    "residue": aa,
+                    "peptide_position": pep_pos,
+                    "protein_position": prot_pos,
+                    "site_string": f"{protein_accession}|{aa}{prot_pos}",
+                    "mod": f"{aa}{prot_pos}"
+                })
+                i += len(match.group(0))  # skip over (UniMod:xx)
+            else:
+                i += 1
+        else:
+            i += 1
+
+    return mods

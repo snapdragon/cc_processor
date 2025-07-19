@@ -3,21 +3,29 @@
 <html>
 <head>
     <title>D3.js with Django</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
     <style>
-        .bar {
-            fill: steelblue;
-        }
-        text {
-          font-family: "Arial", sans-serif;
-          font-size: 18px;
-        }
+      .legend {
+        margin-left: 20px;
+      }
     </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </style></head>
 <body>
-  <svg width="500" height="500" id="proteins"></svg>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <svg width="500" height="500" id="phosphos"></svg>
+  <div class="vertical-flex">
+    <div>
+      <svg width="500" height="500" id="proteins"></svg>
+    </div>
+    <div class="legend">
+      Proteomics results with q values &le; 0.05 and curve fold change &ge; 1.2 for {{ project.full_name }}
+    </div>
+    <div>
+      <svg width="500" height="500" id="phosphos"></svg>
+    </div>
+    <div class="legend">
+      Phosphoproteomics results with q values &le; 0.01 and curve fold change &ge; 1.2 for {{ project.full_name }}
+    </div>
+  </div>
 
   {{ protein_data|json_script:"protein-data" }}
   {{ phospho_data|json_script:"phospho-data" }}

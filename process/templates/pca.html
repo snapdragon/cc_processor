@@ -3,13 +3,9 @@
 <html>
 <head>
     <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="{% static 'js/venn.js' %}"></script>
-    <style>
-        .bar {
-            fill: steelblue;
-        }
-    </style>
 </head>
 <body>
     <svg width="440" height="440" id="SL_replicate_one"></svg>

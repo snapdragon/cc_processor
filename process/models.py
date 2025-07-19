@@ -3,6 +3,7 @@ from django.db.models import Q, UniqueConstraint
 
 class Project(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    full_name = models.CharField(max_length=255, null=True)
 
     with_bugs = models.BooleanField(default=False)
     # Whether the project has abundance data that can be processed.
@@ -179,7 +180,8 @@ class Abundance(models.Model):
 
 class UniprotData(models.Model):
     accession_number = models.CharField(max_length=255)
-    data = models.JSONField(null=True, blank=True)
+    gene_name = models.CharField(max_length=255)
+    protein_name = models.CharField(max_length=255)
 
     class Meta:
         constraints = [
@@ -188,3 +190,19 @@ class UniprotData(models.Model):
 
     def __str__(self):
         return f"Uniprot data for  {self.accession_number}"
+
+class PeptideStartPosition(models.Model):
+    accession_number = models.CharField(max_length=255)
+    peptide = models.CharField(max_length=255)
+    start_position = models.IntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['accession_number', 'peptide'],
+                name='unique_accession_peptide'
+            )
+        ]
+
+    def __str__(self):
+        return f"Peptide start data for {self.accession_number} {self.start_position}"

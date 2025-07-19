@@ -22,24 +22,6 @@ from process.constants import (
 def index(request):
     projects = Project.objects.all()
 
-    projects_data = []
-
-    for project in projects:
-        name = project.name
-
-        if name == "Original":
-            name = "ICR from original json output"
-        elif name == "ICR":
-            if project.with_bugs:
-                name = "ICR (with bugs)"
-            else:
-                name = "ICR (without bugs)"
-
-        projects_data.append({
-            "id": project.id,
-            "name": name,
-        })
-
     return render(request, "index.html", {
         "projects": projects
     })
@@ -101,8 +83,8 @@ def heatmap(request, id):
         protein_readings.append(row)
 
 
-    phospho_phosphosites = ['pY6', 'pT4', 'pT5']
-    phospho_peptides = ['IGEGTY(UniMod:21)GVVYK2', 'ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2']
+    # phospho_phosphosites = ['pY6', 'pT4', 'pT5']
+    # phospho_peptides = ['IGEGTY(UniMod:21)GVVYK2', 'ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2']
 
     phosphos = Phospho.objects.filter(
         protein__accession_number = "P06493",
@@ -132,6 +114,7 @@ def heatmap(request, id):
         phospho_readings.append(row)
 
     return render(request, "heatmap.html", {
+        "project": project,
         "protein_genes": protein_genes,
         "protein_readings_data": protein_readings,
         "protein_reading_max": protein_reading_max,
@@ -160,6 +143,7 @@ def barchart(request, id):
     return render(request, "barchart.html", {
         "protein_data": protein_bar_data,
         "phospho_data": phospho_bar_data,
+        "project": project,
     })
 
 def process_bar_data(go_list):
@@ -196,8 +180,15 @@ def scatterplot(request, id):
     protein_data = []
     phospho_data = []
 
-    protein_num = Protein.objects.filter(project=project).count()
-    phospho_num = Phospho.objects.filter(protein__project=project).count()
+    protein_num = Abundance.objects.filter(
+        statistic__statistic_type__name = ABUNDANCES_RAW,
+        statistic__protein__project = project
+    ).values('statistic__protein').distinct().count()
+
+    phospho_num = Abundance.objects.filter(
+        statistic__statistic_type__name = ABUNDANCES_RAW,
+        statistic__phospho__protein__project = project
+    ).values('statistic__phospho').distinct().count()
 
     oscillating_protein_num = len(project.protein_list)
     oscillating_phospho_num = len(project.phospho_protein_list)
@@ -216,6 +207,7 @@ def scatterplot(request, id):
     phospho_data = process_scatterplot_statistics(phospho_statistics)
 
     return render(request, "scatterplot.html", {
+        "project": project,
         "protein_data": protein_data,
         "protein_num": protein_num,
         "oscillating_protein_num": oscillating_protein_num,

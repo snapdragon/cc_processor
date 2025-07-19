@@ -41,6 +41,7 @@ docker exec -it postgres-db /bin/bash
 psql -U myuser -d mydatabase
 \dt
 # DROP TABLE 'process_' for all tables starting 'process', e.g.
+drop table process_uniprotdata;
 drop table process_abundance;
 drop table process_statistic;
 drop table process_statistictype;

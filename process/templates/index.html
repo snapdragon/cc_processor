@@ -3,25 +3,17 @@
 <html>
 <head>
     <title>List of charts</title>
-    <style>
-        .bar {
-            fill: steelblue;
-        }
-
-        text {
-          font-family: "Arial", sans-serif;
-          font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
 </head>
 <body>
 
-<a href="venn">Venn diagrams</a><p>
+<a href="venn">Venn diagrams of relevant findings per project</a><p>
 
-Heatmaps
+Heatmaps of abundances for relevant proteins and peptides
+
 <ul>
     {% for project in projects %}
-        <li><a href="{% url 'heatmap' project.pk %}">{{ project.name }}</a></li>
+        <li><a href="{% url 'heatmap' project.pk %}">{{ project.full_name }}</a></li>
     {% empty %}
         <li>No projects available.</li>
     {% endfor %}
@@ -30,27 +22,27 @@ Heatmaps
 PCA
 <ul>
     {% for project in projects %}
-        <li><a href="{% url 'pca' project.pk %}">{{ project.name }}</a></li>
+        <li><a href="{% url 'pca' project.pk %}">{{ project.full_name }}</a></li>
     {% empty %}
         <li>No projects available.</li>
     {% endfor %}
 </ul>
 
-Barcharts
+Barcharts of most relevant GO enrichment terms per category
 
 <ul>
     {% for project in projects %}
-        <li><a href="{% url 'barchart' project.pk %}">{{ project.name }}</a></li>
+        <li><a href="{% url 'barchart' project.pk %}">{{ project.full_name }}</a></li>
     {% empty %}
         <li>No projects available.</li>
     {% endfor %}
 </ul>
 
-Scatterplot
+Scatterplots by q value and curve fold change
 
 <ul>
     {% for project in projects %}
-        <li><a href="{% url 'scatterplot' project.pk %}">{{ project.name }}</a></li>
+        <li><a href="{% url 'scatterplot' project.pk %}">{{ project.full_name }}</a></li>
     {% empty %}
         <li>No projects available.</li>
     {% endfor %}

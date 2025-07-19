@@ -3,23 +3,24 @@
 <html>
 <head>
     <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        .divider-line {
-          stroke: #ccc;
-          stroke-width: 1;
-          shape-rendering: crispEdges;
-        }
-        text {
-          font-family: "Arial", sans-serif;
-          font-size: 18px;
-        }
-    </style>
 </head>
 <body>
-
-    <svg id="protein-chart" width="900" height="500"></svg>
-    <svg id="phospho-chart" width="900" height="500"></svg>
+  <div class="vertical-flex">
+    <div>
+      <svg id="protein-chart" width="900" height="500"></svg>
+    </div>
+    <div class="legend">
+      GO enrichment terms with lowest p value for oscillating proteins for {{ project.full_name }}
+    </div>
+    <div>
+      <svg id="phospho-chart" width="1000" height="500"></svg>
+    </div>
+    <div class="legend">
+      GO enrichment terms with lowest p value for oscillating phosphorylation sites for {{ project.full_name }}
+    </div>
+  </div>
 
     {{ protein_data|json_script:"protein-data" }}
     {{ phospho_data|json_script:"phospho-data" }}
@@ -32,10 +33,8 @@
     barchart("#phospho-chart", phospho_data)
 
     function barchart(id, data) {
-      console.log(data)
-    
       const svg = d3.select(id),
-            margin = { top: 20, right: 120, bottom: 30, left: 250 },
+            margin = { top: 20, right: 120, bottom: 30, left: 400 },
             width = +svg.attr("width") - margin.left - margin.right,
             height = +svg.attr("height") - margin.top - margin.bottom;
     

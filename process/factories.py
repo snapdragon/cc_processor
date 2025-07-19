@@ -20,6 +20,7 @@ class ProjectFactory(DjangoModelFactory):
     proteome_file = factory.Faker("word")
     phosphoproteome_file = factory.Faker("word")
     proteome_file_accession_number_column_name = factory.Faker("word")
+    processable = False
 
 
 class ReplicateFactory(DjangoModelFactory):

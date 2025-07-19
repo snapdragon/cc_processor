@@ -22,23 +22,6 @@ from process.constants import (
 )
 
 @pytest.fixture
-def load_json():
-    def _load(file_name):
-        file_path = Path(__file__).parent / "fixtures" / file_name
-        with open(file_path) as f:
-            return json.load(f)
-    return _load
-
-@pytest.fixture
-def load_pickle():
-    def _load(file_name):
-        file_path = Path(__file__).parent / "fixtures" / file_name
-
-        return pd.read_pickle(file_path)
-
-    return _load
-
-@pytest.fixture
 def basic_project_setup():
     project = Project.objects.get(name=PROJECT_SL)
     replicates = Replicate.objects.filter(project=project, mean=False)

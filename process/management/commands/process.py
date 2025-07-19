@@ -5,6 +5,7 @@ import math
 import statistics
 import requests
 from scipy import stats
+from time import sleep
 
 import numpy as np
 import pandas as pd
@@ -303,10 +304,10 @@ class Command(BaseCommand):
             # self._generate_kinase_predictions(run)
 
         if calculate_all or fetch_references:
-        #     self._get_uniprot_data(project)
+            self._get_uniprot_data(project)
 
-        #     self._generate_protein_list(project, True)
-        #     self._generate_protein_list(project, False)
+            self._generate_protein_list(project, True)
+            self._generate_protein_list(project, False)
 
             self._fetch_go_enrichment(project, True)
             self._fetch_go_enrichment(project, False)
@@ -334,10 +335,18 @@ class Command(BaseCommand):
 
         for statistic in statistics:
             # Apparently q_values are rounded down, so no 'round' here
-            if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] > max_q:
+            if (
+                statistic.metrics is None or
+                statistic.metrics.get(ANOVA) is None or 
+                statistic.metrics[ANOVA].get(Q_VALUE) is None or
+                statistic.metrics[ANOVA][Q_VALUE] > max_q
+            ):
                 continue
 
-            if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 1.2:
+            if (
+                statistic.metrics.get(CURVE_FOLD_CHANGE) is None or
+                self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 1.2
+            ):
                 continue
 
             if is_protein:
@@ -414,8 +423,6 @@ class Command(BaseCommand):
                 "p_value": p_value,
                 "intersecting_genes": intersecting_genes,
             })
-
-            # print(f"{source} | {name} | p={p_value:.2e} | genes: {', '.join(intersecting_genes)}")
 
         if is_protein:
             project.protein_go_list = output
@@ -595,12 +602,6 @@ class Command(BaseCommand):
                 statistic__statistic_type__name = statistic_type_name,
                 statistic__phospho__protein__project = project,
             ).iterator(chunk_size=100)
-
-            # abundances = Abundance.objects.filter(
-            #     statistic__statistic_type__name = statistic_type_name,
-            #     statistic__phospho__protein__project = project,
-            # )[:10000]
-
 
             num_abundances = 0
 
@@ -1155,10 +1156,6 @@ class Command(BaseCommand):
 
         return Abundance.objects.filter(statistic=statistic)
 
-    # TODO - not used for much?
-    def _get_abundance(self, statistic, replicate, sample_stage):
-        return Abundance.objects.get(statistic=statistic, replicate=replicate, sample_stage=sample_stage)
-
     def _calculate_normalised_medians(self, protein = None, phospho = None):
         _, stat_normalised_medians = self._clear_and_fetch_stats(
             ABUNDANCES_NORMALISED_MEDIAN,
@@ -1178,10 +1175,18 @@ class Command(BaseCommand):
 
             # TODO - is this if statement needed?
             if reading is not None:
-                median = self._get_abundance(
-                    stat_medians, 
-                    prr.replicate,
-                    prr.sample_stage
+                # Abundance.objects.get(statistic=statistic, replicate=replicate, sample_stage=sample_stage)
+
+                # median = self._get_abundance(
+                #     stat_medians, 
+                #     prr.replicate,
+                #     prr.sample_stage
+                # )
+
+                median = Abundance.objects.get(
+                    statistic=stat_medians,
+                    replicate=prr.replicate,
+                    sample_stage=prr.sample_stage
                 )
 
                 normalised_reading = reading / median.reading
@@ -1668,58 +1673,46 @@ class Command(BaseCommand):
             replicates, protein, phospho, 
         )
 
-        raw_averages = (
-            self._calculate_means(
-                ABUNDANCES_RAW,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs
-            )
+        self._calculate_means(
+            ABUNDANCES_RAW,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs
         )
 
-        normalised_averages = (
-            self._calculate_means(
-                ABUNDANCES_NORMALISED_MEDIAN,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs
-            )
+        self._calculate_means(
+            ABUNDANCES_NORMALISED_MEDIAN,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs
         )
 
-        min_max_averages = (
-            self._calculate_means(
-                ABUNDANCES_NORMALISED_MIN_MAX,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs
-            )
+        self._calculate_means(
+            ABUNDANCES_NORMALISED_MIN_MAX,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs
         )
 
-        zero_max_averages = (
-            self._calculate_means(
-                ABUNDANCES_NORMALISED_ZERO_MAX,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs
-            )
+        self._calculate_means(
+            ABUNDANCES_NORMALISED_ZERO_MAX,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs
         )
 
-        log2_averages = (
-            self._calculate_means(
-                ABUNDANCES_NORMALISED_LOG2_MEAN,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs
-            )
+        self._calculate_means(
+            ABUNDANCES_NORMALISED_LOG2_MEAN,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs
         )
 
-        arrest_averages = (
-            self._calculate_means(
-                ABUNDANCES_NORMALISED_LOG2_ARREST,
-                protein = protein,
-                phospho = phospho,
-                with_bugs = with_bugs
-            )
+        self._calculate_means(
+            ABUNDANCES_NORMALISED_LOG2_ARREST,
+            protein = protein,
+            phospho = phospho,
+            with_bugs = with_bugs
         )
 
         self._calculate_means(
@@ -1934,19 +1927,6 @@ class Command(BaseCommand):
         return info_df.to_dict('index')
 
 
-
-    # TODO - delete
-    def _p_adjust_bh(self, p):
-        """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
-        p = np.asarray(p, dtype=float)
-        by_descend = p.argsort()[::-1]
-        by_orig = by_descend.argsort()
-        steps = float(len(p)) / np.arange(len(p), 0, -1)
-        q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
-
-        return q[by_orig]
-
-
     # getConsensusKinasePred
     def _generate_kinase_predictions(self, run):
         logger.info("Generating kinase predictions")
@@ -2064,7 +2044,6 @@ class Command(BaseCommand):
             time_course_fisher.loc[index, FREQUENCY] = result["freq"]
 
         q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
-        # q_value = self._p_adjust_bh(time_course_fisher['p_value'])
 
         time_course_fisher[Q_VALUE] = q_value
     
@@ -2087,6 +2066,8 @@ class Command(BaseCommand):
             try:
                 UniprotData.objects.get(accession_number=protein.accession_number)
             except Exception:
+                logger.info(f"Fetching uniprot for {protein.accession_number}")
+
                 url = f"https://rest.uniprot.org/uniprotkb/{protein.accession_number}.json"
     
                 response = requests.get(url)
@@ -2102,20 +2083,18 @@ class Command(BaseCommand):
 
                     UniprotData.objects.create(
                         accession_number = protein.accession_number,
-                        data = {
-                            "gene_name": gene_name,
-                            "protein_name": protein_name
-                        }
-                )
+                        gene_name= gene_name,
+                        protein_name = protein_name,
+                    )
                 else:
                     logger.error(f"Failed to retrieve data from UniProt for {protein.accession_number}. Status code: {response.status_code}")
 
-
+                sleep(0.1)
 
     def _get_gene_name(self, accession_number):
         uniprot_data = UniprotData.objects.get(accession_number = accession_number)
 
-        return uniprot_data.data["gene_name"]
+        return uniprot_data.gene_name
 
 
     def _clear_and_fetch_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
@@ -2140,8 +2119,8 @@ class Command(BaseCommand):
         # Only get the necessary fields to save on memory usage
         return RunResult.objects.only("run", "protein", "combined_result").filter(run=run).iterator(chunk_size=100)
 
-    def _round(self, value):
-        return round(value, 4)
+    def _round(self, value, places = 4):
+        return round(value, places)
 
     def _get_site_key(self, statistic: Statistic):
         return f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
@@ -2203,4 +2182,3 @@ def ptestg(z):
         "freq": freqs,
         "class": "Htest"
     }
-
