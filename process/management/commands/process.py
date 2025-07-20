@@ -296,13 +296,6 @@ class Command(BaseCommand):
 
             self._add_oscillations(project, replicates, sample_stages, with_bugs)
 
-        #     self._add_phospho_regression(project, replicates, sample_stages, with_bugs)
-
-            # TODO - figure out how, or if at all, to get this working for SL
-            #   Actually it no longer works for ICR either, related to
-            #   P04264 somehow
-            # self._generate_kinase_predictions(run)
-
         if calculate_all or fetch_references:
             pass
             # self._get_uniprot_data(project)
@@ -584,7 +577,6 @@ class Command(BaseCommand):
 
     # TODO - this can probably be refactored. All it does is get the readings in one
     #   form and then change them to another. Might as well go straight to the other.
-    # createAbundanceDf
     def _create_abundance_dataframe(self, project, replicates, sample_stages, phospho, phospho_ab, phospho_reg):
         abundance_table = {}
 
@@ -1045,8 +1037,6 @@ class Command(BaseCommand):
                     reading=reading_normalised
                 )
 
-
-    # calclog2RelativeAbundance
     def _calculate_relative_log2_normalisation(self, protein = None, phospho = None):
         _, stat_normalised_log2_mean = self._clear_and_fetch_stats(
             ABUNDANCES_NORMALISED_LOG2_MEAN,
@@ -1085,8 +1075,6 @@ class Command(BaseCommand):
                 sample_stage=abundance.sample_stage,
                 reading=normalised_abundance
             )
-
-
 
     def _calculate_arrest_log2_normalisation(self, protein = None, phospho = None):
         ARRESTING_AGENT = "Nocodozole"
@@ -1199,8 +1187,6 @@ class Command(BaseCommand):
                     reading=normalised_reading
                 )
 
-
-    # calculateAverageRepAbundance
     def _calculate_means(
         self,
         statistic_type_name: str,
@@ -1282,161 +1268,7 @@ class Command(BaseCommand):
         return x, y, stage_names_map
 
 
-    
-    # TODO - lifted from ICR, change
-    def _get_consensus_kinase_pred(self, uniprot_accession, phosphosite):
-        """
-        Predicts the kinase most likely to phosphorylate a phosphorylation site 
-        based on the consensus approach.
-        """
-        phospho_kinases_class = {}
-        peptide_seq = self._get_peptide_aligned(uniprot_accession, phosphosite)
 
-        motifs = [
-            {"motif": "plk", "pattern": ".{3}[DNE].[ST][FGAVLIMW][GAVLIPFMW].{3}"},
-            {"motif": "cdk", "pattern": ".{3}..[ST]P.[RK]."},
-            {"motif": "aurora", "pattern": ".{3}R.[ST][GAVLIFMW].{4}"},
-            {"motif": "stp_consensus", "pattern": ".{5}[ST]P.{4}"},
-            {"motif": "stq_consensus", "pattern": ".{5}[ST]Q.{4}"},
-            {"motif": "krxst_consensus", "pattern": ".{3}[KR].[ST].{5}"},
-            {"motif": "krxxst_consensus", "pattern": ".{2}[KR].{2}[ST].{5}"},
-        ]
-
-        total_not_matched = 0
-        matches = 0
-        motif_matches = []
-        for m in motifs:
-            motif = m["motif"]
-            pattern = m["pattern"]
-            res = re.match(pattern, peptide_seq)
-            if res:
-                matches+=1
-                motif_matches.append(motif)
-            # TODO - rename to accession_number?
-            phospho_kinases_class = {"accession":uniprot_accession,"site":phosphosite, "peptide_seq": peptide_seq, "kinase_motif_match": motif_matches}
-        if matches == 0:
-            total_not_matched+=1
-            phospho_kinases_class = {"accession":uniprot_accession, "site":phosphosite, "peptide_seq": peptide_seq, "kinase_motif_match": ["-"]}
-
-        return phospho_kinases_class
-
-    # TODO - lifted from ICR
-    # getPeptideAligned
-    def _get_peptide_aligned(self, uniprot_accession, phosphosite):
-        """
-        Checks if the phosphosite is centered in the peptide sequence and it aligns it if not.
-        """
-        aa = phosphosite[0]
-        position = int(phosphosite[1::]) -1
-        site =  str(position+1)
-
-        # TODO - this was put in as without it the line
-        #       if not len(peptide_seq):
-        #   failed due to lack of access to the variable. This bug is in the
-        #   original, how did it ever work? Was it never called?
-        #   Why did it suddenly start erroring? It happened just after I
-        #   first removed some of the R code from _calculate_fisher_g.
-        #   It's something to do with P04264, one of the duplicated proteins
-        #   for ICR. It's the reason I made it like get_or_create in import_protein
-        #   on duplicate, not just continue.
-        # peptide_seq = []
-
-        if PHOSPHO in index_protein_names[uniprot_accession]:
-            if site in index_protein_names[uniprot_accession][PHOSPHO]:
-                if PEPTIDE_SEQ in index_protein_names[uniprot_accession][PHOSPHO][site]:
-                    peptide_seq = index_protein_names[uniprot_accession][PHOSPHO][site][PEPTIDE_SEQ]
-                else:
-                    peptide_seq = self._get_peptide_sequence(uniprot_accession, phosphosite)
-
-        phospho_alignment = ""
-
-        #Discard invalid inputs
-        if not len(peptide_seq):
-            peptide_seq = index_protein_names[uniprot_accession][PHOSPHO][site][PEPTIDE]
-            phospho_alignment = peptide_seq[5:16]
-
-        # Middle of the protein sequence
-        elif len(peptide_seq) == 11:
-            if aa == peptide_seq[5]:
-                phospho_alignment = peptide_seq
-            else:
-                # Site not in the middle of seq
-                peptide_seq_new = index_protein_names[uniprot_accession][PHOSPHO][site][PEPTIDE]
-                phospho_alignment = peptide_seq_new[5:16]
-                if  uniprot_accession == "P62861" and phosphosite == 'S5':
-                    phospho_alignment = "-KVHGSLARAG"
-
-        # Missing Positions
-        elif len(peptide_seq) < 11:
-            # beginning of the protein sequence
-            if position < 5:
-                increase = 5 - position
-                peptide_seq = ("-" * increase) + peptide_seq
-                phospho_alignment = peptide_seq
-            else:
-                # end of the protein sequence
-                increase = 11 - len(peptide_seq)
-                peptide_seq = peptide_seq + ("-" * increase)
-                if aa != peptide_seq[5]:
-                    peptide_seq = peptide_seq[:5] + aa + peptide_seq[5 + 1:]
-                phospho_alignment = peptide_seq
-
-        return phospho_alignment
-
-    # TODO - lifted from ICR
-    def _get_peptide_sequence(self, uniprot_accession, phosphosite):
-        """
-        Creates a peptide sequence which is a substring of the original protein sequence.
-        +5/-5
-        amino acids from the phosphorylation site.
-        """
-        sequence = self._get_protein_seq(uniprot_accession)
-
-        # Start counting from 1
-        position = int(phosphosite[1::]) -1
-        sequence_len = len(sequence)
-    
-        start = 0
-        end = sequence_len-1
-
-        # start of protein sequence
-        if position < 5:
-            start = 0
-            end = position + 6
-        # middle of protein sequence
-        elif sequence_len > position + 6:
-            start = position - 5
-            end = position + 6
-        # end of protein sequence
-        elif  sequence_len < position + 6 or sequence_len == position + 6:
-            start = position - 5
-            end = sequence_len
-
-        peptide_sequence = sequence[start:end]
-
-        return peptide_sequence
-
-    # TODO - lifted from ICR
-    def _get_protein_sequence(self, uniprot_accession):
-        """
-        Fetches the protein sequence for the given UniProt accession by querying UniProt directly.
-        """
-        url = f"https://rest.uniprot.org/uniprotkb/{uniprot_accession}.fasta"
-    
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                lines = response.text.splitlines()
-                sequence = ''.join(lines[1:]) 
-                return sequence
-            else:
-                return f"Error: Unable to fetch data for accession {uniprot_accession}. HTTP Status: {response.status_code}"
-        except requests.RequestException as e:
-            return f"Error: Unable to connect to UniProt. {str(e)}"
-
-
-
-    # addProteinOscillations
     def _add_oscillations(self, project, replicates, sample_stages, with_bugs):
         # TODO - check all logging statements for similarity to ICR
         logger.info("Adding Protein Oscillation Normalised Abundances")
@@ -1460,8 +1292,7 @@ class Command(BaseCommand):
  
             num_proteins += 1
 
-            # TODO - generate with a site_key function?
-            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
+            phospho_key = self._get_site_key(statistic)
 
             if phospho_key not in ps_and_qs:
                 ps_and_qs[phospho_key] = {}
@@ -1485,7 +1316,7 @@ class Command(BaseCommand):
  
             num_proteins += 1
 
-            phospho_key = f"{statistic.phospho.protein.accession_number}_{statistic.phospho.phosphosite}"
+            phospho_key = self._get_site_key(statistic)
 
             q_value = 1
 
@@ -1504,87 +1335,6 @@ class Command(BaseCommand):
             statistic.save()
 
 
-
-    # addPhosphoRegression
-    def _add_phospho_regression(self, project, replicates, sample_stages, with_bugs):
-        # TODO - check and revise all comments
-        """
-        Normalise the phospho abundance on the protein abundance
-        Calculates and adds all the Regressed Phospho Abundance and their metrics for each phosphosite.
-        Phospho = Dependent = Y
-        Protein = Independent = X
-        Linear Model => y = ax + b
-        Residuals = Y - Y_predict
-        """
-        logger.info("Adding Phospho Normalised on Protein Abundances - Regression")
-
-        self._generate_phospho_regression_metrics(project, replicates, sample_stages, with_bugs)
-
-        time_course_fisher_dict = self._calculate_fisher_g(project, replicates, sample_stages, phospho = True, phospho_ab = False, phospho_reg = True)
-
-        regression_info = {}
-
-        run_results = self._fetch_run_results(run)
-
-        num_proteins = 0
-
-        # TODO - looks very close to the code in protein oscillation. Make a function?
-        for rr in run_results:
-            if not num_proteins % 1000:
-                print(f"Adding phospho regression {num_proteins} for {rr.protein.accession_number}")
-
-            num_proteins += 1
-
-            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-            if not len(pprpa):
-                continue
-
-            for mod in pprpa:
-                if PHOSPHO_REGRESSION in pprpa[mod]:
-                    # TODO - a hack
-                    phospho_key = f"{rr.protein.accession_number}_{pprpa[mod][PHOSPHORYLATION_SITE]}"
-
-                    if phospho_key not in regression_info:
-                        regression_info[phospho_key] = {}
-
-                    if pprpa[mod][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
-                        regression_info[phospho_key][P_VALUE] = pprpa[mod][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][P_VALUE]
-
-        regression_info = self._add_q_value(regression_info)
-
-        run_results = self._fetch_run_results(run)
-
-        for rr in run_results:
-            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-            if not len(pprpa) or not len(rr.combined_result[PROTEIN_ABUNDANCES][RAW]):
-                continue
-
-            # TODO - again, why called phosphosite and not mod?
-            for phosphosite in pprpa:
-                if PHOSPHO_REGRESSION in pprpa[phosphosite]:
-                    mod_key = f"{rr.protein.accession_number}_{pprpa[phosphosite][PHOSPHORYLATION_SITE]}"
-
-                    q_value = 1
-
-                    if mod_key in regression_info:
-                        q_value = regression_info[mod_key][Q_VALUE]
-
-                    if pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN].get(METRICS):
-                        # TODO - why potentially no metrics? Not generated due to lack of data?
-                        pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS][ANOVA][Q_VALUE] = q_value
-
-                    fisher_output = DEFAULT_FISHER_STATS
-
-                    if mod_key in time_course_fisher_dict:
-                        fisher_output = time_course_fisher_dict[mod_key]
-
-                    pprpa[phosphosite][PHOSPHO_REGRESSION][LOG2_MEAN][METRICS]["Fisher_G"] = fisher_output
-
-            rr.save()
-
-    # calculateProteinOscillationAbundances
     def _calculate_protein_oscillation(self, protein, phospho, replicates, sample_stages, zero_or_log2, statistic_type_name):
         # TODO - gets protein abundances repeatedly, once for each phospho. Inefficient.
         #   Put it outside the loop?
@@ -1747,130 +1497,6 @@ class Command(BaseCommand):
         )
 
 
-    def _generate_phospho_regression_metrics(self, run, replicates, sample_stages, with_bugs):
-        run_results = self._fetch_run_results(run)
-
-        # TODO - this is the reason the fields are in the wrong order. They're not
-        #   in the same order when returned from the DB I suspect.
-        stages = [s.name for s in sample_stages]
-
-        for rr in run_results:
-            # TODO - these names are inconsistent with elsewhere
-            phosphoryl_abundances = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-            protein_abundances = rr.combined_result[PROTEIN_ABUNDANCES]
-
-            if not len(phosphoryl_abundances) or not len(protein_abundances[RAW]):
-                continue
-
-            try:
-                for phosphosite in phosphoryl_abundances:
-                    # TODO - not in the original
-                    pappan = phosphoryl_abundances[
-                        phosphosite][POSITION_ABUNDANCES][NORMALISED]
-
-                    rep_proteos = []
-                    rep_phosphos = []
-
-                    for replicate in replicates:
-                        if pappan[LOG2_MEAN].get(replicate.name) is None:
-                            continue
-
-                        rep_proteo = {}
-                        rep_phospho = {}
-
-                        unordered_rep_proteo = protein_abundances[NORMALISED][LOG2_MEAN][replicate.name]
-                        unordered_rep_phospho = pappan[LOG2_MEAN][replicate.name]
-
-                        if len(unordered_rep_proteo) != len(sample_stages) or len(unordered_rep_phospho) != len(sample_stages):
-                            continue
-
-                        # Reorder the stages, they come out of the DB in the wrong order
-                        for stage in sample_stages:
-                            rep_proteo[stage.name] = unordered_rep_proteo[stage.name]
-                            rep_phospho[stage.name] = unordered_rep_phospho[stage.name]
-
-                        rep_phosphos.append(rep_phospho)
-                        rep_proteos.append(rep_proteo)
-
-                    if len(rep_phosphos) != len(replicates) or len(rep_proteos) != len(replicates):
-                        # One of the replicates didn't have all the required data
-                        continue
-
-                    # Add the Regressed Phospho Normalised Abundances
-                    phosphoryl_abundances[
-                        phosphosite][PHOSPHO_REGRESSION] = {ZERO_MAX:{}, LOG2_MEAN:{}}
-
-                    # converting dictionary values to list for both replicates
-                    # TODO - study this
-                    # TODO - Can this function can be simplified?
-                    phospho_Y_list = [val for r_phos in rep_phosphos for val in r_phos.values()]
-                    protein_X_list = [val for r_prot in rep_proteos for val in r_prot.values()]
-
-                    # converting list to array
-                    prot_x = np.asarray(protein_X_list).reshape(len(protein_X_list), 1)
-                    phospho_y = np.asarray(phospho_Y_list).reshape(len(phospho_Y_list), 1)
-
-                    # TODO - a try within a try?
-                    try:
-                        if None in prot_x or None in phospho_y:
-                            continue
-
-                        model = linear_model.LinearRegression().fit(prot_x, phospho_y)
-                    except Exception as e:
-                        logger.error("_generate_phospho_regression_metrics error")
-                        logger.error(prot_x)
-                        logger.error(phospho_y)
-                        logger.error(e)
-
-                    y_pred = model.predict(prot_x)
-
-                    residuals = (phospho_y - y_pred)
-
-                    # TODO - change this variable name
-                    res_dic = {}
-
-                    num_stages = len(sample_stages)
-
-                    # replicates is a list with len len(replicates) * len(sample_stages)
-                    #   Chop it up in to bits for each replicate.
-                    for i, replicate in enumerate(replicates):
-                        res_dic[replicate.name] = {}
-
-                        for j, value in enumerate(residuals[(i*num_stages):((i+1)*num_stages)]):
-                            key = stages[j]
-                            res_dic[replicate.name][key] = value[0]
-
-                    phospho_regression = phosphoryl_abundances[phosphosite][
-                        PHOSPHO_REGRESSION]
-                    
-                    phospho_regression[LOG2_MEAN] = res_dic
-
-                    phospho_regression[LOG2_MEAN][ABUNDANCE_AVERAGE] = self._calculate_means(
-                        phospho_regression[LOG2_MEAN],
-                        imputed=False,
-                        with_bugs=with_bugs
-                    )
-
-                    # Calculate the protein - phospho vector correlation
-                    phospho_regression[ZERO_MAX][METRICS] = {}
-
-                    # [0] to get the correlation coefficient, [1] = p-value
-                    phospho_regression[ZERO_MAX][METRICS][PROTEIN_PHOSPHO_CORRELATION] = stats.pearsonr(protein_X_list, phospho_Y_list)[0]
-
-                    # curve fold change phosphorylation/curve fold change protein for 0-max
-                    phospho_regression[ZERO_MAX][METRICS][PHOSPHO_PROTEIN_CFC_RATIO] = rr.combined_result[PHOSPHORYLATION_ABUNDANCES][
-                        phosphosite][METRICS][ZERO_MAX][CURVE_FOLD_CHANGE] / rr.combined_result[METRICS][ZERO_MAX][CURVE_FOLD_CHANGE]
-
-                    # ANOVA
-                    phospho_regression[LOG2_MEAN][METRICS] = {}
-                    phospho_regression[LOG2_MEAN][METRICS][ANOVA] = self._calculate_ANOVA(phospho_regression[LOG2_MEAN], replicates, sample_stages)
-            except Exception as e:
-                logger.error("generate_phospho_regression_metrics error")
-                logger.error(e)
-                logger.error()
-
-            rr.save()
-
     def _generate_protein_oscillation_metrics(self, project, replicates, sample_stages, with_bugs):
         phosphos = Phospho.objects.filter(
             protein__project = project
@@ -1926,36 +1552,6 @@ class Command(BaseCommand):
 
         return info_df.to_dict('index')
 
-
-    # getConsensusKinasePred
-    def _generate_kinase_predictions(self, run):
-        logger.info("Generating kinase predictions")
-
-        run_results = self._fetch_run_results(run)
-
-        for rr in run_results:
-            pprpa = rr.combined_result[PHOSPHORYLATION_ABUNDANCES]
-
-            for mod in pprpa:
-                # only for certain phosphorylation sites
-                # TODO - why? What does the lack of dash mean?
-
-                if mod.find("-") == -1:
-                    # Add PepTools Phospho annotations
-                    mod_result = pprpa[mod]
-                    accession_number = rr.protein.accession_number
-
-                    if PHOSPHO in index_protein_names[accession_number] and mod in index_protein_names[accession_number][PHOSPHO]:
-                        mod_result[PEPTOOLS_ANNOTATIONS] = index_protein_names[accession_number][PHOSPHO][mod]
-
-                    mod_result[KINASE_PREDICTION] = {}
-
-                    phospho_kinases_class = self._get_consensus_kinase_pred(accession_number, pprpa[mod][PHOSPHORYLATION_SITE])
-
-                    mod_result[KINASE_PREDICTION][PEPTIDE_SEQ] = phospho_kinases_class[PEPTIDE_SEQ]
-                    mod_result[KINASE_PREDICTION][CONSENSUS_MOTIF_MATCH] = phospho_kinases_class[KINASE_MOTIF_MATCH]
-
-            rr.save()
 
     def _calculate_medians(
         self,
@@ -2037,7 +1633,7 @@ class Command(BaseCommand):
         for index, row in time_course_fisher.iterrows():
             row_z = [i for i in row.tolist()]
 
-            result = ptestg(row_z)
+            result = self._ptestg(row_z)
 
             time_course_fisher.loc[index, G_STATISTIC] = result["obsStat"]
             time_course_fisher.loc[index, P_VALUE] = result["pvalue"]
@@ -2114,11 +1710,6 @@ class Command(BaseCommand):
         return statistic_type, stat
 
 
-    # TODO - not needed
-    def _fetch_run_results(self, run):
-        # Only get the necessary fields to save on memory usage
-        return RunResult.objects.only("run", "protein", "combined_result").filter(run=run).iterator(chunk_size=100)
-
     def _round(self, value, places = 4):
         return round(value, places)
 
@@ -2151,56 +1742,56 @@ class Command(BaseCommand):
             print(f"{uid}: {complexes if complexes else 'None found'}")
 
 
-def fisher_g_test(z):
-    """
-    Perform Fisher's g-test on a time series `z`.
-    Returns:
-        g_stat: the observed test statistic
-        p_value: p-value for the test
-        freq: frequency with max periodogram value
-    """
-    z = np.asarray(z)
-    n = len(z)
-    m = (n - 2) // 2 if n % 2 == 0 else (n - 1) // 2
+    def _fisher_g_test(self, z):
+        """
+        Perform Fisher's g-test on a time series `z`.
+        Returns:
+            g_stat: the observed test statistic
+            p_value: p-value for the test
+            freq: frequency with max periodogram value
+        """
+        z = np.asarray(z)
+        n = len(z)
+        m = (n - 2) // 2 if n % 2 == 0 else (n - 1) // 2
 
-    # Compute the periodogram (uses normalized frequencies)
-    freqs, pgram_vals = periodogram(z, scaling='spectrum')
+        # Compute the periodogram (uses normalized frequencies)
+        freqs, pgram_vals = periodogram(z, scaling='spectrum')
 
-    # Remove Nyquist frequency for even-length input
-    if n % 2 == 0:
-        pgram_vals = pgram_vals[:-1]
+        # Remove Nyquist frequency for even-length input
+        if n % 2 == 0:
+            pgram_vals = pgram_vals[:-1]
 
-    max_index = np.argmax(pgram_vals)
-    g_stat = pgram_vals[max_index] / np.sum(pgram_vals)
+        max_index = np.argmax(pgram_vals)
+        g_stat = pgram_vals[max_index] / np.sum(pgram_vals)
 
-    # Compute p-value
-    p = int(np.floor(1 / g_stat))
-    i_vals = np.arange(1, p + 1)
-    terms = comb(m, i_vals) * (-1) ** (i_vals - 1) * (1 - i_vals * g_stat) ** (m - 1)
-    p_value = np.sum(terms)
+        # Compute p-value
+        p = int(np.floor(1 / g_stat))
+        i_vals = np.arange(1, p + 1)
+        terms = comb(m, i_vals) * (-1) ** (i_vals - 1) * (1 - i_vals * g_stat) ** (m - 1)
+        p_value = np.sum(terms)
 
-    return np.array([g_stat, p_value, freqs[max_index]])
+        return np.array([g_stat, p_value, freqs[max_index]])
 
-def ptestg(z):
-    """
-    Perform periodicity test on input data `z` using Fisher's g-test.
-    """
-    z = np.atleast_2d(z).T  # Ensure z is a column vector
-    n, m = z.shape
+    def _ptestg(self, z):
+        """
+        Perform periodicity test on input data `z` using Fisher's g-test.
+        """
+        z = np.atleast_2d(z).T  # Ensure z is a column vector
+        n, m = z.shape
 
-    obs_stat = np.zeros(m)
-    p_values = np.zeros(m)
-    freqs = np.zeros(m)
+        obs_stat = np.zeros(m)
+        p_values = np.zeros(m)
+        freqs = np.zeros(m)
 
-    for i in range(m):
-        result = fisher_g_test(z[:, i])
-        obs_stat[i] = result[0]
-        p_values[i] = result[1]
-        freqs[i] = result[2]
+        for i in range(m):
+            result = self._fisher_g_test(z[:, i])
+            obs_stat[i] = result[0]
+            p_values[i] = result[1]
+            freqs[i] = result[2]
 
-    return {
-        "obsStat": obs_stat,
-        "pvalue": p_values,
-        "freq": freqs,
-        "class": "Htest"
-    }
+        return {
+            "obsStat": obs_stat,
+            "pvalue": p_values,
+            "freq": freqs,
+            "class": "Htest"
+        }
