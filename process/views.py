@@ -8,6 +8,7 @@ from process.models import (
     Statistic,
     Protein,
     Phospho,
+    UniprotData,
 )
 
 from process.constants import (
@@ -47,13 +48,42 @@ def venn(request):
     })
 
 
-
-def heatmap(request, id):
+def heatmap_by_protein(request, id):
     project = Project.objects.get(id=id)
 
-    # CDK1, CDK2, CDK6, CCND1
-    protein_genes = ['CDK1', 'CDK2', 'CDK6', 'CCND1']
-    protein_accession_numbers = ['P06493', 'P24941', 'Q00534', 'P24385']
+    proteins = Protein.objects.filter(project=project)
+
+    return render(request, "heatmap_by_protein.html", {
+        "proteins": proteins,
+        "project_id": id,
+    })
+
+
+
+def heatmap(request, id=None):
+    if id is None:
+        # It's a call from heatmap_by_protein
+        project = Project.objects.get(id=request.POST.get('project_id'))
+
+        accession_number = request.POST.get('accession_number')
+
+        protein_accession_numbers = [accession_number]
+
+        try:
+            updata = UniprotData.objects.get(accession_number=accession_number)
+
+            protein_genes = [updata.gene_name]
+        except Exception as e:
+            # No uniprot data for this accession number
+            protein_genes = [accession_number]
+    else:
+        project = Project.objects.get(id=id)
+
+        # CDK1, CDK2, CDK6, CCND1
+        protein_genes = ['CDK1', 'CDK2', 'CDK6', 'CCND1']
+        protein_accession_numbers = ['P06493', 'P24941', 'Q00534', 'P24385']
+
+        accession_number = None
 
     sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
 
@@ -62,10 +92,10 @@ def heatmap(request, id):
     protein_readings = []
     protein_reading_max = 0
 
-    for accession_number in protein_accession_numbers:
+    for an in protein_accession_numbers:
         abundances = Abundance.objects.filter(
             statistic__statistic_type__name = ABUNDANCES_RAW,
-            statistic__protein__accession_number = accession_number,
+            statistic__protein__accession_number = an,
             statistic__protein__project = project,
             replicate__mean = True
         ).order_by(
@@ -83,13 +113,16 @@ def heatmap(request, id):
         protein_readings.append(row)
 
 
-    # phospho_phosphosites = ['pY6', 'pT4', 'pT5']
-    # phospho_peptides = ['IGEGTY(UniMod:21)GVVYK2', 'ALGT(UniMod:21)PNNEVWPEVESLQDYK3', 'IGEGT(UniMod:21)YGVVYK2']
-
-    phosphos = Phospho.objects.filter(
-        protein__accession_number = "P06493",
-        protein__project = project
-    )
+    if accession_number is not None:
+        phosphos = Phospho.objects.filter(
+            protein__accession_number = accession_number,
+            protein__project = project
+        )
+    else:
+        phosphos = Phospho.objects.filter(
+            protein__accession_number = "P06493",
+            protein__project = project
+        )
 
     phospho_readings = []
     phospho_reading_max = 0
@@ -122,6 +155,7 @@ def heatmap(request, id):
         "phospho_readings_data": phospho_readings,
         "phospho_reading_max": phospho_reading_max,
         "samples_data": samples,
+        "accession_number": accession_number,
     })
 
 

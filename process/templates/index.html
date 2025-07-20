@@ -19,6 +19,16 @@ Heatmaps of abundances for relevant proteins and peptides
     {% endfor %}
 </ul>
 
+Heatmaps of abundances by protein
+
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'heatmap_by_protein' project.pk %}">{{ project.full_name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
+
 PCA
 <ul>
     {% for project in projects %}

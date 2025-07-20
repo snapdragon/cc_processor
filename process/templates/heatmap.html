@@ -12,13 +12,21 @@
         <svg id="protein_heatmap" width="1000" height="450"></svg>
     </div>
     <div class="legend">
-        Abundances for relevant proteins for {{ project.full_name }}
+        {% if accession_number %}
+            Abundances for protein {{ accession_number }} in {{ project.full_name }}
+        {% else %}
+            Abundances for relevant proteins for {{ project.full_name }}
+        {% endif %}
     </div>
     <div>
         <svg id="phospho_heatmap" width="1000" height="450"></svg>
     </div>
     <div class="legend">
-        Abundances for CDK1 phosphorylation sites for {{ project.full_name }}
+        {% if accession_number %}
+            Abundances for phosphorylation sites for protein {{ accession_number }} in {{ project.full_name }}
+        {% else %}
+            Abundances for CDK1 phosphorylation sites for {{ project.full_name }}
+        {% endif %}
     </div>
 </div>
 
@@ -44,7 +52,7 @@
 
     function heatmap(id, genes, expression_matrix, samples, colourRange) {
         const cellSize = 60;
-        const margin = { top: 120, right: 50, bottom: 50, left: 100 };
+        const margin = { top: 120, right: 50, bottom: 50, left: 200 };
 
         const svg = d3.select(id)
             .attr("width", margin.left + samples.length * cellSize + margin.right)
@@ -115,8 +123,8 @@
 
     // Draw gradient rectangle
     legend_svg.append("rect")
-      .attr("x", 320)
-      .attr("y", 380)
+      .attr("x", 400)
+      .attr("y", 140 + expression_matrix.length * 60)
       .attr("width", 120)
       .attr("height", 20)
       .style("fill", "url(#legend-gradient)")
@@ -124,15 +132,15 @@
 
     // Add text labels
     legend_svg.append("text")
-      .attr("x", 297)
-      .attr("y", 393)
+      .attr("x", 372)
+      .attr("y", 153 + expression_matrix.length * 60)
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
       .text("Low");
 
     legend_svg.append("text")
-      .attr("x", 465)
-      .attr("y", 393)
+      .attr("x", 547)
+      .attr("y", 153 + expression_matrix.length * 60)
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
       .text("High");
