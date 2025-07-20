@@ -304,13 +304,16 @@ class Command(BaseCommand):
             # self._generate_kinase_predictions(run)
 
         if calculate_all or fetch_references:
-            self._get_uniprot_data(project)
+            pass
+            # self._get_uniprot_data(project)
 
-            self._generate_protein_list(project, True)
-            self._generate_protein_list(project, False)
+            # self._generate_protein_list(project, True)
+            # self._generate_protein_list(project, False)
 
-            self._fetch_go_enrichment(project, True)
-            self._fetch_go_enrichment(project, False)
+            # self._fetch_go_enrichment(project, True)
+            # self._fetch_go_enrichment(project, False)
+
+            # self._fetch_corum_complexes(project)
 
             # self._generate_pcas(project)
 
@@ -430,8 +433,6 @@ class Command(BaseCommand):
             project.phospho_protein_go_list = output
 
         project.save()
-
-
 
 
     def _generate_pcas(self, project):
@@ -2127,6 +2128,28 @@ class Command(BaseCommand):
     # TODO - consolidate with any others
     def _rep_stage_name(self, abundance):
         return f"{abundance.replicate.name}_{abundance.sample_stage.name}"
+
+    def _fetch_corum_complexes(self, project):
+        uniprot_ids = project.protein_list
+
+        try:
+            df = pd.read_csv('data/corum_humanComplexes.txt', sep='\t', low_memory=False)
+            df['subunits_uniprot_id'] = df['subunits_uniprot_id'].fillna('')
+        except FileNotFoundError:
+            print(f"CORUM file not found.")
+            return None
+
+        corum_results = {uid: [] for uid in uniprot_ids}
+        for _, row in df.iterrows():
+            members = row['subunits_uniprot_id'].split(';')
+            for uid in uniprot_ids:
+                if uid in members:
+                    corum_results[uid].append((row['complex_id'], row['complex_name']))
+
+        print("CORUM Results:")
+        for uid, complexes in corum_results.items():
+            print(f"{uid}: {complexes if complexes else 'None found'}")
+
 
 def fisher_g_test(z):
     """
