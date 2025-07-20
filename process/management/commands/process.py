@@ -72,7 +72,6 @@ from process.constants import (
     KINASE_MOTIF_MATCH,
     PROTEIN_INFO,
     DEFAULT_FISHER_STATS,
-    PROTEIN_INFO_FIELDS,
     GENE_NAME,
     PROTEIN_NAME,
     ABUNDANCES_RAW,

@@ -47,36 +47,6 @@ TOTAL_PROTEIN_INDEX_FILE = "total_protein_index.json"
 
 DEFAULT_FISHER_STATS = {G_STATISTIC: 1, P_VALUE: 1, FREQUENCY: 1, Q_VALUE: 1}
 
-PROTEIN_INFO_FIELDS = [
-    "halflife_mean",
-    "halflife_std",     
-    "halflife_min",     
-    "halflife_count",
-    "relative_abundance_8h_count",
-    "relative_abundance_8h_mean",   
-    "relative_abundance_8h_std",    
-    "mean_gene_effect",   
-    "in_DRIVE_cancer_proteins",
-    "in_CGC_cancer_proteins",
-    "role_in_cancer",
-    "tier",
-    "cell_cycle",
-    "mitotic_cell_cycle",
-    "kinetochore",
-    "spindle",
-    "centriole",
-    "replication fork",
-    "G0_to_G1_transition",
-    "G1/S_transition",
-    "G2/M_transition",
-    "S_phase",
-    "transcription_factor",
-    "kinase_domain_containing",
-    "is_E3",
-    "APC_complex",
-    "dna_replication_machinery"
-]
-
 # StatisticTypes
 
 PROTEIN_MEDIAN = "protein median"

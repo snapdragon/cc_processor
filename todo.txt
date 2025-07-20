@@ -27,29 +27,36 @@ Add tests for
     _calculate_phospho_q_and_fisher_g
     _add_oscillations
 
-Add _add_phospho_regression?
 
 
-Lookup phosphosite in import_phospho for SL?
-The phosphosites chosen for CDK1 (the only ones available) may not be relevant to the cell cycle
+For the paper:
+
+Focus on three categories: protein kinases, components of the ubiquitin-proteasome system (UPS) and transcription factors (TFs). (TODO maybe? End of page 6).
+Determine link between CCDs and transcription (TODO page 8 paragraph 2).
+integrated protein half-life data (TODO page 8 paragraph 2 end).
+Connection between CCD proteins and mean gene effect (TODO page 8, paragraph 3)
+Percentage of phosphorylation accessibility and disorder sites, phosphorylation site conservation (TODO end of page 8, Phosphorylation dynamics driving cell cycle progression)
+Taxonomic range of phosphorylation events (TODO page 9)
+Predict protein kinases responsible for phosphorylation events (TODO end of page 9)
+Phosphorylation oscillation relevance (TODO page 10 paragraph 2)
+Degrons (TODO page 10 ‘Degradation mechanisms of CCD proteins’)
+
+
+
+
+Mod is incorrectly populated for ICR. What does it even mean?
+
 Study PCA to find out how to improve the graphs, if they can be improved
-Improve colour scheme for d3
-Add legends to d3 diagrams
 Have venn diagram intersect on gene names not protein names?
-SL has no phosphosite (so far). Don't populate it?
 Changing _generate_xs_ys to use whichever replicate has more values might
     improve the results
 If a cell has a value for phospho but not for protein, something is wrong
 Replace the linear imputation with a better version and with-bugs for the old
 Wrap all code that has the not i % 1000 in a function then wrap that in a decorator?
 Add admin app
-min-max and imputed values are calculated differently between protein and phospho in ICR
-    Which way is the correct way?
-Add 'peptide_abundances' to phospho output?
 In ICR of the imputed protein values are flagged "experimental", none are imputed.
     Strip out imputation code? Check phospho with ICR?
     SL will have no imputed values (I guess) as it will have no Nones.
-Find out which functions aren't actually needed
 Move functions out of command file and into a lib dir
 process/management/commands/process.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
     Higher level of mypy checking required? Check work.
