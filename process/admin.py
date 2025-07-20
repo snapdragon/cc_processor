@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import Abundance, Statistic, StatisticType, Phospho, Protein, ColumnName, SampleStage, Replicate, Project
+from .models import (
+    Abundance,
+    ColumnName,
+    Phospho,
+    Project,
+    Protein,
+    Replicate,
+    SampleStage,
+    Statistic,
+    StatisticType,
+)
 
 admin.site.register(Abundance)
 admin.site.register(Statistic)

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('process', '0002_auto_20250708_1155'),
+        ("process", "0002_auto_20250708_1155"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='phospho',
-            name='phosphosite',
+            model_name="phospho",
+            name="phosphosite",
             field=models.CharField(max_length=255, null=True),
         ),
     ]

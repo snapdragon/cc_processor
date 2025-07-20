@@ -1,33 +1,23 @@
-import pytest
-import numpy as np
-from math import isclose
-import pandas as pd
-import pandas.testing as pdt
 import math
+from math import isclose
 
-from process.factories import (
-    ProjectFactory,
-    ProteinFactory,
-    ReplicateFactory,
-    SampleStageFactory,
-    StatisticTypeFactory,
-    StatisticFactory,
-    AbundanceFactory,
-)
-from process.management.commands.process import Command
-from process.models import Abundance, StatisticType, Statistic
+import pytest
 
 from process.constants import (
-    ABUNDANCES_RAW,
-    PROTEIN_MEDIAN,
-    ABUNDANCES_NORMALISED_MEDIAN,
     ABUNDANCES_NORMALISED_LOG2_ARREST,
     ABUNDANCES_NORMALISED_LOG2_MEAN,
+    ABUNDANCES_NORMALISED_MEDIAN,
     ABUNDANCES_NORMALISED_MIN_MAX,
     ABUNDANCES_NORMALISED_ZERO_MAX,
-    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+    ABUNDANCES_RAW,
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
+    PROTEIN_MEDIAN,
+    PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
 )
+from process.factories import AbundanceFactory, StatisticFactory, StatisticTypeFactory
+from process.management.commands.process import Command
+from process.models import Abundance, Statistic, StatisticType
+
 
 @pytest.mark.django_db
 def test_calculate_medians(basic_project_setup):
@@ -52,21 +42,21 @@ def test_calculate_medians(basic_project_setup):
             for sample_stage in sample_stages:
                 reading += 1
 
-                AbundanceFactory(statistic=stat, replicate=replicate, sample_stage=sample_stage, reading=reading)
+                AbundanceFactory(
+                    statistic=stat,
+                    replicate=replicate,
+                    sample_stage=sample_stage,
+                    reading=reading,
+                )
 
     command._calculate_medians(
-        project,
-        replicates,
-        sample_stages,
-        True,
-        with_bugs=False
+        project, replicates, sample_stages, True, with_bugs=False
     )
 
     stat_type_prot_median = StatisticType.objects.get(name=PROTEIN_MEDIAN)
 
     medians = Abundance.objects.filter(
-        statistic__project=project,
-        statistic__statistic_type=stat_type_prot_median
+        statistic__project=project, statistic__statistic_type=stat_type_prot_median
     )
 
     assert len(replicates) == 3
@@ -80,7 +70,11 @@ def test_calculate_medians(basic_project_setup):
         for sample_stage in sample_stages:
             median += 1
 
-            abundance = Abundance.objects.get(statistic__project=project, replicate=replicate, sample_stage=sample_stage)
+            abundance = Abundance.objects.get(
+                statistic__project=project,
+                replicate=replicate,
+                sample_stage=sample_stage,
+            )
 
             assert abundance.reading == median
 
@@ -95,25 +89,21 @@ def test_calculate_normalised_medians(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     stat_type_prot_median, stat_prot_medians = create_readings(
-        PROTEIN_MEDIAN,
-        replicates,
-        sample_stages,
-        reading = 30,
-        project=project
+        PROTEIN_MEDIAN, replicates, sample_stages, reading=30, project=project
     )
 
     stat_type_prot_reading, stat_prot_readings = create_readings(
-        ABUNDANCES_RAW,
-        replicates,
-        sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        ABUNDANCES_RAW, replicates, sample_stages, reading=0, protein=proteins[0]
     )
 
-    command._calculate_normalised_medians(proteins[0])        
+    command._calculate_normalised_medians(proteins[0])
 
-    stat_type_normalised_median = StatisticType.objects.get(name=ABUNDANCES_NORMALISED_MEDIAN)
-    stat_normalised_median = Statistic.objects.get(statistic_type=stat_type_normalised_median, protein=proteins[0])
+    stat_type_normalised_median = StatisticType.objects.get(
+        name=ABUNDANCES_NORMALISED_MEDIAN
+    )
+    stat_normalised_median = Statistic.objects.get(
+        statistic_type=stat_type_normalised_median, protein=proteins[0]
+    )
 
     abundances = Abundance.objects.filter(statistic=stat_normalised_median)
 
@@ -127,7 +117,6 @@ def test_calculate_normalised_medians(basic_project_setup):
         assert abundance.reading == reading / (reading + 30)
 
 
-
 @pytest.mark.django_db
 def test_calculate_means(basic_project_setup):
     command = Command()
@@ -137,29 +126,18 @@ def test_calculate_means(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     _, stat_prot_readings = create_readings(
-        ABUNDANCES_RAW,
-        replicates,
-        sample_stages,
-        0,
-        protein=proteins[0]
+        ABUNDANCES_RAW, replicates, sample_stages, 0, protein=proteins[0]
     )
 
-    command._calculate_means(
-        ABUNDANCES_RAW,
-        proteins[0],
-        False
-    )
+    command._calculate_means(ABUNDANCES_RAW, proteins[0], False)
 
     abundances = Abundance.objects.filter(statistic=stat_prot_readings)
 
     assert len(abundances) == 40
 
     abundances = Abundance.objects.filter(
-        statistic=stat_prot_readings,
-        replicate__mean=True
-    ).order_by(
-        'sample_stage__rank'
-    )
+        statistic=stat_prot_readings, replicate__mean=True
+    ).order_by("sample_stage__rank")
 
     assert len(abundances) == 10
 
@@ -184,20 +162,17 @@ def test_calculate_arrest_log2_normalisation(basic_project_setup):
         ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        reading=0,
+        protein=proteins[0],
     )
 
-    command._calculate_arrest_log2_normalisation(
-        proteins[0]
-    )
+    command._calculate_arrest_log2_normalisation(proteins[0])
 
     stat_type_arrest_log2_normalisation = StatisticType.objects.get(
         name=ABUNDANCES_NORMALISED_LOG2_ARREST
     )
     stat_arrest_log2_normalisation = Statistic.objects.get(
-        statistic_type=stat_type_arrest_log2_normalisation,
-        protein=proteins[0]
+        statistic_type=stat_type_arrest_log2_normalisation, protein=proteins[0]
     )
 
     abundances = Abundance.objects.filter(statistic=stat_arrest_log2_normalisation)
@@ -209,10 +184,8 @@ def test_calculate_arrest_log2_normalisation(basic_project_setup):
     reading = 0
 
     # TODO - hardcoding "One" is bad
-    for abundance in abundances.filter(
-        replicate__name="One"
-    ).order_by(
-        'sample_stage__rank'
+    for abundance in abundances.filter(replicate__name="One").order_by(
+        "sample_stage__rank"
     ):
         reading += 1
 
@@ -232,8 +205,8 @@ def test_calculate_relative_log2_normalisation(basic_project_setup):
         ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        reading=0,
+        protein=proteins[0],
     )
 
     command._calculate_relative_log2_normalisation(proteins[0])
@@ -242,8 +215,7 @@ def test_calculate_relative_log2_normalisation(basic_project_setup):
         name=ABUNDANCES_NORMALISED_LOG2_MEAN
     )
     stat_arrest_log2_mean = Statistic.objects.get(
-        statistic_type=stat_type_arrest_log2_mean,
-        protein=proteins[0]
+        statistic_type=stat_type_arrest_log2_mean, protein=proteins[0]
     )
 
     abundances = Abundance.objects.filter(statistic=stat_arrest_log2_mean)
@@ -280,8 +252,8 @@ def test_calculate_min_normalisation(basic_project_setup):
         ABUNDANCES_NORMALISED_LOG2_MEAN,
         replicates,
         sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        reading=0,
+        protein=proteins[0],
     )
 
     command._calculate_zero_or_min_normalisation(
@@ -289,12 +261,9 @@ def test_calculate_min_normalisation(basic_project_setup):
         proteins[0],
     )
 
-    stat_type_min_max = StatisticType.objects.get(
-        name=ABUNDANCES_NORMALISED_MIN_MAX
-    )
+    stat_type_min_max = StatisticType.objects.get(name=ABUNDANCES_NORMALISED_MIN_MAX)
     stat_min_max = Statistic.objects.get(
-        statistic_type=stat_type_min_max,
-        protein=proteins[0]
+        statistic_type=stat_type_min_max, protein=proteins[0]
     )
 
     abundances = Abundance.objects.filter(statistic=stat_min_max)
@@ -312,8 +281,6 @@ def test_calculate_min_normalisation(basic_project_setup):
     assert len(abundances) == 30
 
 
-
-
 @pytest.mark.django_db
 def test_calculate_zero_max_normalisation(basic_project_setup):
     command = Command()
@@ -326,8 +293,8 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
         ABUNDANCES_NORMALISED_MEDIAN,
         replicates,
         sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        reading=0,
+        protein=proteins[0],
     )
 
     command._calculate_zero_or_min_normalisation(
@@ -337,12 +304,9 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
         True,
     )
 
-    stat_type_zero = StatisticType.objects.get(
-        name=ABUNDANCES_NORMALISED_ZERO_MAX
-    )
+    stat_type_zero = StatisticType.objects.get(name=ABUNDANCES_NORMALISED_ZERO_MAX)
     stat_zero = Statistic.objects.get(
-        statistic_type=stat_type_zero,
-        protein=proteins[0]
+        statistic_type=stat_type_zero, protein=proteins[0]
     )
 
     abundances = Abundance.objects.filter(statistic=stat_zero)
@@ -363,15 +327,24 @@ def test_calculate_zero_max_normalisation(basic_project_setup):
     assert len(abundances) == 30
 
 
-
-@pytest.mark.parametrize("statistic_type_name, phospho, phospho_ab, phospho_reg", [
-    (ABUNDANCES_NORMALISED_LOG2_MEAN, False, False, False),
-    (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
-    (PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, True, True, False),
-    (PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, True),
-])
+@pytest.mark.parametrize(
+    "statistic_type_name, phospho, phospho_ab, phospho_reg",
+    [
+        (ABUNDANCES_NORMALISED_LOG2_MEAN, False, False, False),
+        (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
+        (PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, True, True, False),
+        (
+            PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
+            True,
+            False,
+            True,
+        ),
+    ],
+)
 @pytest.mark.django_db
-def test_create_abundance_dataframe(statistic_type_name, phospho, phospho_ab, phospho_reg, basic_project_setup):
+def test_create_abundance_dataframe(
+    statistic_type_name, phospho, phospho_ab, phospho_reg, basic_project_setup
+):
     command = Command()
 
     project = basic_project_setup["project"]
@@ -388,9 +361,9 @@ def test_create_abundance_dataframe(statistic_type_name, phospho, phospho_ab, ph
                 statistic_type_name,
                 replicates,
                 sample_stages,
-                reading = reading,
-                protein = None,
-                phospho = ph
+                reading=reading,
+                protein=None,
+                phospho=ph,
             )
 
             reading += 30
@@ -400,19 +373,14 @@ def test_create_abundance_dataframe(statistic_type_name, phospho, phospho_ab, ph
                 statistic_type_name,
                 replicates,
                 sample_stages,
-                reading = reading,
-                protein=protein
+                reading=reading,
+                protein=protein,
             )
 
             reading += 30
 
     df = command._create_abundance_dataframe(
-        project,
-        replicates,
-        sample_stages,
-        phospho,
-        phospho_ab,
-        phospho_reg
+        project, replicates, sample_stages, phospho, phospho_ab, phospho_reg
     )
 
     column_names = df.columns
@@ -458,18 +426,11 @@ def test_calculate_metrics(basic_project_setup):
     statistic_type_name = ABUNDANCES_NORMALISED_LOG2_MEAN
 
     _, stat = create_readings(
-        statistic_type_name,
-        replicates,
-        sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        statistic_type_name, replicates, sample_stages, reading=0, protein=proteins[0]
     )
 
     command._calculate_means(
-        statistic_type_name,
-        protein = proteins[0],
-        phospho = None,
-        with_bugs = True
+        statistic_type_name, protein=proteins[0], phospho=None, with_bugs=True
     )
 
     command._calculate_metrics(
@@ -479,28 +440,28 @@ def test_calculate_metrics(basic_project_setup):
         proteins[0],
     )
 
-    stat = command._get_statistic(statistic_type_name, protein = proteins[0])
+    stat = command._get_statistic(statistic_type_name, protein=proteins[0])
 
     metrics = stat.metrics
 
     numbers = {
-        'R_squared_all': 1.0,
-        'residuals_all': 8.313515829031342e-30,
-        'kurtosis_average': 120.8625,
-        'skewness_average': 0.0,
-        'variance_average': 8.25,
-        'R_squared_average': 1.0,
-        'curve_fold_change': 1.8181818181818175, 
-        'residuals_average': 2.5276769669211793e-30,
-        'standard_deviation': 8.803408430829505,
-        'max_fold_change_average': 9.0
+        "R_squared_all": 1.0,
+        "residuals_all": 8.313515829031342e-30,
+        "kurtosis_average": 120.8625,
+        "skewness_average": 0.0,
+        "variance_average": 8.25,
+        "R_squared_average": 1.0,
+        "curve_fold_change": 1.8181818181818175,
+        "residuals_average": 2.5276769669211793e-30,
+        "standard_deviation": 8.803408430829505,
+        "max_fold_change_average": 9.0,
     }
 
     for number in numbers:
-        assert isclose(metrics[number], numbers[number]) == True
+        assert isclose(metrics[number], numbers[number])
 
-    assert metrics['curve_peak'] == 'Nocodozole'
-    assert metrics['peak_average'] == 'Nocodozole'
+    assert metrics["curve_peak"] == "Nocodozole"
+    assert metrics["peak_average"] == "Nocodozole"
 
 
 # TODO - unfinished
@@ -513,11 +474,7 @@ def test_calculate_curve_fold_change(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     _, stat = create_readings(
-        ABUNDANCES_RAW,
-        replicates,
-        sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        ABUNDANCES_RAW, replicates, sample_stages, reading=0, protein=proteins[0]
     )
 
     abundances = Abundance.objects.filter(statistic=stat)
@@ -534,23 +491,27 @@ def test_calculate_curve_fold_change(basic_project_setup):
     print(curve_fold_change)
     print(curve_peak)
 
-# def test_polyfit():
-    
 
+# def test_polyfit():
 
 
 # TODO - unfinished
-@pytest.mark.parametrize("statistic_type_name, phospho, phospho_ab, phospho_reg", [
-    (ABUNDANCES_NORMALISED_LOG2_MEAN, False, False, False),
-    (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
-    # (PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, True, True, False),
-    # (PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, True),
-])
+@pytest.mark.parametrize(
+    "statistic_type_name, phospho, phospho_ab, phospho_reg",
+    [
+        (ABUNDANCES_NORMALISED_LOG2_MEAN, False, False, False),
+        (ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, False),
+        # (PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN, True, True, False),
+        # (PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN, True, False, True),
+    ],
+)
 @pytest.mark.django_db
-def test_calculate_fisher_g(statistic_type_name, phospho, phospho_ab, phospho_reg, basic_project_setup):
-    command = Command()
+def test_calculate_fisher_g(
+    statistic_type_name, phospho, phospho_ab, phospho_reg, basic_project_setup
+):
+    # command = Command()
 
-    project = basic_project_setup["project"]
+    # project = basic_project_setup["project"]
     replicates = basic_project_setup["replicates"]
     sample_stages = basic_project_setup["sample_stages"]
     proteins = basic_project_setup["proteins"]
@@ -564,9 +525,9 @@ def test_calculate_fisher_g(statistic_type_name, phospho, phospho_ab, phospho_re
                 statistic_type_name,
                 replicates,
                 sample_stages,
-                reading = reading,
-                protein = None,
-                phospho = ph
+                reading=reading,
+                protein=None,
+                phospho=ph,
             )
 
             reading += 30
@@ -576,20 +537,15 @@ def test_calculate_fisher_g(statistic_type_name, phospho, phospho_ab, phospho_re
                 statistic_type_name,
                 replicates,
                 sample_stages,
-                reading = reading,
-                protein=protein
+                reading=reading,
+                protein=protein,
             )
 
             reading += 30
 
-    dict = command._calculate_fisher_g(
-        project,
-        replicates,
-        sample_stages,
-        phospho,
-        phospho_ab,
-        phospho_reg
-    )
+    # dict = command._calculate_fisher_g(
+    #     project, replicates, sample_stages, phospho, phospho_ab, phospho_reg
+    # )
 
     # dict2 = command._calculate_fisher_g_r_version(
     #     project,
@@ -608,7 +564,6 @@ def test_calculate_fisher_g(statistic_type_name, phospho, phospho_ab, phospho_re
     # print(dict2)
 
 
-
 @pytest.mark.django_db
 def test_generate_xs_ys(basic_project_setup):
     command = Command()
@@ -618,11 +573,7 @@ def test_generate_xs_ys(basic_project_setup):
     proteins = basic_project_setup["proteins"]
 
     _, stat = create_readings(
-        ABUNDANCES_RAW,
-        replicates,
-        sample_stages,
-        reading = 0,
-        protein=proteins[0]
+        ABUNDANCES_RAW, replicates, sample_stages, reading=0, protein=proteins[0]
     )
 
     abundances = Abundance.objects.filter(statistic=stat)
@@ -634,8 +585,7 @@ def test_generate_xs_ys(basic_project_setup):
 
     assert x == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert y == list(range(11, 21))
-    assert stage_names_map == {s.name:i for i, s in enumerate(sample_stages)}
-
+    assert stage_names_map == {s.name: i for i, s in enumerate(sample_stages)}
 
 
 @pytest.mark.skip(reason="Broken")
@@ -644,17 +594,15 @@ def test__add_oscillations():
     pass
 
 
-@pytest.mark.skip(reason="Broken")
-@pytest.mark.django_db
-def test_tp():
-    command = Command()
-
-
-
-
 # TODO - move this elsewhere
 def create_readings(
-    statistic_type_name, replicates, sample_stages, reading, project = None, protein = None, phospho=None
+    statistic_type_name,
+    replicates,
+    sample_stages,
+    reading,
+    project=None,
+    protein=None,
+    phospho=None,
 ):
     stat_type = StatisticType.objects.get(name=statistic_type_name)
 
@@ -671,8 +619,11 @@ def create_readings(
         for sample_stage in sample_stages:
             reading += 1
 
-            Abundance.objects.create(statistic=stat, replicate=replicate, sample_stage=sample_stage, reading=reading)
+            Abundance.objects.create(
+                statistic=stat,
+                replicate=replicate,
+                sample_stage=sample_stage,
+                reading=reading,
+            )
 
     return stat_type, stat
-
-

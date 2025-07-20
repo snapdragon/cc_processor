@@ -4,11 +4,15 @@ import re
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-from process.models import ColumnName, Project, Protein, Abundance, Phospho, StatisticType, Statistic
-
-from process.constants import (
-    ABUNDANCES_RAW,
-    PROJECT_SL
+from process.constants import ABUNDANCES_RAW, PROJECT_SL
+from process.models import (
+    Abundance,
+    ColumnName,
+    Phospho,
+    Project,
+    Protein,
+    Statistic,
+    StatisticType,
 )
 
 logging.basicConfig(
@@ -88,7 +92,9 @@ class Command(BaseCommand):
                 # print(f"Skipping contaminant {accession_number}")
                 continue
 
-            if protein := Protein.objects.filter(project=project, accession_number=accession_number).first():
+            if protein := Protein.objects.filter(
+                project=project, accession_number=accession_number
+            ).first():
                 print(f"DUPLICATE ACCESSION NUMBER {accession_number}")
 
                 # To ensure the two readings don't get mashed up if they
@@ -100,7 +106,9 @@ class Command(BaseCommand):
                 )
             else:
                 protein = Protein.objects.create(
-                    project=project, accession_number=accession_number, is_contaminant=is_contaminant
+                    project=project,
+                    accession_number=accession_number,
+                    is_contaminant=is_contaminant,
                 )
 
                 statistic = Statistic.objects.create(
@@ -109,7 +117,7 @@ class Command(BaseCommand):
 
             if project_name == PROJECT_SL:
                 for col in df.columns:
-                    col_short = re.search(r'IITI_\d{3}', col)
+                    col_short = re.search(r"IITI_\d{3}", col)
 
                     if col_short is not None:
                         if cn := cns_by_name.get(col_short.group()):
@@ -119,7 +127,10 @@ class Command(BaseCommand):
                                 continue
 
                             Abundance.objects.create(
-                                statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
+                                statistic=statistic,
+                                replicate=cn.replicate,
+                                sample_stage=cn.sample_stage,
+                                reading=reading,
                             )
             else:
                 for col in df.columns:
@@ -130,8 +141,10 @@ class Command(BaseCommand):
                             continue
 
                         Abundance.objects.create(
-                            statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
+                            statistic=statistic,
+                            replicate=cn.replicate,
+                            sample_stage=cn.sample_stage,
+                            reading=reading,
                         )
-
 
         print(f"Total rows: {row_no}")

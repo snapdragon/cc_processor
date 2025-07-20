@@ -2,15 +2,16 @@ import factory
 from factory.django import DjangoModelFactory
 
 from process.models import (
+    Abundance,
+    Phospho,
     Project,
     Protein,
     Replicate,
     SampleStage,
-    StatisticType,
     Statistic,
-    Abundance,
-    Phospho
+    StatisticType,
 )
+
 
 class ProjectFactory(DjangoModelFactory):
     class Meta:
@@ -58,7 +59,6 @@ class PhosphoFactory(DjangoModelFactory):
     phosphosite = factory.Faker("word")
 
 
-
 class StatisticTypeFactory(DjangoModelFactory):
     class Meta:
         model = StatisticType
@@ -75,7 +75,8 @@ class StatisticFactory(DjangoModelFactory):
     project = None
     protein = None
     phospho = None
-    metrics = {}
+    metrics: dict = {}
+
 
 class AbundanceFactory(DjangoModelFactory):
     class Meta:

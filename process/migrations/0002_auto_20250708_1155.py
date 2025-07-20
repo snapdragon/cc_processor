@@ -3,33 +3,30 @@
 from django.db import migrations
 
 from process.constants import (
-    PROTEIN_MEDIAN,
-    PHOSPHO_MEDIAN,
-
-    ZERO_MAX,
-    LOG2_MEAN,
-    ABUNDANCES_RAW,
     ABUNDANCES_IMPUTED,
-
-    ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_NORMALISED_LOG2_ARREST,
+    ABUNDANCES_NORMALISED_LOG2_MEAN,
     ABUNDANCES_NORMALISED_MEDIAN,
     ABUNDANCES_NORMALISED_MIN_MAX,
-    ABUNDANCES_NORMALISED_LOG2_MEAN,
-    ABUNDANCES_NORMALISED_LOG2_ARREST,
-
-    PHOSPHO_REGRESSION_ZERO_MAX,
+    ABUNDANCES_NORMALISED_ZERO_MAX,
+    ABUNDANCES_RAW,
+    ICR_ABUNDANCE_REP_1,
+    ICR_ABUNDANCE_REP_2,
+    LOG2_MEAN,
+    PHOSPHO_MEDIAN,
     PHOSPHO_REGRESSION_LOG2_MEAN,
-    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW,
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED,
-    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN,
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX,
-    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
-    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST,
-
-    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX,
+    PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW,
+    PHOSPHO_REGRESSION_ZERO_MAX,
+    PROJECT_SL,
+    PROTEIN_MEDIAN,
     PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
-
+    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
     SL_SAMPLE_STAGE_NAME_1,
     SL_SAMPLE_STAGE_NAME_2,
     SL_SAMPLE_STAGE_NAME_3,
@@ -40,11 +37,7 @@ from process.constants import (
     SL_SAMPLE_STAGE_NAME_8,
     SL_SAMPLE_STAGE_NAME_9,
     SL_SAMPLE_STAGE_NAME_10,
-
-    ICR_ABUNDANCE_REP_1,
-    ICR_ABUNDANCE_REP_2,
-
-    PROJECT_SL
+    ZERO_MAX,
 )
 
 
@@ -57,7 +50,7 @@ class Migration(migrations.Migration):
             proteome_file="Soliman/results-request-2023MK001-proteome.xlsx",
             phosphoproteome_file="Soliman/results-request-2023MK004-phosphoproteome.xlsx",
             proteome_file_accession_number_column_name="Protein.Group",
-            processable = True
+            processable=True,
         )
 
         Replicate = apps.get_model("process", "Replicate")
@@ -259,7 +252,7 @@ class Migration(migrations.Migration):
             proteome_file="ICR/CR07_TMT16plex_FullProt_Proteins.xlsx",
             phosphoproteome_file="ICR/20210610_CR07_IMAC_PeptideGroups.tdt",
             proteome_file_accession_number_column_name="Accession",
-            processable = True
+            processable=True,
         )
 
         replicate_ICR_1 = Replicate.objects.create(
@@ -379,9 +372,6 @@ class Migration(migrations.Migration):
             name="Abundance: 134N, 2, 15",
         )
 
-
-
-
         # Config for importing ICR results
         project_original = Project.objects.create(
             name="Original",
@@ -389,48 +379,27 @@ class Migration(migrations.Migration):
             proteome_file="N/A",
             phosphoproteome_file="N/A",
             proteome_file_accession_number_column_name="N/A",
-            processable = False
+            processable=False,
         )
 
-        replicate_original_1 = Replicate.objects.create(
+        Replicate.objects.create(
             name=ICR_ABUNDANCE_REP_1, project=project_original, mean=False
         )
-        replicate_original_2 = Replicate.objects.create(
+        Replicate.objects.create(
             name=ICR_ABUNDANCE_REP_2, project=project_original, mean=False
         )
-        replicate_original_3 = Replicate.objects.create(
+        Replicate.objects.create(
             name="abundance_average", project=project_original, mean=True
         )
 
-        sample_stage_original_1 = SampleStage.objects.create(
-            project=project_original, name="Palbo", rank=1
-        )
-        sample_stage_original_2 = SampleStage.objects.create(
-            project=project_original, name="Late G1_1", rank=2
-        )
-        sample_stage_original_3 = SampleStage.objects.create(
-            project=project_original, name="G1/S", rank=3
-        )
-        sample_stage_original_4 = SampleStage.objects.create(
-            project=project_original, name="S", rank=4
-        )
-        sample_stage_original_5 = SampleStage.objects.create(
-            project=project_original, name="S/G2", rank=5
-        )
-        sample_stage_original_6 = SampleStage.objects.create(
-            project=project_original, name="G2_2", rank=6
-        )
-        sample_stage_original_7 = SampleStage.objects.create(
-            project=project_original, name="G2/M_1", rank=7
-        )
-        sample_stage_original_8 = SampleStage.objects.create(
-            project=project_original, name="M/Early G1", rank=8
-        )
-
-
-
-
-
+        SampleStage.objects.create(project=project_original, name="Palbo", rank=1)
+        SampleStage.objects.create(project=project_original, name="Late G1_1", rank=2)
+        SampleStage.objects.create(project=project_original, name="G1/S", rank=3)
+        SampleStage.objects.create(project=project_original, name="S", rank=4)
+        SampleStage.objects.create(project=project_original, name="S/G2", rank=5)
+        SampleStage.objects.create(project=project_original, name="G2_2", rank=6)
+        SampleStage.objects.create(project=project_original, name="G2/M_1", rank=7)
+        SampleStage.objects.create(project=project_original, name="M/Early G1", rank=8)
 
         StatisticType = apps.get_model("process", "StatisticType")
 

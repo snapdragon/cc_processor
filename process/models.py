@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
+
 class Project(models.Model):
     name = models.CharField(max_length=255, unique=True)
     full_name = models.CharField(max_length=255, null=True)
@@ -15,11 +16,12 @@ class Project(models.Model):
     protein_list = models.JSONField(null=True, blank=True)
     phospho_protein_list = models.JSONField(null=True, blank=True)
     # GO is lowercase as postgres automatically folds unquoted identifiers to lowercase
-    protein_go_list =  models.JSONField(null=True, blank=True)
-    phospho_protein_go_list =  models.JSONField(null=True, blank=True)
+    protein_go_list = models.JSONField(null=True, blank=True)
+    phospho_protein_go_list = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"Project {self.name}"
+
 
 class Replicate(models.Model):
     name = models.CharField(max_length=255)
@@ -30,11 +32,14 @@ class Replicate(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['project', 'name'], name='unique_replicate_project_name')
+            models.UniqueConstraint(
+                fields=["project", "name"], name="unique_replicate_project_name"
+            )
         ]
 
     def __str__(self):
         return f"Replicate {self.name}"
+
 
 class SampleStage(models.Model):
     name = models.CharField(max_length=255)
@@ -45,7 +50,9 @@ class SampleStage(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['project', 'name'], name='unique_sample_stage_project_name')
+            models.UniqueConstraint(
+                fields=["project", "name"], name="unique_sample_stage_project_name"
+            )
         ]
 
     def __str__(self):
@@ -63,7 +70,10 @@ class ColumnName(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['name', 'replicate', 'sample_stage'], name='unique_name_replicate_sample_stage')
+            models.UniqueConstraint(
+                fields=["name", "replicate", "sample_stage"],
+                name="unique_name_replicate_sample_stage",
+            )
         ]
 
     def __str__(self):
@@ -79,7 +89,10 @@ class Protein(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['project', 'accession_number'], name='unique_project_accession_number')
+            models.UniqueConstraint(
+                fields=["project", "accession_number"],
+                name="unique_project_accession_number",
+            )
         ]
 
     def __str__(self):
@@ -100,7 +113,9 @@ class Phospho(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['protein', 'mod'], name='unique_protein_mod')
+            models.UniqueConstraint(
+                fields=["protein", "mod"], name="unique_protein_mod"
+            )
         ]
 
     def __str__(self):
@@ -119,16 +134,25 @@ class Statistic(models.Model):
         StatisticType, on_delete=models.CASCADE, related_name="statistic_type"
     )
     protein = models.ForeignKey(
-        Protein, on_delete=models.CASCADE, related_name="statistic_protein",
-        null=True, blank=True
+        Protein,
+        on_delete=models.CASCADE,
+        related_name="statistic_protein",
+        null=True,
+        blank=True,
     )
     phospho = models.ForeignKey(
-        Phospho, on_delete=models.CASCADE, related_name="statistic_phospho",
-        null=True, blank=True
+        Phospho,
+        on_delete=models.CASCADE,
+        related_name="statistic_phospho",
+        null=True,
+        blank=True,
     )
     project = models.ForeignKey(  # Needed for medians
-        Project, on_delete=models.SET_NULL, related_name="statistic_project",
-        null=True, blank=True
+        Project,
+        on_delete=models.SET_NULL,
+        related_name="statistic_project",
+        null=True,
+        blank=True,
     )
     metrics = models.JSONField(null=True, blank=True)
 
@@ -137,21 +161,20 @@ class Statistic(models.Model):
             UniqueConstraint(
                 fields=["statistic_type", "project"],
                 condition=Q(protein__isnull=True) & Q(phospho__isnull=True),
-                name="unique_statistic_by_type_and_project"
+                name="unique_statistic_by_type_and_project",
             ),
             UniqueConstraint(
                 fields=["statistic_type", "protein"],
                 condition=Q(project__isnull=True) & Q(phospho__isnull=True),
-                name="unique_statistic_by_type_and_protein"
+                name="unique_statistic_by_type_and_protein",
             ),
             UniqueConstraint(
                 fields=["statistic_type", "phospho"],
                 condition=Q(project__isnull=True) & Q(protein__isnull=True),
-                name="unique_statistic_by_type_and_phospho"
-            )
+                name="unique_statistic_by_type_and_phospho",
+            ),
         ]
 
-        
     def __str__(self):
         if self.phospho:
             return f"Statistic {self.statistic_type.name} {self.phospho.mod} (phospho)"
@@ -160,7 +183,9 @@ class Statistic(models.Model):
         elif self.project:
             return f"Statistic {self.statistic_type.name} {self.project.name} (project)"
         else:
-            return f"Invalid statistic {self.statistic_type.name} (no protein or phospho)"
+            return (
+                f"Invalid statistic {self.statistic_type.name} (no protein or phospho)"
+            )
 
 
 class Abundance(models.Model):
@@ -178,6 +203,7 @@ class Abundance(models.Model):
     def __str__(self):
         return f"Abundance: replicate '{self.replicate.name}' stage '{self.sample_stage.name}' statistic type '{self.statistic.statistic_type.name}' reading: {self.reading}"
 
+
 class UniprotData(models.Model):
     accession_number = models.CharField(max_length=255)
     gene_name = models.CharField(max_length=255)
@@ -185,11 +211,14 @@ class UniprotData(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['accession_number'], name='unique_uniprot_data_accession_number')
+            models.UniqueConstraint(
+                fields=["accession_number"], name="unique_uniprot_data_accession_number"
+            )
         ]
 
     def __str__(self):
         return f"Uniprot data for  {self.accession_number}"
+
 
 class PeptideStartPosition(models.Model):
     accession_number = models.CharField(max_length=255)
@@ -199,8 +228,7 @@ class PeptideStartPosition(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['accession_number', 'peptide'],
-                name='unique_accession_peptide'
+                fields=["accession_number", "peptide"], name="unique_accession_peptide"
             )
         ]
 

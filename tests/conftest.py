@@ -1,25 +1,9 @@
-import json
 import pytest
-from pathlib import Path
-import pandas as pd
 
-from process.factories import (
-    ProjectFactory,
-    ReplicateFactory,
-    SampleStageFactory,
-    ProteinFactory,
-    PhosphoFactory,
-)
+from process.constants import PROJECT_SL
+from process.factories import PhosphoFactory, ProteinFactory
+from process.models import Project, Replicate, SampleStage
 
-from process.models import (
-    Project,
-    Replicate,
-    SampleStage,
-)
-
-from process.constants import (
-    PROJECT_SL
-)
 
 @pytest.fixture
 def basic_project_setup():
@@ -53,6 +37,7 @@ def basic_project_setup():
         "proteins": proteins,
         "phosphos": phosphos,
     }
+
 
 # TODO - get rid of this later
 @pytest.fixture

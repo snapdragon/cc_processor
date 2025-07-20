@@ -1,22 +1,17 @@
 import json
-import math
 
-import pandas as pd
 from django.core.management.base import BaseCommand
-
-from process.models import (
-    Project,
-    Statistic,
-)
 
 from process.constants import (
     ABUNDANCES_NORMALISED_LOG2_MEAN,
-    Q_VALUE,
     ANOVA,
     CURVE_FOLD_CHANGE,
+    Q_VALUE,
 )
+from process.models import Project, Statistic
 
 OUTPUT_DIR = "output/lists"
+
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -47,9 +42,7 @@ class Command(BaseCommand):
         all_matches = {}
 
         for project in projects:
-            all_matches[project.name] = self._run_project(
-                project
-            )
+            all_matches[project.name] = self._run_project(project)
 
         for pr1 in all_matches:
             for pr2 in all_matches:
@@ -72,8 +65,6 @@ class Command(BaseCommand):
 
                 print("")
 
-
-
     def _run_project(self, project):
         if project.name == "ICR":
             print(f"Project: {project.name} with_bugs {project.with_bugs}")
@@ -89,7 +80,7 @@ class Command(BaseCommand):
         # else:
         statistics = Statistic.objects.filter(
             statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
-            protein__project=project
+            protein__project=project,
         )
 
         protein_matches = self._run_stats(statistics, project, 0.05)
@@ -103,7 +94,7 @@ class Command(BaseCommand):
         # else:
         statistics = Statistic.objects.filter(
             statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
-            phospho__protein__project=project
+            phospho__protein__project=project,
         )
 
         phospho_matches = self._run_stats(statistics, project, 0.02)
@@ -111,7 +102,6 @@ class Command(BaseCommand):
         print("")
 
         return protein_matches, phospho_matches
-
 
     def _run_stats(self, statistics, project, max_q):
         total = 0
@@ -121,11 +111,19 @@ class Command(BaseCommand):
         for statistic in statistics:
             total += 1
 
-            if statistic.metrics is None or statistic.metrics.get(ANOVA) is None or statistic.metrics[ANOVA].get(Q_VALUE) is None or statistic.metrics[ANOVA][Q_VALUE] >= max_q:
+            if (
+                statistic.metrics is None
+                or statistic.metrics.get(ANOVA) is None
+                or statistic.metrics[ANOVA].get(Q_VALUE) is None
+                or statistic.metrics[ANOVA][Q_VALUE] >= max_q
+            ):
                 # print(f"q value {statistic.metrics[ANOVA][Q_VALUE]}")
                 continue
 
-            if statistic.metrics.get(CURVE_FOLD_CHANGE) is None or statistic.metrics[CURVE_FOLD_CHANGE] < 1.2:
+            if (
+                statistic.metrics.get(CURVE_FOLD_CHANGE) is None
+                or statistic.metrics[CURVE_FOLD_CHANGE] < 1.2
+            ):
                 continue
 
             num_matches += 1
@@ -145,7 +143,9 @@ class Command(BaseCommand):
         else:
             output = "Total phospho"
 
-        print(f"{output} matches {len(matches)} of {total} ({num_matches} not distinct)")
+        print(
+            f"{output} matches {len(matches)} of {total} ({num_matches} not distinct)"
+        )
 
         file = project.name
 
@@ -158,6 +158,6 @@ class Command(BaseCommand):
             file = f"{file}_phospho"
 
         with open(f"{OUTPUT_DIR}/{file}.json", "w") as f:
-            json.dump(list(matches), f, indent = 4)
+            json.dump(list(matches), f, indent=4)
 
         return matches

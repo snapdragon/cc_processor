@@ -38,7 +38,7 @@ PEPTIDE_SEQ = "peptide_seq"
 # TODO - is this a good name? A bit vague.
 PHOSPHO = "phospho"
 # These are capitalised as they're fields found in the index_protein_names json file
-PEPTIDE = 'Peptide'
+PEPTIDE = "Peptide"
 PEPTOOLS_ANNOTATIONS = "PepTools_annotations"
 CONSENSUS_MOTIF_MATCH = "consenus_motif_match"
 KINASE_MOTIF_MATCH = "kinase_motif_match"
@@ -62,17 +62,31 @@ ABUNDANCES_NORMALISED_LOG2_MEAN = "abundances normalised log2_mean"
 ABUNDANCES_NORMALISED_MIN_MAX = "abundances normalised min-max"
 ABUNDANCES_NORMALISED_MEDIAN = "abundances normalised median"
 ABUNDANCES_NORMALISED_ZERO_MAX = "abundances normalised 0-max"
-ABUNDANCES_NORMALISED_LOG2_ARREST ="abundances normalised log2 arrest"
+ABUNDANCES_NORMALISED_LOG2_ARREST = "abundances normalised log2 arrest"
 
 PHOSPHO_REGRESSION_ZERO_MAX = "phospho_regression 0-max"
 PHOSPHO_REGRESSION_LOG2_MEAN = "phospho_regression log2_mean"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW = "phospho_regression position_abundances raw"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED = "phospho_regression position_abundances imputed"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX = "phospho_regression position_abundances normalised 0-max"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN = "phospho_regression position_abundances normalised median"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX = "phospho_regression position_abundances normalised min-max"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN = "phospho_regression position_abundances normalised log2_mean"
-PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST = "phospho_regression position_abundances normalised log2 arrest"
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_RAW = (
+    "phospho_regression position_abundances raw"
+)
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_IMPUTED = (
+    "phospho_regression position_abundances imputed"
+)
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_ZERO_MAX = (
+    "phospho_regression position_abundances normalised 0-max"
+)
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MEDIAN = (
+    "phospho_regression position_abundances normalised median"
+)
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_MIN_MAX = (
+    "phospho_regression position_abundances normalised min-max"
+)
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN = (
+    "phospho_regression position_abundances normalised log2_mean"
+)
+PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_ARREST = (
+    "phospho_regression position_abundances normalised log2 arrest"
+)
 PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX = "protein_oscillation_abundances 0-max"
 PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN = "protein_oscillation_abundances log2_mean"
 

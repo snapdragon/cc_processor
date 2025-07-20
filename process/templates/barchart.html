@@ -38,22 +38,22 @@
             margin = { top: 20, right: 120, bottom: 30, left: 500 },
             width = +svg.attr("width") - margin.left - margin.right,
             height = +svg.attr("height") - margin.top - margin.bottom;
-    
+
       const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-    
+
       const y = d3.scaleBand()
         .domain(data.map(d => d.name))
         .rangeRound([0, height])
         .padding(0.2);
-    
+
       const x = d3.scaleLinear()
         .domain([0, d3.max(data, d => d.value)])
         .range([0, width]);
-    
+
       const color = d3.scaleOrdinal()
         .domain(["Reactome", "BP", "MF", "CC"])
         .range(["#888", "#4095c5", "#9fcae2", "#0072b2"]);
-    
+
       // Bars
       g.append("g")
         .selectAll("rect")
@@ -70,7 +70,7 @@
         .call(d3.axisLeft(y).tickSize(0))
         .selectAll("text")
           .style("text-anchor", "end");
-    
+
       // X-axis
       g.append("g")
         .attr("transform", `translate(0,${height})`)
@@ -81,18 +81,18 @@
           .attr("fill", "#000")
           .attr("text-anchor", "end")
           .text("-log10 (p-value)");
-    
+
       // Group labels on the right
       const groupPositions = [];
       let lastGroup = null;
-    
+
       data.forEach((d, i) => {
         if (d.group !== lastGroup) {
           groupPositions.push({ group: d.group, index: i });
           lastGroup = d.group;
         }
       });
-    
+
       // Add group labels
       svg.append("g")
         .selectAll("text")
@@ -103,7 +103,7 @@
           .attr("y", d => (margin.top + y(data[d.index].name) + y.bandwidth() / 2) + 50)
           .attr("class", "group-label")
           .text(d => d.group);
-    
+
       // Add horizontal dividers between groups
       svg.append("g")
         .selectAll("line")

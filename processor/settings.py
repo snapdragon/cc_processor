@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-+4g!acvmg+&n@sn!0bh&^lljl%3r3(yidg3-4tlf(5k9d-zs4w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '0.0.0.0']
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
 
 # Application definition
 
@@ -130,20 +130,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # N.B. THIS IS SET UP FOR DEVELOPMENT ONLY! Settings below will need to be improved for prod.
 
 # Allow localhost and 127.0.0.1 as valid cookie domains
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost',
-    'http://127.0.0.1',
-    'http://0.0.0.0'
-]
+CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://127.0.0.1", "http://0.0.0.0"]
 
 # Let the browser accept the session cookie
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
 # Optional but helpful for dev:
-SESSION_COOKIE_SAMESITE = 'Lax'  # or None, but None requires Secure=True on some browsers
-CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = (
+    "Lax"  # or None, but None requires Secure=True on some browsers
+)
+CSRF_COOKIE_SAMESITE = "Lax"
 
 SESSION_COOKIE_DOMAIN = None
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_ENGINE = "django.contrib.sessions.backends.db"

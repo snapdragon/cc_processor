@@ -1,44 +1,42 @@
 import logging
-
-import pandas as pd
-from django.core.management.base import BaseCommand
-import ijson
 from decimal import Decimal
 
-from process.models import (
-    Project,
-    Protein,
-    Abundance,
-    Phospho,
-    StatisticType,
-    Statistic,
-    Replicate,
-    SampleStage
-)
+import ijson
+from django.core.management.base import BaseCommand
 
 from process.constants import (
-    ABUNDANCES_RAW,
-    RAW,
-    PROTEIN_ABUNDANCES,
-    ABUNDANCES_NORMALISED_MEDIAN,
-    NORMALISED,
-    MEDIAN,
+    ABUNDANCES_IMPUTED,
     ABUNDANCES_NORMALISED_LOG2_ARREST,
     ABUNDANCES_NORMALISED_LOG2_MEAN,
-    LOG2_MEAN,
+    ABUNDANCES_NORMALISED_MEDIAN,
     ABUNDANCES_NORMALISED_MIN_MAX,
-    MIN_MAX,
     ABUNDANCES_NORMALISED_ZERO_MAX,
-    ZERO_MAX,
-    ABUNDANCES_IMPUTED,
+    ABUNDANCES_RAW,
     IMPUTED,
+    LOG2_MEAN,
+    MEDIAN,
     METRICS,
+    MIN_MAX,
+    NORMALISED,
     PHOSPHORYLATION_ABUNDANCES,
     PHOSPHORYLATION_SITE,
     POSITION_ABUNDANCES,
+    PROTEIN_ABUNDANCES,
     PROTEIN_OSCILLATION_ABUNDANCES,
-    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
     PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
+    PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
+    RAW,
+    ZERO_MAX,
+)
+from process.models import (
+    Abundance,
+    Phospho,
+    Project,
+    Protein,
+    Replicate,
+    SampleStage,
+    Statistic,
+    StatisticType,
 )
 
 logging.basicConfig(
@@ -50,16 +48,16 @@ logger = logging.getLogger(__name__)
 
 PROJECT_NAME = "Original"
 
+
 class Command(BaseCommand):
     help = "import the output from the original for comparison"
 
     def handle(self, *args, **options):
-        logger.info(f"Importing original output")
+        logger.info("Importing original output")
 
         project = Project.objects.get(name=PROJECT_NAME)
-        stats_type_rp = StatisticType.objects.get(name=ABUNDANCES_RAW)
 
-        file_path = f"data/ICR/TimeCourse_Full_info_indented.json"
+        file_path = "data/ICR/TimeCourse_Full_info_indented.json"
 
         Abundance.objects.filter(statistic__project=project).delete()
         Abundance.objects.filter(statistic__protein__project=project).delete()
@@ -71,7 +69,7 @@ class Command(BaseCommand):
         Phospho.objects.filter(protein__project=project).delete()
 
         replicates = Replicate.objects.filter(project=project)
-        sample_stages = SampleStage.objects.filter(project=project).order_by('rank')
+        sample_stages = SampleStage.objects.filter(project=project).order_by("rank")
 
         replicates_by_name = {}
         sample_stages_by_name = {}
@@ -84,10 +82,12 @@ class Command(BaseCommand):
 
         num_proteins = 0
 
-        with open(file_path, 'r') as f:
-            for gene_name, gene_data in ijson.kvitems(f, ''):
+        with open(file_path, "r") as f:
+            for gene_name, gene_data in ijson.kvitems(f, ""):
                 if not num_proteins % 1000:
-                    logger.info(f"Importing original protein result {num_proteins} {gene_name}")
+                    logger.info(
+                        f"Importing original protein result {num_proteins} {gene_name}"
+                    )
 
                 num_proteins += 1
 
@@ -124,13 +124,15 @@ class Command(BaseCommand):
                     phospho = Phospho.objects.create(
                         protein=protein,
                         mod=mod,
-                        phosphosite=phospho_data[PHOSPHORYLATION_SITE]
+                        phosphosite=phospho_data[PHOSPHORYLATION_SITE],
                     )
 
                     # TODO - peptide abundances
 
                     if not phospho_data.get(POSITION_ABUNDANCES):
-                        logger.info(f"No phospho position abundances for {gene_name} {mod}")
+                        logger.info(
+                            f"No phospho position abundances for {gene_name} {mod}"
+                        )
                         continue
 
                     pa = phospho_data[POSITION_ABUNDANCES]
@@ -171,10 +173,14 @@ class Command(BaseCommand):
                                     poa[ZERO_MAX][METRICS],
                                 )
                             else:
-                                logger.info(f"No protein oscillation zero max metrics {protein.accession_number}")
+                                logger.info(
+                                    f"No protein oscillation zero max metrics {protein.accession_number}"
+                                )
 
                         else:
-                            logger.info(f"No protein oscillation zero max for protein {protein.accession_number}")
+                            logger.info(
+                                f"No protein oscillation zero max for protein {protein.accession_number}"
+                            )
 
                         if poa.get(LOG2_MEAN):
                             self._import_readings(
@@ -194,11 +200,14 @@ class Command(BaseCommand):
                                     poa[LOG2_MEAN][METRICS],
                                 )
                             else:
-                                logger.info(f"No protein oscillation log2 mean metrics {protein.accession_number}")
+                                logger.info(
+                                    f"No protein oscillation log2 mean metrics {protein.accession_number}"
+                                )
 
                         else:
-                            logger.info(f"No protein oscillation log2 mean for protein {protein.accession_number}")
-
+                            logger.info(
+                                f"No protein oscillation log2 mean for protein {protein.accession_number}"
+                            )
 
     def _import_metrics(
         self,
@@ -209,13 +218,11 @@ class Command(BaseCommand):
     ):
         if protein:
             _, stat_prot_raw = self._fetch_stats_type_and_stats(
-                statistic_type_name,
-                protein = protein
+                statistic_type_name, protein=protein
             )
         else:
             _, stat_prot_raw = self._fetch_stats_type_and_stats(
-                statistic_type_name,
-                phospho = phospho
+                statistic_type_name, phospho=phospho
             )
 
         stat_prot_raw.metrics = self._convert_decimals(obj)
@@ -228,26 +235,24 @@ class Command(BaseCommand):
         protein,
         phospho,
         statistic_type_name,
-        obj
+        obj,
     ):
         if protein:
             _, stat_raw = self._fetch_stats_type_and_stats(
-                statistic_type_name,
-                protein=protein
+                statistic_type_name, protein=protein
             )
         else:
             _, stat_raw = self._fetch_stats_type_and_stats(
-                statistic_type_name,
-                phospho = phospho 
+                statistic_type_name, phospho=phospho
             )
 
         for replicate_name, readings in obj.items():
             for sample_stage_name, reading in readings.items():
                 # Strip out 'status' string for imputed values
                 if statistic_type_name == ABUNDANCES_IMPUTED:
-                    reading = reading['value']
+                    reading = reading["value"]
 
-                # Protein oscillations puts metrics at the same level as replicates
+                # Protein oscillations puts metrics at the same level as replicates
                 if replicate_name == "metrics":
                     continue
 
@@ -258,7 +263,7 @@ class Command(BaseCommand):
                     statistic=stat_raw,
                     replicate=replicate,
                     sample_stage=sample_stage,
-                    reading=reading
+                    reading=reading,
                 )
 
     def _import_data(
@@ -303,7 +308,9 @@ class Command(BaseCommand):
                 pa[NORMALISED]["log2_palbo"],
             )
         else:
-            logger.info(f"No normalised log2 arrest for protein {protein.accession_number}")
+            logger.info(
+                f"No normalised log2 arrest for protein {protein.accession_number}"
+            )
 
         if pa.get(NORMALISED) and pa[NORMALISED].get(LOG2_MEAN):
             self._import_readings(
@@ -315,8 +322,10 @@ class Command(BaseCommand):
                 pa[NORMALISED][LOG2_MEAN],
             )
         else:
-            logger.info(f"No normalised log2 mean for protein {protein.accession_number}")
-                
+            logger.info(
+                f"No normalised log2 mean for protein {protein.accession_number}"
+            )
+
         if pa.get(NORMALISED) and pa[NORMALISED].get(MIN_MAX):
             self._import_readings(
                 replicates_by_name,
@@ -339,7 +348,9 @@ class Command(BaseCommand):
                 pa[NORMALISED][ZERO_MAX],
             )
         else:
-            logger.info(f"No normalised zero max for protein {protein.accession_number}")
+            logger.info(
+                f"No normalised zero max for protein {protein.accession_number}"
+            )
 
         if pa.get(IMPUTED):
             self._import_readings(
@@ -373,17 +384,27 @@ class Command(BaseCommand):
         else:
             logger.info(f"No zero max metrics {protein.accession_number}")
 
-    def _fetch_stats_type_and_stats(self, statistic_type_name, project = None, protein = None, phospho = None):
+    def _fetch_stats_type_and_stats(
+        self, statistic_type_name, project=None, protein=None, phospho=None
+    ):
         statistic_type = StatisticType.objects.get(name=statistic_type_name)
 
         if project:
-            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, project=project)
+            stat, _ = Statistic.objects.get_or_create(
+                statistic_type=statistic_type, project=project
+            )
         elif protein:
-            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, protein=protein)
+            stat, _ = Statistic.objects.get_or_create(
+                statistic_type=statistic_type, protein=protein
+            )
         elif phospho:
-            stat, _ = Statistic.objects.get_or_create(statistic_type=statistic_type, phospho=phospho)
+            stat, _ = Statistic.objects.get_or_create(
+                statistic_type=statistic_type, phospho=phospho
+            )
         else:
-            raise Exception(f"_clear_and_fetch_stats needs a project, protein or phospho")
+            raise Exception(
+                "_clear_and_fetch_stats needs a project, protein or phospho"
+            )
 
         return statistic_type, stat
 

@@ -9483,4 +9483,3 @@ ALTER TABLE ONLY public.process_uniprotdata
 --
 -- PostgreSQL database dump complete
 --
-

@@ -1,19 +1,24 @@
-import re
 import logging
-import json
+import os
+import re
+import sys
 
 import pandas as pd
 from django.core.management.base import BaseCommand
+
 import utilities_basicReader
-
-from process.models import ColumnName, Project, Protein, Phospho, StatisticType, Abundance, Statistic, PeptideStartPosition
-
-from static_mapping import time_points, data_files, data_files_datakeys, time_points_mapping
-
-from process.constants import (
-    ABUNDANCES_RAW,
-    PROJECT_SL
+from process.constants import ABUNDANCES_RAW, PROJECT_SL
+from process.models import (
+    Abundance,
+    ColumnName,
+    PeptideStartPosition,
+    Phospho,
+    Project,
+    Protein,
+    Statistic,
+    StatisticType,
 )
+from static_mapping import data_files_datakeys, time_points, time_points_mapping
 
 logging.basicConfig(
     level=logging.INFO,
@@ -71,12 +76,14 @@ class Command(BaseCommand):
             excel_file = pd.ExcelFile(file_path)
 
             # Sheet two is the phosphoproteome sheet, apparently
-            df = pd.read_excel(excel_file, sheet_name = 1)
+            df = pd.read_excel(excel_file, sheet_name=1)
 
             row_no = 0
 
             for index, row in df.iterrows():
-                accession_number = row[project.proteome_file_accession_number_column_name]
+                accession_number = row[
+                    project.proteome_file_accession_number_column_name
+                ]
 
                 if accession_number.startswith("CON_"):
                     print(f"Skipping contaminant {accession_number}")
@@ -87,42 +94,47 @@ class Command(BaseCommand):
 
                 row_no += 1
 
-                peptide = row['Stripped.Sequence']
+                peptide = row["Stripped.Sequence"]
 
                 try:
                     psp = PeptideStartPosition.objects.get(
-                        accession_number = accession_number,
-                        peptide = peptide
+                        accession_number=accession_number, peptide=peptide
                     )
 
                     start_position = psp.start_position
 
-                    modified_peptide = row['Modified.Sequence']
+                    modified_peptide = row["Modified.Sequence"]
 
-                    mods = extract_protein_site(modified_peptide, accession_number, start_position)
+                    mods = extract_protein_site(
+                        modified_peptide, accession_number, start_position
+                    )
 
-                    phosphosite = ','.join(m['mod'] for m in mods)
+                    phosphosite = ",".join(m["mod"] for m in mods)
                 except Exception as e:
                     print(e)
                     print(f"No phosphosite available for {accession_number} {peptide}")
                     phosphosite = None
 
-                mod = row['Precursor.Id']
+                mod = row["Precursor.Id"]
 
                 if not proteins.get(accession_number):
                     new_protein = Protein.objects.create(
-                        project=project, accession_number=accession_number, is_contaminant=False
+                        project=project,
+                        accession_number=accession_number,
+                        is_contaminant=False,
                     )
                     proteins[accession_number] = new_protein
                     # print(f"{accession_number} not found in proteins, skipping")
                     # continue
 
                 protein, _ = Protein.objects.get_or_create(
-                    project=project, accession_number=accession_number, is_contaminant=False
+                    project=project,
+                    accession_number=accession_number,
+                    is_contaminant=False,
                 )
 
                 phospho = Phospho.objects.create(
-                    protein = protein, mod = mod, phosphosite = phosphosite
+                    protein=protein, mod=mod, phosphosite=phosphosite
                 )
 
                 statistic = Statistic.objects.create(
@@ -130,7 +142,7 @@ class Command(BaseCommand):
                 )
 
                 for col in df.columns:
-                    col_short = re.search(r'IITI_\d{3}', col)
+                    col_short = re.search(r"IITI_\d{3}", col)
 
                     if col_short is not None:
                         if cn := cns_by_name.get(col_short.group()):
@@ -140,39 +152,52 @@ class Command(BaseCommand):
                                 continue
 
                             Abundance.objects.create(
-                                statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
+                                statistic=statistic,
+                                replicate=cn.replicate,
+                                sample_stage=cn.sample_stage,
+                                reading=reading,
                             )
 
             return
-        
+
         if project_name != "ICR":
             raise Exception(f"Unknown project name {project_name}")
 
         cns_by_replicate_and_column_name = {}
         time_course_phospho_full = {}
-        time_course_phospho_reps = parseTimeCoursePhosphoProteomics(file_path, contaminants)
+        time_course_phospho_reps = parseTimeCoursePhosphoProteomics(
+            file_path, contaminants
+        )
 
         for cn in column_names:
             if not cns_by_replicate_and_column_name.get(cn.replicate.name):
                 cns_by_replicate_and_column_name[cn.replicate.name] = {}
 
-            cns_by_replicate_and_column_name[cn.replicate.name][cn.sample_stage.name] = cn
+            cns_by_replicate_and_column_name[cn.replicate.name][
+                cn.sample_stage.name
+            ] = cn
 
         num_phosphos = 0
 
         for uniprot_accession in time_course_phospho_reps:
             if not proteins.get(uniprot_accession):
                 new_protein = Protein.objects.create(
-                    project=project, accession_number=uniprot_accession, is_contaminant=False
+                    project=project,
+                    accession_number=uniprot_accession,
+                    is_contaminant=False,
                 )
                 proteins[uniprot_accession] = new_protein
 
             # logger.info(f"Importing phosphos for protein: {uniprot_accession}")
 
             if uniprot_accession not in time_course_phospho_full:
-                time_course_phospho_full[uniprot_accession] = {"phosphorylation_abundances": {}}
+                time_course_phospho_full[uniprot_accession] = {
+                    "phosphorylation_abundances": {}
+                }
 
-            for mod_key in time_course_phospho_reps[uniprot_accession]["phosphorylation_abundances"]:
+            for mod_key in time_course_phospho_reps[uniprot_accession][
+                "phosphorylation_abundances"
+            ]:
                 if (
                     mod_key
                     not in time_course_phospho_full[uniprot_accession][
@@ -180,7 +205,9 @@ class Command(BaseCommand):
                     ]
                 ):
                     if not num_phosphos % 1000:
-                        print(f"Importing ICR phospho {num_phosphos} {uniprot_accession} {mod_key}")
+                        print(
+                            f"Importing ICR phospho {num_phosphos} {uniprot_accession} {mod_key}"
+                        )
 
                     num_phosphos += 1
 
@@ -201,25 +228,31 @@ class Command(BaseCommand):
 
                     # Combine the abundances for a phosphosite from different modifications
                     for modification in mod["peptide_abundances"]["rep_1"]:
-                        abundance_rep_1 = mod["peptide_abundances"]["rep_1"][modification]["abundance_rep_1"]
-                        abundance_rep_2 = mod["peptide_abundances"]["rep_2"][modification]["abundance_rep_2"]
+                        abundance_rep_1 = mod["peptide_abundances"]["rep_1"][
+                            modification
+                        ]["abundance_rep_1"]
+                        abundance_rep_2 = mod["peptide_abundances"]["rep_2"][
+                            modification
+                        ]["abundance_rep_2"]
 
                         for k, v in abundance_rep_1.items():
                             cur_ab = 0
                             if k in raw["abundance_rep_1"]:
                                 cur_ab += raw["abundance_rep_1"][k]
 
-                            raw["abundance_rep_1"][k] = (cur_ab + abundance_rep_1[k])
+                            raw["abundance_rep_1"][k] = cur_ab + abundance_rep_1[k]
 
                         for k, v in abundance_rep_2.items():
                             cur_ab = 0
                             if k in raw["abundance_rep_2"]:
                                 cur_ab += raw["abundance_rep_2"][k]
 
-                            raw["abundance_rep_2"][k] = (cur_ab + abundance_rep_2[k])
+                            raw["abundance_rep_2"][k] = cur_ab + abundance_rep_2[k]
 
                 phospho = Phospho.objects.create(
-                    protein=proteins[uniprot_accession], mod=mod_key, phosphosite=phosphosite
+                    protein=proteins[uniprot_accession],
+                    mod=mod_key,
+                    phosphosite=phosphosite,
                 )
 
                 statistic = Statistic.objects.create(
@@ -233,12 +266,16 @@ class Command(BaseCommand):
                         if reading != reading:
                             continue
 
-                        cn = cns_by_replicate_and_column_name[replicate_name][column_name]
+                        cn = cns_by_replicate_and_column_name[replicate_name][
+                            column_name
+                        ]
 
                         Abundance.objects.create(
-                            statistic=statistic, replicate=cn.replicate, sample_stage=cn.sample_stage, reading=reading
+                            statistic=statistic,
+                            replicate=cn.replicate,
+                            sample_stage=cn.sample_stage,
+                            reading=reading,
                         )
-
 
 
 def findModificationPositionRep1(data_point):
@@ -252,7 +289,7 @@ def findModificationPositionRep1(data_point):
             'likelihood': None, 'phosphosite': 'S971', 'Uniprot_Position': {'start': '-', 'end': '-'}},
             'S979': {'event': '2xPhospho', 'aa': 'S', 'Position': '979', 'likelihood': None, 'phosphosite': 'S979', ...}}}}
     """
-    
+
     modification = data_point["Modifications in Master Proteins"]
     positions = findPositionInMasterProtein(data_point["Positions in Master Proteins"])
     modification_info = {}
@@ -266,7 +303,7 @@ def findModificationPositionRep1(data_point):
     modifications = modification.split("; ")
     accession = ""
 
-    if len(modifications) == 0 or modifications == ['']:
+    if len(modifications) == 0 or modifications == [""]:
         # modifications = "Q07820 [137-176]"
         modification = data_point["Positions in Master Proteins"]
         modifications = [modification]
@@ -306,10 +343,7 @@ def findModificationPositionRep1(data_point):
                         + "]"
                     )
                     p_site = p_site + range_name
-                if (
-                    info["phosphosite"].find("/") != -1
-                    or len(info["phosphosite"]) == 1
-                ):
+                if info["phosphosite"].find("/") != -1 or len(info["phosphosite"]) == 1:
                     info["phosphosite"] = info["phosphosite"] + range_name
                     info["position"] = info["position"] + range_name
 
@@ -318,12 +352,10 @@ def findModificationPositionRep1(data_point):
                 modification_info[accession][p_site]["phosphosite"] = p_site
                 modification_info[accession][p_site]["aa"] = info["aa"]
                 modification_info[accession][p_site]["position"] = info["position"]
-                modification_info[accession][p_site][
-                    "uniprot_position"
-                ] = positions[accession]
-                modification_info[accession][p_site]["likelihood"] = info[
-                    "likelihood"
+                modification_info[accession][p_site]["uniprot_position"] = positions[
+                    accession
                 ]
+                modification_info[accession][p_site]["likelihood"] = info["likelihood"]
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -332,6 +364,7 @@ def findModificationPositionRep1(data_point):
             logger.info(e)
 
     return modification_info
+
 
 def findPhosphoAbundance(data_source, data_point, uniprot_accession_key):
     """
@@ -352,6 +385,7 @@ def findPhosphoAbundance(data_source, data_point, uniprot_accession_key):
             abundance[uniprot_accession_key][time_point] = ab[col_name]
 
     return abundance
+
 
 def findSite(sites):
     """
@@ -422,30 +456,32 @@ def findSite(sites):
 
     return final_sites
 
-def findPositionInMasterProtein(data_point):
-        """
-        Finds the positions of the peptide in the master protein.
-        Input: "P16402 [35-47]; P10412 [34-46]; P16403 [34-46]"
-        Output: {'P16402': {'start': '35', 'end': '47'}, 'P10412': {'start': '34', 'end': '46'}, 'P16403': {'start': '34', 'end': '46'}}
-        """
-        position_in_master_protein = data_point
-        protein_position_info = {}
 
-        positions = position_in_master_protein.split(";")
-        for position in positions:
-            position = position.strip(" ")
-            position_info = position.split(" ")
-            for index, item in enumerate(position_info):
-                position_info[index] = item.strip("[").strip("]")
-                if len(position_info) > 1:
-                    position_ranges = position_info[1].split("-")
-                else:
-                    position_ranges = position_info[0].split("-")
-                protein_position_info[position_info[0]] = {
-                    "start": position_ranges[0],
-                    "end": position_ranges[1],
-                }
-        return protein_position_info
+def findPositionInMasterProtein(data_point):
+    """
+    Finds the positions of the peptide in the master protein.
+    Input: "P16402 [35-47]; P10412 [34-46]; P16403 [34-46]"
+    Output: {'P16402': {'start': '35', 'end': '47'}, 'P10412': {'start': '34', 'end': '46'}, 'P16403': {'start': '34', 'end': '46'}}
+    """
+    position_in_master_protein = data_point
+    protein_position_info = {}
+
+    positions = position_in_master_protein.split(";")
+    for position in positions:
+        position = position.strip(" ")
+        position_info = position.split(" ")
+        for index, item in enumerate(position_info):
+            position_info[index] = item.strip("[").strip("]")
+            if len(position_info) > 1:
+                position_ranges = position_info[1].split("-")
+            else:
+                position_ranges = position_info[0].split("-")
+            protein_position_info[position_info[0]] = {
+                "start": position_ranges[0],
+                "end": position_ranges[1],
+            }
+    return protein_position_info
+
 
 def parseTimeCoursePhosphoProteomics(file_path, contaminants):
     phospho_rep = {}
@@ -453,7 +489,9 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
     # TODO - delete utilites_basicReader at some point
     data_points_2 = utilities_basicReader.readTableFile(
         file_path,
-        byColumn=False,stripQuotes=True,)
+        byColumn=False,
+        stripQuotes=True,
+    )
 
     for key, data_point_2 in data_points_2.items():
         if key == 0:
@@ -462,28 +500,29 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
             modification_info = findModificationPositionRep1(data_point_2)
 
             for uniprot_accession_key in modification_info:
-                if (
-                    uniprot_accession_key == ""
-                    or uniprot_accession_key in contaminants
-                ):
+                if uniprot_accession_key == "" or uniprot_accession_key in contaminants:
                     logger.info("+++++ CONTAMINANT FOUND")
                     logger.info(uniprot_accession_key)
                     continue
 
                 abundance_rep_1 = findPhosphoAbundance(
                     "TimeCourse_Phosphoproteomics_rep_1",
-                    data_point_2,uniprot_accession_key,)
-        
+                    data_point_2,
+                    uniprot_accession_key,
+                )
+
                 abundance_rep_2 = findPhosphoAbundance(
                     "TimeCourse_Phosphoproteomics_rep_2",
-                    data_point_2, uniprot_accession_key)
+                    data_point_2,
+                    uniprot_accession_key,
+                )
 
                 if (
                     len(abundance_rep_1[uniprot_accession_key]) == 0
                     and len(abundance_rep_2[uniprot_accession_key]) == 0
                 ):
                     continue
-                
+
                 if uniprot_accession_key not in phospho_rep:
                     phospho_rep[uniprot_accession_key] = {
                         "phosphorylation_abundances": {}
@@ -508,25 +547,27 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
                             "phosphorylation_abundances"
                         ][mod_key] = {
                             "phosphorylation site": phosphosite_info["phosphosite"],
-                            "peptide_abundances": {"rep_1":{}, "rep_2":{}},
+                            "peptide_abundances": {"rep_1": {}, "rep_2": {}},
                             "position_abundances": {
                                 "raw": {},
-                                "normalised": {"log2_mean": {}, "min-max": {}, "0-max": {}},
+                                "normalised": {
+                                    "log2_mean": {},
+                                    "min-max": {},
+                                    "0-max": {},
+                                },
                                 "imputed": {},
                             },
                             "confidence": {},
                         }
 
-                    phospho_rep[uniprot_accession_key][
-                        "phosphorylation_abundances"
-                    ][mod_key]["confidence"]["CR07"] = {
+                    phospho_rep[uniprot_accession_key]["phosphorylation_abundances"][
+                        mod_key
+                    ]["confidence"]["CR07"] = {
                         "protein_groups": data_point_2["Number of Protein Groups"],
                         "no_proteins": data_point_2["Number of Proteins"],
                         "no_isoforms": data_point_2["Number of Isoforms"],
                         "PSMs": data_point_2["Number of PSMs"],
-                        "missed_cleavages": data_point_2[
-                            "Number of Missed Cleavages"
-                        ],
+                        "missed_cleavages": data_point_2["Number of Missed Cleavages"],
                         "MHplus": data_point_2["Theo MHplus in Da"],
                         "q_value_HT": data_point_2[
                             "Percolator q-Value by Search Engine Sequest HT"
@@ -534,47 +575,43 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
                         "PEP_Sequest": data_point_2[
                             "Percolator PEP by Search Engine Sequest HT"
                         ],
-                        "XCorr_HT": data_point_2[
-                            "XCorr by Search Engine Sequest HT"
-                        ],
+                        "XCorr_HT": data_point_2["XCorr by Search Engine Sequest HT"],
                         "confidence_Sequest_HT": data_point_2[
                             "Confidence by Search Engine Sequest HT"
                         ],
                     }
-                    
-                    if (modification not in phospho_rep[uniprot_accession_key][
+
+                    if (
+                        modification
+                        not in phospho_rep[uniprot_accession_key][
                             "phosphorylation_abundances"
-                        ][mod_key]["peptide_abundances"]["rep_1"]):
+                        ][mod_key]["peptide_abundances"]["rep_1"]
+                    ):
 
                         phospho_rep[uniprot_accession_key][
                             "phosphorylation_abundances"
                         ][mod_key]["peptide_abundances"]["rep_1"][modification] = {
-                            "abundance_rep_1": abundance_rep_1[
-                                uniprot_accession_key
-                            ],
+                            "abundance_rep_1": abundance_rep_1[uniprot_accession_key],
                             "sequence": data_point_2["Annotated Sequence"],
-                            "uniprot_position": phosphosite_info[
-                                "uniprot_position"
-                            ],
+                            "uniprot_position": phosphosite_info["uniprot_position"],
                             "aa": phosphosite_info["aa"],
                             "phosphosite": phosphosite_info["phosphosite"],
                             "likelihood": phosphosite_info["likelihood"],
                             "modification": modification,
                         }
 
-                    if (modification not in phospho_rep[uniprot_accession_key][
+                    if (
+                        modification
+                        not in phospho_rep[uniprot_accession_key][
                             "phosphorylation_abundances"
-                        ][mod_key]["peptide_abundances"]["rep_2"]):
+                        ][mod_key]["peptide_abundances"]["rep_2"]
+                    ):
                         phospho_rep[uniprot_accession_key][
                             "phosphorylation_abundances"
                         ][mod_key]["peptide_abundances"]["rep_2"][modification] = {
-                            "abundance_rep_2": abundance_rep_2[
-                                uniprot_accession_key
-                            ],
+                            "abundance_rep_2": abundance_rep_2[uniprot_accession_key],
                             "sequence": data_point_2["Annotated Sequence"],
-                            "uniprot_position": phosphosite_info[
-                                "uniprot_position"
-                            ],
+                            "uniprot_position": phosphosite_info["uniprot_position"],
                             "aa": phosphosite_info["aa"],
                             "phosphosite": phosphosite_info["phosphosite"],
                             "likelihood": phosphosite_info["likelihood"],
@@ -587,16 +624,6 @@ def parseTimeCoursePhosphoProteomics(file_path, contaminants):
 
     return phospho_rep
 
-
-
-
-
-
-
-
-
-
-import re
 
 def extract_protein_site(peptide, protein_accession, peptide_start):
     """
@@ -611,7 +638,7 @@ def extract_protein_site(peptide, protein_accession, peptide_start):
         List[dict]: Modification info including mod_key, residue, peptide_position, protein_position, and site_string
     """
     mods = []
-    seq_clean = ''
+    seq_clean = ""
     idx = 0  # 1-based clean peptide index
     i = 0
 
@@ -620,21 +647,23 @@ def extract_protein_site(peptide, protein_accession, peptide_start):
             seq_clean += peptide[i]
             idx += 1
             i += 1
-        elif peptide[i] == '(':
-            match = re.match(r'\(([^\)]+)\)', peptide[i:])
+        elif peptide[i] == "(":
+            match = re.match(r"\(([^\)]+)\)", peptide[i:])
             if match:
                 mod_key = match.group(1)
                 aa = seq_clean[-1]  # last added residue
-                pep_pos = idx       # 1-based peptide position
+                pep_pos = idx  # 1-based peptide position
                 prot_pos = peptide_start + pep_pos - 1  # 1-based protein position
-                mods.append({
-                    "mod_key": mod_key,
-                    "residue": aa,
-                    "peptide_position": pep_pos,
-                    "protein_position": prot_pos,
-                    "site_string": f"{protein_accession}|{aa}{prot_pos}",
-                    "mod": f"{aa}{prot_pos}"
-                })
+                mods.append(
+                    {
+                        "mod_key": mod_key,
+                        "residue": aa,
+                        "peptide_position": pep_pos,
+                        "protein_position": prot_pos,
+                        "site_string": f"{protein_accession}|{aa}{prot_pos}",
+                        "mod": f"{aa}{prot_pos}",
+                    }
+                )
                 i += len(match.group(0))  # skip over (UniMod:xx)
             else:
                 i += 1
