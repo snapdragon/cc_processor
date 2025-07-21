@@ -18,6 +18,7 @@ _get_kinase_predictions should be excluded unless I can
 
 
 utilities_reader.py and utilities_basicReader.py should be in a subdir
+
 Compare proteins metrics for Q09666 has not very good q-value:
 ANOVA metrics match for abundances normalised log2_mean for Q09666 for q_value reading 0.6470752162303733 vs 0.7033535395638385
 
