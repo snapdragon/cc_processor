@@ -13,8 +13,6 @@ class Project(models.Model):
     proteome_file = models.CharField(max_length=255)
     phosphoproteome_file = models.CharField(max_length=255)
     proteome_file_accession_number_column_name = models.CharField(max_length=255)
-    protein_list = models.JSONField(null=True, blank=True)
-    phospho_protein_list = models.JSONField(null=True, blank=True)
     # GO is lowercase as postgres automatically folds unquoted identifiers to lowercase
     protein_go_list = models.JSONField(null=True, blank=True)
     phospho_protein_go_list = models.JSONField(null=True, blank=True)
@@ -86,6 +84,7 @@ class Protein(models.Model):
     )
     accession_number = models.CharField(max_length=255)
     is_contaminant = models.BooleanField(default=False)
+    relevant = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
@@ -107,9 +106,10 @@ class Phospho(models.Model):
     mod = models.CharField(max_length=255)
 
     phosphosite = models.CharField(max_length=255, null=True)
+    relevant = models.BooleanField(default=False)
 
-    pep_tools_annotations = models.JSONField(null=True, blank=True)
-    kinase_prediction = models.JSONField(null=True, blank=True)
+    # pep_tools_annotations = models.JSONField(null=True, blank=True)
+    # kinase_prediction = models.JSONField(null=True, blank=True)
 
     class Meta:
         constraints = [

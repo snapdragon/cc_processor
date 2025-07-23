@@ -72,7 +72,7 @@
                     .attr("width", cellSize)
                     .attr("height", cellSize)
                     .attr("class", "cell")
-                    .attr("fill", value == null || isNaN(value) ? "white" : colorScale(value));
+                    .attr("fill", value == null || isNaN(value) ? "#FFCCCB" : colorScale(value));
             });
         });
 
@@ -123,27 +123,42 @@
 
     // Draw gradient rectangle
     legend_svg.append("rect")
-      .attr("x", 400)
+      .attr("x", 300)
       .attr("y", 140 + expression_matrix.length * 60)
       .attr("width", 120)
       .attr("height", 20)
       .style("fill", "url(#legend-gradient)")
       .style("stroke", "black");
 
+    legend_svg.append("rect")
+      .attr("x", 510)
+      .attr("y", 140 + expression_matrix.length * 60)
+      .attr("width", 20)
+      .attr("height", 20)
+      .style("fill", "#FFCCCB")
+      .style("stroke", "black");
+
     // Add text labels
     legend_svg.append("text")
-      .attr("x", 372)
+      .attr("x", 272)
       .attr("y", 153 + expression_matrix.length * 60)
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
       .text("Low");
 
     legend_svg.append("text")
-      .attr("x", 547)
+      .attr("x", 447)
       .attr("y", 153 + expression_matrix.length * 60)
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
       .text("High");
+
+    legend_svg.append("text")
+      .attr("x", 572)
+      .attr("y", 153 + expression_matrix.length * 60)
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text("Missing");
 
     }
 

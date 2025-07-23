@@ -63,6 +63,10 @@ python manage.py makemigrations
 python manage.py makemigrations --empty process
 # Paste all the previously copied inserts into the file made by the command above
 python manage.py migrate
+# From inside postgres container
+psql -U myuser -d dbify -f db_data/process_peptidestartposition.sql
+psql -U myuser -d dbify -f db_data/process_uniprotdata.sql
+
 ```
 
 ### Run docker compose
@@ -174,6 +178,10 @@ pg_dump -d main -t process_uniprotdata > uniprot_data.sql
 pg_dump -d main -t process_peptidestartposition > peptidestartposition.sql
 
 # From outside container
-docker cp f09f37276ef6:/process_uniprotdata.sql db_backups/process_uniprotdata.sql
-docker cp f09f37276ef6:/process_peptidestartposition.sql db_backups/process_peptidestartposition.sql
+docker cp f09f37276ef6:/process_uniprotdata.sql db_data/process_uniprotdata.sql
+docker cp f09f37276ef6:/process_peptidestartposition.sql db_data/process_peptidestartposition.
+
+# To import, from outside container
+psql -U myuser -d dbify -f db_data/process_peptidestartposition.sql
+psql -U myuser -d dbify -f db_data/process_uniprotdata.sql
 ```

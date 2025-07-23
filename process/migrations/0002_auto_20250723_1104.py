@@ -95,154 +95,154 @@ class Migration(migrations.Migration):
         ColumnName.objects.create(
             replicate=replicate_1,
             sample_stage=sample_stage_1,
-            name="IITI_001",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_1,
-            sample_stage=sample_stage_2,
-            name="IITI_002",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_1,
-            sample_stage=sample_stage_3,
-            name="IITI_003",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_1,
-            sample_stage=sample_stage_4,
-            name="IITI_004",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_1,
-            sample_stage=sample_stage_5,
-            name="IITI_005",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_1,
-            sample_stage=sample_stage_6,
-            name="IITI_006",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_1,
-            sample_stage=sample_stage_7,
             name="IITI_007",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
-            sample_stage=sample_stage_8,
+            sample_stage=sample_stage_2,
+            name="IITI_003",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_1,
+            sample_stage=sample_stage_3,
+            name="IITI_005",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_1,
+            sample_stage=sample_stage_4,
+            name="IITI_006",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_1,
+            sample_stage=sample_stage_5,
             name="IITI_008",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
-            sample_stage=sample_stage_9,
+            sample_stage=sample_stage_6,
             name="IITI_009",
         )
         ColumnName.objects.create(
             replicate=replicate_1,
-            sample_stage=sample_stage_10,
+            sample_stage=sample_stage_7,
+            name="IITI_001",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_1,
+            sample_stage=sample_stage_8,
             name="IITI_010",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_1,
+            sample_stage=sample_stage_9,
+            name="IITI_002",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_1,
+            sample_stage=sample_stage_10,
+            name="IITI_004",
         )
 
         ColumnName.objects.create(
             replicate=replicate_2,
             sample_stage=sample_stage_1,
-            name="IITI_011",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_2,
-            sample_stage=sample_stage_2,
-            name="IITI_012",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_2,
-            sample_stage=sample_stage_3,
-            name="IITI_013",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_2,
-            sample_stage=sample_stage_4,
-            name="IITI_014",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_2,
-            sample_stage=sample_stage_5,
-            name="IITI_015",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_2,
-            sample_stage=sample_stage_6,
-            name="IITI_016",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_2,
-            sample_stage=sample_stage_7,
             name="IITI_017",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
-            sample_stage=sample_stage_8,
+            sample_stage=sample_stage_2,
+            name="IITI_013",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_2,
+            sample_stage=sample_stage_3,
+            name="IITI_015",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_2,
+            sample_stage=sample_stage_4,
+            name="IITI_016",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_2,
+            sample_stage=sample_stage_5,
             name="IITI_018",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
-            sample_stage=sample_stage_9,
+            sample_stage=sample_stage_6,
             name="IITI_019",
         )
         ColumnName.objects.create(
             replicate=replicate_2,
-            sample_stage=sample_stage_10,
+            sample_stage=sample_stage_7,
+            name="IITI_011",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_2,
+            sample_stage=sample_stage_8,
             name="IITI_020",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_2,
+            sample_stage=sample_stage_9,
+            name="IITI_012",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_2,
+            sample_stage=sample_stage_10,
+            name="IITI_014",
         )
 
         ColumnName.objects.create(
             replicate=replicate_3,
             sample_stage=sample_stage_1,
-            name="IITI_021",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_3,
-            sample_stage=sample_stage_2,
-            name="IITI_022",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_3,
-            sample_stage=sample_stage_3,
-            name="IITI_023",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_3,
-            sample_stage=sample_stage_4,
-            name="IITI_024",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_3,
-            sample_stage=sample_stage_5,
-            name="IITI_025",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_3,
-            sample_stage=sample_stage_6,
-            name="IITI_026",
-        )
-        ColumnName.objects.create(
-            replicate=replicate_3,
-            sample_stage=sample_stage_7,
             name="IITI_027",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
-            sample_stage=sample_stage_8,
+            sample_stage=sample_stage_2,
+            name="IITI_023",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_3,
+            sample_stage=sample_stage_3,
+            name="IITI_025",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_3,
+            sample_stage=sample_stage_4,
+            name="IITI_026",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_3,
+            sample_stage=sample_stage_5,
             name="IITI_028",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
-            sample_stage=sample_stage_9,
+            sample_stage=sample_stage_6,
             name="IITI_029",
         )
         ColumnName.objects.create(
             replicate=replicate_3,
-            sample_stage=sample_stage_10,
+            sample_stage=sample_stage_7,
+            name="IITI_021",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_3,
+            sample_stage=sample_stage_8,
             name="IITI_030",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_3,
+            sample_stage=sample_stage_9,
+            name="IITI_022",
+        )
+        ColumnName.objects.create(
+            replicate=replicate_3,
+            sample_stage=sample_stage_10,
+            name="IITI_024",
         )
 
         # Config for Institute of Cancer Research project

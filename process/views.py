@@ -85,7 +85,6 @@ def heatmap(request, id=None):
     else:
         project = Project.objects.get(id=id)
 
-        # CDK1, CDK2, CDK6, CCND1
         protein_genes = ["CDK1", "CDK2", "CDK6", "CCND1"]
         protein_accession_numbers = ["P06493", "P24941", "Q00534", "P24385"]
 
@@ -241,21 +240,27 @@ def scatterplot(request, id):
         .count()
     )
 
-    oscillating_protein_num = len(project.protein_list)
-    oscillating_phospho_num = len(project.phospho_protein_list)
+    oscillating_protein_num = Protein.objects.filter(
+        project=project,
+        relevant=True
+    ).count()
+    oscillating_phospho_num = Phospho.objects.filter(
+        protein__project=project,
+        relevant=True
+    ).count()
 
     protein_statistics = Statistic.objects.filter(
         statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
-        protein__project__name=PROJECT_SL,
+        protein__project = project,
     )
 
     phospho_statistics = Statistic.objects.filter(
         statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
-        phospho__protein__project__name=PROJECT_SL,
+        phospho__protein__project = project
     )
 
-    protein_data = process_scatterplot_statistics(protein_statistics)
-    phospho_data = process_scatterplot_statistics(phospho_statistics)
+    protein_data = process_scatterplot_statistics(protein_statistics, True)
+    phospho_data = process_scatterplot_statistics(phospho_statistics, False)
 
     return render(
         request,
@@ -272,8 +277,10 @@ def scatterplot(request, id):
     )
 
 
-def process_scatterplot_statistics(statistics):
+def process_scatterplot_statistics(statistics, is_protein):
     data = []
+
+    important_accession_numbers = ["P24385", "O96020", "P14635", "P20248", "P30281", "P06493", "P24941", "Q00534"]
 
     for statistic in statistics:
         if (
@@ -299,11 +306,26 @@ def process_scatterplot_statistics(statistics):
             else:
                 oscillating = False
 
+            gene_name = None
+
+            if is_protein:
+                accession_number = statistic.protein.accession_number
+            else:
+                accession_number = statistic.phospho.protein.accession_number
+
+            if accession_number in important_accession_numbers:
+                try:
+                    updata = UniprotData.objects.get(accession_number=accession_number)
+
+                    gene_name = updata.gene_name
+                except Exception:
+                    continue
+
             data.append(
                 {
                     "x": curve_fold_log2,
                     "y": q_value_negative_log10,
-                    "label": "",
+                    "label": gene_name,
                     "oscillating": oscillating,
                 }
             )

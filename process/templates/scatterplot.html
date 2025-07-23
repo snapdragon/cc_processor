@@ -54,19 +54,7 @@
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
-      // Add some labeled points (manually chosen to match plot)
-      // TODO - put back in
-      const labels = [
-        // { x: 1.8, y: 3.2, label: "CCND1" },
-        // { x: 2.5, y: 4.2, label: "CCNE2" },
-        // { x: 2.8, y: 4.5, label: "CCNB1" },
-        // { x: 3.0, y: 5.0, label: "CCNA2" },
-        // { x: 1.2, y: 1.8, label: "CCND3" }
-      ];
-
-      labels.forEach(l => data.push({ ...l, oscillating: l.x > 1 && l.y > 2 }));
-
-      const xScale = d3.scaleLinear().domain([0, 5]).range([0, width]);
+      const xScale = d3.scaleLinear().domain([0, 6]).range([0, width]);
       const yScale = d3.scaleLinear().domain([0, 7]).range([height, 0]);
 
       // Axes
@@ -104,7 +92,7 @@
         .attr("x", d => xScale(d.x) + 5)
         .attr("y", d => yScale(d.y))
         .text(d => d.label)
-        .attr("class", "label");
+        .attr("class", "scatterplot-label")
 
       // Annotation text
       svg.append("text")

@@ -254,11 +254,11 @@ class Command(BaseCommand):
             pass
             # self._get_uniprot_data(project)
 
-            # self._generate_protein_list(project, True)
-            # self._generate_protein_list(project, False)
+            self._generate_protein_list(project, True)
+            self._generate_protein_list(project, False)
 
-            # self._fetch_go_enrichment(project, True)
-            # self._fetch_go_enrichment(project, False)
+            self._fetch_go_enrichment(project, True)
+            self._fetch_go_enrichment(project, False)
 
             # self._fetch_corum_complexes(project)
 
@@ -266,6 +266,8 @@ class Command(BaseCommand):
 
     def _generate_protein_list(self, project, is_protein):
         if is_protein:
+            Protein.objects.filter(project=project).update(relevant=False)
+
             max_q = PROTEIN_MAX_Q
 
             statistics = Statistic.objects.filter(
@@ -273,6 +275,8 @@ class Command(BaseCommand):
                 protein__project=project,
             )
         else:
+            Phospho.objects.filter(protein__project=project).update(relevant=False)
+
             max_q = PHOSPHO_MAX_Q
 
             statistics = Statistic.objects.filter(
@@ -280,9 +284,14 @@ class Command(BaseCommand):
                 phospho__protein__project=project,
             )
 
-        matches = set()
+        num_stats = 0
 
         for statistic in statistics:
+            if not num_stats % 1000:
+                logger.info(f"Generating relevance {num_stats}")
+
+            num_stats += 1
+
             # Apparently q_values are rounded down, so no 'round' here
             if (
                 statistic.metrics is None
@@ -299,29 +308,14 @@ class Command(BaseCommand):
                 continue
 
             if is_protein:
-                matches.add(statistic.protein.accession_number)
+                statistic.protein.relevant = True
+                statistic.protein.save()
             else:
-                matches.add(statistic.phospho.protein.accession_number)
+                statistic.phospho.relevant = True
+                statistic.phospho.save()
 
-        if is_protein:
-            project.protein_list = list(matches)
-        else:
-            project.phospho_protein_list = list(matches)
-
-        project.save()
 
     def _fetch_go_enrichment(self, project, is_protein):
-        if is_protein:
-            protein_list = project.protein_list
-        else:
-            protein_list = project.phospho_protein_list
-
-        if not len(protein_list):
-            logger.info(
-                f"Project {project.name} has an empty protein list for GO enrichment"
-            )
-            return
-
         if is_protein:
             logger.info(f"Fetching protein GO enrichment for project {project.name}")
         else:
@@ -329,9 +323,30 @@ class Command(BaseCommand):
                 f"Fetching phospho protein GO enrichment for project {project.name}"
             )
 
+        if is_protein:
+            proteins = Protein.objects.filter(
+                project=project,
+                relevant = True
+            )
+
+            accession_numbers = [p.accession_number for p in proteins]
+        else:
+            phosphos = Phospho.objects.filter(
+                protein__project = project,
+                relevant = True
+            )
+
+            accession_numbers = [p.protein.accession_number for p in phosphos]
+
+        if not len(accession_numbers):
+            logger.info(
+                f"Project {project.name} has an empty accession number list for GO enrichment"
+            )
+            return
+
         genes = []
 
-        for accession_number in protein_list:
+        for accession_number in accession_numbers:
             try:
                 gene = self._get_gene_name(accession_number)
 
@@ -1315,7 +1330,7 @@ class Command(BaseCommand):
                     protein_stage = protein_replicate.get(sample_stage=sample_stage)
                     phospho_stage = phospho_replicate.get(sample_stage=sample_stage)
                 except Exception:
-                    logger.info("No protein or phospho for calculating oscillation")
+                    # logger.info("No protein or phospho for calculating oscillation")
                     continue
 
                 oscillation = phospho_stage.reading - protein_stage.reading
@@ -1526,7 +1541,10 @@ class Command(BaseCommand):
 
         for i, abundance in enumerate(abundances):
             if not i % 10000:
-                logger.info(f"Processing protein abundance for median {i}")
+                if is_protein:
+                    logger.info(f"Processing protein abundance for median {i}")
+                else:
+                    logger.info(f"Processing phospho abundance for median {i}")
 
             if rep_stage_abundances.get(abundance.replicate) is None:
                 rep_stage_abundances[abundance.replicate] = {}
@@ -1699,7 +1717,13 @@ class Command(BaseCommand):
         return f"{abundance.replicate.name}_{abundance.sample_stage.name}"
 
     def _fetch_corum_complexes(self, project):
-        uniprot_ids = project.protein_list
+        # TODO - need phospho protein lists too?
+        proteins = Protein.objects.filter(
+            project=project,
+            relevant=True
+        )
+
+        accession_numbers = [p.accession_number for p in proteins]
 
         try:
             df = pd.read_csv(
@@ -1710,16 +1734,16 @@ class Command(BaseCommand):
             print("CORUM file not found.")
             return None
 
-        corum_results = {uid: [] for uid in uniprot_ids}
+        corum_results = {accession_number: [] for accession_number in accession_numbers}
         for _, row in df.iterrows():
             members = row["subunits_uniprot_id"].split(";")
-            for uid in uniprot_ids:
-                if uid in members:
-                    corum_results[uid].append((row["complex_id"], row["complex_name"]))
+            for accession_number in accession_numbers:
+                if accession_number in members:
+                    corum_results[accession_number].append((row["complex_id"], row["complex_name"]))
 
         print("CORUM Results:")
-        for uid, complexes in corum_results.items():
-            print(f"{uid}: {complexes if complexes else 'None found'}")
+        for accession_number, complexes in corum_results.items():
+            print(f"{accession_number}: {complexes if complexes else 'None found'}")
 
     def _fisher_g_test(self, z):
         """

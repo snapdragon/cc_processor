@@ -118,14 +118,14 @@ class Command(BaseCommand):
                 mod = row["Precursor.Id"]
 
                 if not proteins.get(accession_number):
-                    new_protein = Protein.objects.create(
-                        project=project,
-                        accession_number=accession_number,
-                        is_contaminant=False,
-                    )
-                    proteins[accession_number] = new_protein
-                    # print(f"{accession_number} not found in proteins, skipping")
-                    # continue
+                    # new_protein = Protein.objects.create(
+                    #     project=project,
+                    #     accession_number=accession_number,
+                    #     is_contaminant=False,
+                    # )
+                    # proteins[accession_number] = new_protein
+                    print(f"{accession_number} not found in proteins, skipping")
+                    continue
 
                 protein, _ = Protein.objects.get_or_create(
                     project=project,
