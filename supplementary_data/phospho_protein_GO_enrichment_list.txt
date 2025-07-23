@@ -1,0 +1,4382 @@
+[
+    {
+        "name": "cytosol",
+        "source": "GO:CC",
+        "p_value": 1.798304638339684e-99,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleoplasm",
+        "source": "GO:CC",
+        "p_value": 3.448570041326282e-92,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein binding",
+        "source": "GO:MF",
+        "p_value": 1.5905948303756634e-81,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear lumen",
+        "source": "GO:CC",
+        "p_value": 6.825020035222169e-71,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular membraneless organelle",
+        "source": "GO:CC",
+        "p_value": 5.5901117657980246e-67,
+        "intersecting_genes": []
+    },
+    {
+        "name": "membraneless organelle",
+        "source": "GO:CC",
+        "p_value": 5.9452626031358e-67,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasm",
+        "source": "GO:CC",
+        "p_value": 1.6363843211125738e-60,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle organization",
+        "source": "GO:BP",
+        "p_value": 1.3407131203342287e-59,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular anatomical structure",
+        "source": "GO:CC",
+        "p_value": 1.351799039587471e-59,
+        "intersecting_genes": []
+    },
+    {
+        "name": "membrane-enclosed lumen",
+        "source": "GO:CC",
+        "p_value": 1.1562442638882044e-54,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular organelle lumen",
+        "source": "GO:CC",
+        "p_value": 1.1562442638882044e-54,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle lumen",
+        "source": "GO:CC",
+        "p_value": 1.1562442638882044e-54,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle",
+        "source": "GO:CC",
+        "p_value": 6.084792955221836e-52,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular organelle",
+        "source": "GO:CC",
+        "p_value": 7.732847660658416e-52,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoskeleton",
+        "source": "GO:CC",
+        "p_value": 1.092685983992735e-51,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular component organization or biogenesis",
+        "source": "GO:BP",
+        "p_value": 5.90312357885982e-50,
+        "intersecting_genes": []
+    },
+    {
+        "name": "anchoring junction",
+        "source": "GO:CC",
+        "p_value": 1.7897659983997448e-46,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 1.5275621053330356e-45,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleus",
+        "source": "GO:CC",
+        "p_value": 7.806684091188099e-45,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell junction",
+        "source": "GO:CC",
+        "p_value": 1.365021574363128e-43,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoskeletal protein binding",
+        "source": "GO:MF",
+        "p_value": 1.381904928719205e-43,
+        "intersecting_genes": []
+    },
+    {
+        "name": "supramolecular complex",
+        "source": "GO:CC",
+        "p_value": 1.0988442436818079e-42,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular component organization",
+        "source": "GO:BP",
+        "p_value": 6.546919722653002e-42,
+        "intersecting_genes": []
+    },
+    {
+        "name": "macromolecule localization",
+        "source": "GO:BP",
+        "p_value": 1.7133234732662006e-40,
+        "intersecting_genes": []
+    },
+    {
+        "name": "focal adhesion",
+        "source": "GO:CC",
+        "p_value": 1.1241650950552977e-39,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-substrate junction",
+        "source": "GO:CC",
+        "p_value": 1.5687235885509378e-39,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cadherin binding",
+        "source": "GO:MF",
+        "p_value": 2.2480719550208554e-39,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular localization",
+        "source": "GO:BP",
+        "p_value": 1.4024735550567858e-36,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA binding",
+        "source": "GO:MF",
+        "p_value": 4.379176710601941e-36,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular macromolecule localization",
+        "source": "GO:BP",
+        "p_value": 5.512429363752006e-36,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization",
+        "source": "GO:BP",
+        "p_value": 1.8490215711834507e-35,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell cycle",
+        "source": "GO:BP",
+        "p_value": 2.872864303070419e-32,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament-based process",
+        "source": "GO:BP",
+        "p_value": 8.169228364371158e-32,
+        "intersecting_genes": []
+    },
+    {
+        "name": "enzyme binding",
+        "source": "GO:MF",
+        "p_value": 2.030262787086723e-31,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell adhesion molecule binding",
+        "source": "GO:MF",
+        "p_value": 2.1923122794409193e-31,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 3.8189312733087215e-31,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell cycle process",
+        "source": "GO:BP",
+        "p_value": 1.0362049524150549e-30,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cellular component organization",
+        "source": "GO:BP",
+        "p_value": 1.1789090106203786e-30,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin cytoskeleton",
+        "source": "GO:CC",
+        "p_value": 1.201391426156911e-30,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular membrane-bounded organelle",
+        "source": "GO:CC",
+        "p_value": 8.865367157276117e-30,
+        "intersecting_genes": []
+    },
+    {
+        "name": "molecular adaptor activity",
+        "source": "GO:MF",
+        "p_value": 1.1994908809554246e-29,
+        "intersecting_genes": []
+    },
+    {
+        "name": "membrane-bounded organelle",
+        "source": "GO:CC",
+        "p_value": 6.417926497078794e-29,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule cytoskeleton",
+        "source": "GO:CC",
+        "p_value": 3.060019653914368e-28,
+        "intersecting_genes": []
+    },
+    {
+        "name": "binding",
+        "source": "GO:MF",
+        "p_value": 3.8635872070681407e-28,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cellular process",
+        "source": "GO:BP",
+        "p_value": 1.3250910679638888e-27,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA binding",
+        "source": "GO:MF",
+        "p_value": 1.8810564523968896e-27,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cellular process",
+        "source": "GO:BP",
+        "p_value": 2.4157671084168997e-27,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of organelle organization",
+        "source": "GO:BP",
+        "p_value": 2.4592512404311118e-26,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular transport",
+        "source": "GO:BP",
+        "p_value": 3.651014514592604e-26,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of localization in cell",
+        "source": "GO:BP",
+        "p_value": 4.290173283707233e-26,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of biological process",
+        "source": "GO:BP",
+        "p_value": 5.334998374742158e-26,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of biological process",
+        "source": "GO:BP",
+        "p_value": 6.928238612027425e-26,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear body",
+        "source": "GO:CC",
+        "p_value": 1.1213565671277886e-25,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein-macromolecule adaptor activity",
+        "source": "GO:MF",
+        "p_value": 1.1455318279345578e-25,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin binding",
+        "source": "GO:MF",
+        "p_value": 2.362410116708757e-25,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mRNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 6.795802151790827e-25,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein-containing complex binding",
+        "source": "GO:MF",
+        "p_value": 1.6982111329684563e-24,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic cell cycle",
+        "source": "GO:BP",
+        "p_value": 2.7636764240067147e-24,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic cell cycle process",
+        "source": "GO:BP",
+        "p_value": 3.8494025156544974e-24,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of biological process",
+        "source": "GO:BP",
+        "p_value": 3.909901113992804e-24,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nitrogen compound transport",
+        "source": "GO:BP",
+        "p_value": 5.158896975537048e-24,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cellular process",
+        "source": "GO:BP",
+        "p_value": 5.914371012680827e-24,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of primary metabolic process",
+        "source": "GO:BP",
+        "p_value": 1.3926458318297616e-23,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell division",
+        "source": "GO:BP",
+        "p_value": 1.8785724291013484e-23,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to stress",
+        "source": "GO:BP",
+        "p_value": 2.0964552290241215e-23,
+        "intersecting_genes": []
+    },
+    {
+        "name": "biological regulation",
+        "source": "GO:BP",
+        "p_value": 3.664071372397277e-23,
+        "intersecting_genes": []
+    },
+    {
+        "name": "supramolecular fiber organization",
+        "source": "GO:BP",
+        "p_value": 1.8931537521519217e-22,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear speck",
+        "source": "GO:CC",
+        "p_value": 4.453715765372481e-22,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein transport",
+        "source": "GO:BP",
+        "p_value": 4.544006811766676e-22,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome",
+        "source": "GO:CC",
+        "p_value": 6.5225317458773335e-22,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleic acid binding",
+        "source": "GO:MF",
+        "p_value": 1.2671857486350414e-21,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromatin organization",
+        "source": "GO:BP",
+        "p_value": 1.990679071686568e-21,
+        "intersecting_genes": []
+    },
+    {
+        "name": "localization",
+        "source": "GO:BP",
+        "p_value": 4.6517933676433564e-21,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell cycle",
+        "source": "GO:BP",
+        "p_value": 2.867341857625138e-20,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell cortex",
+        "source": "GO:CC",
+        "p_value": 1.5956354279943257e-19,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular signal transduction",
+        "source": "GO:BP",
+        "p_value": 3.395875976372296e-19,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of protein localization",
+        "source": "GO:BP",
+        "p_value": 8.614218419541766e-19,
+        "intersecting_genes": []
+    },
+    {
+        "name": "supramolecular fiber",
+        "source": "GO:CC",
+        "p_value": 1.2337429159482648e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell leading edge",
+        "source": "GO:CC",
+        "p_value": 1.4943840317534449e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of macromolecule metabolic process",
+        "source": "GO:BP",
+        "p_value": 1.5299812328392285e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome organization",
+        "source": "GO:BP",
+        "p_value": 1.631218422099119e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "developmental process",
+        "source": "GO:BP",
+        "p_value": 2.175282153602614e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "supramolecular polymer",
+        "source": "GO:CC",
+        "p_value": 2.343129572123133e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell cycle process",
+        "source": "GO:BP",
+        "p_value": 4.06887261019824e-18,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromatin remodeling",
+        "source": "GO:BP",
+        "p_value": 2.274766245504009e-17,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of nucleobase-containing compound metabolic process",
+        "source": "GO:BP",
+        "p_value": 2.678658797631233e-17,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament organization",
+        "source": "GO:BP",
+        "p_value": 5.877877993240463e-17,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to stimulus",
+        "source": "GO:BP",
+        "p_value": 5.903198778003053e-17,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein metabolic process",
+        "source": "GO:BP",
+        "p_value": 9.720551790237685e-17,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear transport",
+        "source": "GO:BP",
+        "p_value": 1.4339860143225596e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleocytoplasmic transport",
+        "source": "GO:BP",
+        "p_value": 1.4339860143225596e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "anatomical structure development",
+        "source": "GO:BP",
+        "p_value": 1.7423908293291288e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome segregation",
+        "source": "GO:BP",
+        "p_value": 1.79011645588547e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA damage response",
+        "source": "GO:BP",
+        "p_value": 1.814655937121724e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "sister chromatid segregation",
+        "source": "GO:BP",
+        "p_value": 2.193874807859124e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "perinuclear region of cytoplasm",
+        "source": "GO:CC",
+        "p_value": 2.9834957714189367e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 3.163297489385517e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cellular localization",
+        "source": "GO:BP",
+        "p_value": 5.976796967105882e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-cell junction",
+        "source": "GO:CC",
+        "p_value": 6.713418792365414e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of metabolic process",
+        "source": "GO:BP",
+        "p_value": 7.016767049873447e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "hydrolase activity, acting on acid anhydrides, in phosphorus-containing anhydrides",
+        "source": "GO:MF",
+        "p_value": 7.574505178778066e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "hydrolase activity, acting on acid anhydrides",
+        "source": "GO:MF",
+        "p_value": 7.574505178778066e-16,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribonucleoside triphosphate phosphatase activity",
+        "source": "GO:MF",
+        "p_value": 1.0243533628195573e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear envelope",
+        "source": "GO:CC",
+        "p_value": 1.1113111608618533e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleoside-triphosphatase regulator activity",
+        "source": "GO:MF",
+        "p_value": 1.3832032322133416e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "GTPase regulator activity",
+        "source": "GO:MF",
+        "p_value": 1.3832032322133416e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of macromolecule metabolic process",
+        "source": "GO:BP",
+        "p_value": 1.4952526073954023e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of catabolic process",
+        "source": "GO:BP",
+        "p_value": 1.750413235092121e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "pyrophosphatase activity",
+        "source": "GO:MF",
+        "p_value": 1.7680715068697959e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament bundle",
+        "source": "GO:CC",
+        "p_value": 1.848540287264058e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosomal region",
+        "source": "GO:CC",
+        "p_value": 2.805021208087211e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of RNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 3.3463496762794583e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "enzyme regulator activity",
+        "source": "GO:MF",
+        "p_value": 3.9275182059227266e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribonucleoprotein granule",
+        "source": "GO:CC",
+        "p_value": 7.729379981829588e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actomyosin",
+        "source": "GO:CC",
+        "p_value": 9.233136822018244e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasmic stress granule",
+        "source": "GO:CC",
+        "p_value": 9.233136822018244e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell morphogenesis",
+        "source": "GO:BP",
+        "p_value": 9.613443727177152e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of supramolecular fiber organization",
+        "source": "GO:BP",
+        "p_value": 9.632275867793699e-15,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of response to stimulus",
+        "source": "GO:BP",
+        "p_value": 1.1515271846785744e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell projection",
+        "source": "GO:CC",
+        "p_value": 1.2806346526850733e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 1.3612146417748847e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "anatomical structure morphogenesis",
+        "source": "GO:BP",
+        "p_value": 1.4517953190296806e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear export",
+        "source": "GO:BP",
+        "p_value": 1.516928804134041e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "enzyme activator activity",
+        "source": "GO:MF",
+        "p_value": 1.7331526705646285e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome, centromeric region",
+        "source": "GO:CC",
+        "p_value": 1.880471460212744e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "condensed chromosome",
+        "source": "GO:CC",
+        "p_value": 2.739319145596649e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament binding",
+        "source": "GO:MF",
+        "p_value": 2.8124381323280167e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of metabolic process",
+        "source": "GO:BP",
+        "p_value": 3.392909265424031e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasmic ribonucleoprotein granule",
+        "source": "GO:CC",
+        "p_value": 4.0614800796787604e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA localization",
+        "source": "GO:BP",
+        "p_value": 5.0953345627843935e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear membrane",
+        "source": "GO:CC",
+        "p_value": 6.199811280964408e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of macromolecule metabolic process",
+        "source": "GO:BP",
+        "p_value": 6.342817313876144e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of nucleobase-containing compound metabolic process",
+        "source": "GO:BP",
+        "p_value": 7.539807529238e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "contractile actin filament bundle",
+        "source": "GO:CC",
+        "p_value": 8.217977269837601e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "stress fiber",
+        "source": "GO:CC",
+        "p_value": 8.217977269837601e-14,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA transport",
+        "source": "GO:BP",
+        "p_value": 1.17729623470496e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of nucleobase-containing compound metabolic process",
+        "source": "GO:BP",
+        "p_value": 1.4124401452153415e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of organelle organization",
+        "source": "GO:BP",
+        "p_value": 1.734515530245163e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "synapse",
+        "source": "GO:CC",
+        "p_value": 1.8858809076956588e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "polymeric cytoskeletal fiber",
+        "source": "GO:CC",
+        "p_value": 1.9322097471008866e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cellular component organization",
+        "source": "GO:BP",
+        "p_value": 1.969877423146335e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of metabolic process",
+        "source": "GO:BP",
+        "p_value": 1.9866045072823288e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cellular component biogenesis",
+        "source": "GO:BP",
+        "p_value": 2.1439491990321828e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear chromosome segregation",
+        "source": "GO:BP",
+        "p_value": 2.284696998175934e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "condensed chromosome, centromeric region",
+        "source": "GO:CC",
+        "p_value": 2.78232775219456e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "heterochromatin",
+        "source": "GO:CC",
+        "p_value": 2.910128426628952e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA catabolic process",
+        "source": "GO:BP",
+        "p_value": 3.1287823102456386e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mRNA processing",
+        "source": "GO:BP",
+        "p_value": 3.325653036067083e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of organelle organization",
+        "source": "GO:BP",
+        "p_value": 4.725231559305036e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA transport",
+        "source": "GO:BP",
+        "p_value": 5.267637226993329e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleic acid transport",
+        "source": "GO:BP",
+        "p_value": 5.267637226993329e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear matrix",
+        "source": "GO:CC",
+        "p_value": 5.331876675432261e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule-based process",
+        "source": "GO:BP",
+        "p_value": 6.300377467901676e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "spindle",
+        "source": "GO:CC",
+        "p_value": 6.382179847012128e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "tubulin binding",
+        "source": "GO:MF",
+        "p_value": 7.075036971146157e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "plasma membrane bounded cell projection",
+        "source": "GO:CC",
+        "p_value": 7.624378139126021e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of localization",
+        "source": "GO:BP",
+        "p_value": 9.715730422428347e-13,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of RNA localization",
+        "source": "GO:BP",
+        "p_value": 1.0197001746074627e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of biological quality",
+        "source": "GO:BP",
+        "p_value": 1.1271817690402882e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "purine ribonucleoside triphosphate binding",
+        "source": "GO:MF",
+        "p_value": 2.053114800613932e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of RNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 2.5113422993332433e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to stimulus",
+        "source": "GO:BP",
+        "p_value": 2.972727982802468e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription coregulator activity",
+        "source": "GO:MF",
+        "p_value": 3.0032896153527234e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule organizing center",
+        "source": "GO:CC",
+        "p_value": 3.1404708544257587e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA catabolic process",
+        "source": "GO:BP",
+        "p_value": 3.421792496097097e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleic acid catabolic process",
+        "source": "GO:BP",
+        "p_value": 3.528644695137737e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 3.9040278740523235e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "purine ribonucleotide binding",
+        "source": "GO:MF",
+        "p_value": 4.219507279589462e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "endomembrane system",
+        "source": "GO:CC",
+        "p_value": 4.240921929513717e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of signal transduction",
+        "source": "GO:BP",
+        "p_value": 4.832080996933826e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of RNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 5.992829526931555e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "small GTPase-mediated signal transduction",
+        "source": "GO:BP",
+        "p_value": 6.340645062676347e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribonucleotide binding",
+        "source": "GO:MF",
+        "p_value": 9.18362401897226e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of chromosome segregation",
+        "source": "GO:BP",
+        "p_value": 9.875649824723136e-12,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA repair",
+        "source": "GO:BP",
+        "p_value": 1.2617078784971369e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular signaling cassette",
+        "source": "GO:BP",
+        "p_value": 1.2621566669647884e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein-containing complex",
+        "source": "GO:CC",
+        "p_value": 1.3144385218825648e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell communication",
+        "source": "GO:BP",
+        "p_value": 1.4325251005776605e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromatin binding",
+        "source": "GO:MF",
+        "p_value": 1.6640887748193903e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of signaling",
+        "source": "GO:BP",
+        "p_value": 1.9750798937535335e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "apoptotic process",
+        "source": "GO:BP",
+        "p_value": 2.125564760217771e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mRNA splicing, via spliceosome",
+        "source": "GO:BP",
+        "p_value": 2.3294537925182845e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "spliceosomal complex",
+        "source": "GO:CC",
+        "p_value": 2.496873464669667e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 2.578391678979905e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to organelle",
+        "source": "GO:BP",
+        "p_value": 2.625207477493783e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "kinetochore",
+        "source": "GO:CC",
+        "p_value": 2.7571108156301245e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mRNA catabolic process",
+        "source": "GO:BP",
+        "p_value": 3.0926879803859675e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell migration",
+        "source": "GO:BP",
+        "p_value": 3.0995457379092685e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "purine nucleotide binding",
+        "source": "GO:MF",
+        "p_value": 3.766204316348162e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "lamellipodium",
+        "source": "GO:CC",
+        "p_value": 4.5578804381854017e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule",
+        "source": "GO:CC",
+        "p_value": 4.9829546949408336e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "endomembrane system organization",
+        "source": "GO:BP",
+        "p_value": 5.5987708257125804e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell death",
+        "source": "GO:BP",
+        "p_value": 5.659176558629407e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to stress",
+        "source": "GO:BP",
+        "p_value": 6.907728343389584e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "GTPase activator activity",
+        "source": "GO:MF",
+        "p_value": 7.72651869597534e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of chromosome organization",
+        "source": "GO:BP",
+        "p_value": 7.981376829782008e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein domain specific binding",
+        "source": "GO:MF",
+        "p_value": 8.448476887720393e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein localization",
+        "source": "GO:BP",
+        "p_value": 9.077716193750734e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "programmed cell death",
+        "source": "GO:BP",
+        "p_value": 9.606950907167729e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "GTPase binding",
+        "source": "GO:MF",
+        "p_value": 9.6643760790333e-11,
+        "intersecting_genes": []
+    },
+    {
+        "name": "multicellular organism development",
+        "source": "GO:BP",
+        "p_value": 1.0925380832535477e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament bundle assembly",
+        "source": "GO:BP",
+        "p_value": 1.1447377077297503e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of RNA splicing",
+        "source": "GO:BP",
+        "p_value": 1.1627499015273134e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription factor binding",
+        "source": "GO:MF",
+        "p_value": 1.2192998227726452e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to nucleus",
+        "source": "GO:BP",
+        "p_value": 1.3612936911032544e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein metabolic process",
+        "source": "GO:BP",
+        "p_value": 1.561968099762472e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of intracellular signal transduction",
+        "source": "GO:BP",
+        "p_value": 1.733762110082496e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule binding",
+        "source": "GO:MF",
+        "p_value": 1.7743255230636477e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mRNA stability",
+        "source": "GO:BP",
+        "p_value": 2.0578083506935784e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament bundle organization",
+        "source": "GO:BP",
+        "p_value": 2.062666382476431e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleotide binding",
+        "source": "GO:MF",
+        "p_value": 2.2622240012067344e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytokinesis",
+        "source": "GO:BP",
+        "p_value": 2.803339248413507e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of macromolecule biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 2.8548269344468025e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "centrosome",
+        "source": "GO:CC",
+        "p_value": 3.027449568157828e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic nuclear division",
+        "source": "GO:BP",
+        "p_value": 3.116922548111524e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of localization",
+        "source": "GO:BP",
+        "p_value": 3.3293666771456293e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic sister chromatid segregation",
+        "source": "GO:BP",
+        "p_value": 3.329832760615175e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of RNA stability",
+        "source": "GO:BP",
+        "p_value": 3.329832760615175e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleobase-containing compound catabolic process",
+        "source": "GO:BP",
+        "p_value": 3.6502294438120173e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of developmental process",
+        "source": "GO:BP",
+        "p_value": 4.503865577926127e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "adherens junction",
+        "source": "GO:CC",
+        "p_value": 4.541015597043372e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleoside phosphate binding",
+        "source": "GO:MF",
+        "p_value": 4.654026466204316e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "podosome",
+        "source": "GO:CC",
+        "p_value": 7.327804224922103e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleobase-containing compound transport",
+        "source": "GO:BP",
+        "p_value": 7.515231783437507e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "GTPase activity",
+        "source": "GO:MF",
+        "p_value": 7.539848665464243e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "histone binding",
+        "source": "GO:MF",
+        "p_value": 7.699365131061682e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell cycle phase transition",
+        "source": "GO:BP",
+        "p_value": 8.457370658367569e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle localization",
+        "source": "GO:BP",
+        "p_value": 8.56637123148241e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of macromolecule biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 8.952552745156843e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein polymerization",
+        "source": "GO:BP",
+        "p_value": 9.111767445336762e-10,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of translation",
+        "source": "GO:BP",
+        "p_value": 1.096742799364949e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "small GTPase binding",
+        "source": "GO:MF",
+        "p_value": 1.1572213016236903e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular component biogenesis",
+        "source": "GO:BP",
+        "p_value": 1.446765017206016e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actomyosin structure organization",
+        "source": "GO:BP",
+        "p_value": 1.5475757935854179e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleus organization",
+        "source": "GO:BP",
+        "p_value": 1.5922307493014106e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of gene expression",
+        "source": "GO:BP",
+        "p_value": 1.6088415029814791e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein polymerization",
+        "source": "GO:BP",
+        "p_value": 1.6317969325480174e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "macromolecule modification",
+        "source": "GO:BP",
+        "p_value": 1.9165614954398272e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 2.2225259150940495e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ATP binding",
+        "source": "GO:MF",
+        "p_value": 2.353385607373584e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin filament-based process",
+        "source": "GO:BP",
+        "p_value": 2.456672821926161e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of intracellular transport",
+        "source": "GO:BP",
+        "p_value": 2.4595582213987013e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell junction organization",
+        "source": "GO:BP",
+        "p_value": 2.7029778381998197e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transport",
+        "source": "GO:BP",
+        "p_value": 2.8903759359962707e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cellular component size",
+        "source": "GO:BP",
+        "p_value": 3.339558803390368e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "macromolecule catabolic process",
+        "source": "GO:BP",
+        "p_value": 3.730392208384368e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "adenyl ribonucleotide binding",
+        "source": "GO:MF",
+        "p_value": 4.383802183650022e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ruffle",
+        "source": "GO:CC",
+        "p_value": 4.688075330321425e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "SWI/SNF superfamily-type complex",
+        "source": "GO:CC",
+        "p_value": 5.498644319374669e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mitotic cell cycle",
+        "source": "GO:BP",
+        "p_value": 5.875553056288488e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "vesicle",
+        "source": "GO:CC",
+        "p_value": 6.573540369815179e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin filament organization",
+        "source": "GO:BP",
+        "p_value": 6.651723191300852e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular developmental process",
+        "source": "GO:BP",
+        "p_value": 7.001007061546547e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "catalytic complex",
+        "source": "GO:CC",
+        "p_value": 7.164736193863966e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 7.293679196617498e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of small GTPase mediated signal transduction",
+        "source": "GO:BP",
+        "p_value": 7.370096239774947e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment or maintenance of cell polarity",
+        "source": "GO:BP",
+        "p_value": 9.033632258572737e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein kinase binding",
+        "source": "GO:MF",
+        "p_value": 9.99760409306838e-09,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell differentiation",
+        "source": "GO:BP",
+        "p_value": 1.1292305079613979e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein modification process",
+        "source": "GO:BP",
+        "p_value": 1.1889611711765916e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell cycle phase transition",
+        "source": "GO:BP",
+        "p_value": 1.2242494640041201e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "heterocyclic compound binding",
+        "source": "GO:MF",
+        "p_value": 1.2562373089061468e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 1.2610794031790338e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoskeleton-dependent cytokinesis",
+        "source": "GO:BP",
+        "p_value": 1.694461073278245e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromatin",
+        "source": "GO:CC",
+        "p_value": 1.816357034343304e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular protein transport",
+        "source": "GO:BP",
+        "p_value": 1.839240777591013e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "glutamatergic synapse",
+        "source": "GO:CC",
+        "p_value": 2.0303785024501224e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of macromolecule biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 2.144043263412178e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of protein metabolic process",
+        "source": "GO:BP",
+        "p_value": 2.511872159991828e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein metabolic process",
+        "source": "GO:BP",
+        "p_value": 2.512539157533324e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "system development",
+        "source": "GO:BP",
+        "p_value": 2.514927217870466e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "kinase binding",
+        "source": "GO:MF",
+        "p_value": 2.610946939377484e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein localization",
+        "source": "GO:BP",
+        "p_value": 3.220790913671676e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 3.848475596318139e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "adenyl nucleotide binding",
+        "source": "GO:MF",
+        "p_value": 4.029927636983564e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "signaling",
+        "source": "GO:BP",
+        "p_value": 4.315861550134369e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein modification process",
+        "source": "GO:BP",
+        "p_value": 4.4040447205027855e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA-binding transcription factor binding",
+        "source": "GO:MF",
+        "p_value": 4.5422864988258194e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein phosphorylation",
+        "source": "GO:BP",
+        "p_value": 4.691921518180438e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "membraneless organelle assembly",
+        "source": "GO:BP",
+        "p_value": 5.05996245343243e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cellular component organization",
+        "source": "GO:BP",
+        "p_value": 5.3104208423682085e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of supramolecular fiber organization",
+        "source": "GO:BP",
+        "p_value": 5.353838299771334e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "carbohydrate derivative binding",
+        "source": "GO:MF",
+        "p_value": 5.4158243457689266e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "anion binding",
+        "source": "GO:MF",
+        "p_value": 6.608349044273887e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "signal transduction",
+        "source": "GO:BP",
+        "p_value": 6.699591084613565e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "metaphase/anaphase transition of mitotic cell cycle",
+        "source": "GO:BP",
+        "p_value": 6.740489478240117e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neuron projection",
+        "source": "GO:CC",
+        "p_value": 6.857001619421206e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell motility",
+        "source": "GO:BP",
+        "p_value": 7.340033306135916e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cell cycle",
+        "source": "GO:BP",
+        "p_value": 7.780598550601177e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell migration",
+        "source": "GO:BP",
+        "p_value": 8.735767145790999e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cell cycle process",
+        "source": "GO:BP",
+        "p_value": 8.859311331723456e-08,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of sister chromatid segregation",
+        "source": "GO:BP",
+        "p_value": 1.01091136152571e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to epidermal growth factor",
+        "source": "GO:BP",
+        "p_value": 1.0198990582749598e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "postsynapse",
+        "source": "GO:CC",
+        "p_value": 1.0745889211785843e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA export from nucleus",
+        "source": "GO:BP",
+        "p_value": 1.0853389350367838e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of nucleocytoplasmic transport",
+        "source": "GO:BP",
+        "p_value": 1.1266281048513627e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of locomotion",
+        "source": "GO:BP",
+        "p_value": 1.1782449412087761e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "contractile muscle fiber",
+        "source": "GO:CC",
+        "p_value": 1.224595564428947e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic cell cycle phase transition",
+        "source": "GO:BP",
+        "p_value": 1.2847804945725262e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "metaphase/anaphase transition of cell cycle",
+        "source": "GO:BP",
+        "p_value": 1.3470231371613524e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of organelle localization",
+        "source": "GO:BP",
+        "p_value": 1.3684612510023199e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ATP-dependent activity",
+        "source": "GO:MF",
+        "p_value": 1.3691584233066267e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cellular component biogenesis",
+        "source": "GO:BP",
+        "p_value": 1.52479617502706e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribosome biogenesis",
+        "source": "GO:BP",
+        "p_value": 1.5754048010631136e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "vesicle-mediated transport",
+        "source": "GO:BP",
+        "p_value": 1.7201340039632025e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle assembly",
+        "source": "GO:BP",
+        "p_value": 1.84241289484548e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "molecular function regulator activity",
+        "source": "GO:MF",
+        "p_value": 1.9856050914794576e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to plasma membrane",
+        "source": "GO:BP",
+        "p_value": 1.9901097940901377e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "phosphorylation",
+        "source": "GO:BP",
+        "p_value": 2.3188681782526093e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell motility",
+        "source": "GO:BP",
+        "p_value": 2.448708246326039e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "guanyl-nucleotide exchange factor activity",
+        "source": "GO:MF",
+        "p_value": 2.6244363289817977e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of apoptotic process",
+        "source": "GO:BP",
+        "p_value": 2.7174403532588766e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic cytokinesis",
+        "source": "GO:BP",
+        "p_value": 2.78491986222348e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell communication",
+        "source": "GO:BP",
+        "p_value": 2.8565573943708084e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell shape",
+        "source": "GO:BP",
+        "p_value": 3.585459211526163e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of intracellular transport",
+        "source": "GO:BP",
+        "p_value": 3.585459211526163e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of programmed cell death",
+        "source": "GO:BP",
+        "p_value": 4.7648033902395404e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of catabolic process",
+        "source": "GO:BP",
+        "p_value": 5.014760449926526e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "myofibril",
+        "source": "GO:CC",
+        "p_value": 5.213618042458499e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "rRNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 5.275198962851487e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "midbody",
+        "source": "GO:CC",
+        "p_value": 5.960712298325839e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of DNA-templated transcription",
+        "source": "GO:BP",
+        "p_value": 6.224545205894937e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of RNA biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 6.432846443618913e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell morphogenesis",
+        "source": "GO:BP",
+        "p_value": 6.72539063627086e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of mRNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 7.128230468696291e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "translation",
+        "source": "GO:BP",
+        "p_value": 7.374761405727028e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to endogenous stimulus",
+        "source": "GO:BP",
+        "p_value": 7.484853640420973e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ATPase complex",
+        "source": "GO:CC",
+        "p_value": 7.581584298767798e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of DNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 7.925725148941249e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mitotic cell cycle phase transition",
+        "source": "GO:BP",
+        "p_value": 7.928841016586896e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of microtubule cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 8.002432842261388e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "axon",
+        "source": "GO:CC",
+        "p_value": 9.804137483919813e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to cell periphery",
+        "source": "GO:BP",
+        "p_value": 9.87019532926472e-07,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of RNA biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 1.040953644399138e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear chromosome",
+        "source": "GO:CC",
+        "p_value": 1.0723617734748617e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mitotic metaphase/anaphase transition",
+        "source": "GO:BP",
+        "p_value": 1.1336162948480543e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of response to stress",
+        "source": "GO:BP",
+        "p_value": 1.2033654815765472e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of supramolecular fiber organization",
+        "source": "GO:BP",
+        "p_value": 1.2593336935974169e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "Z disc",
+        "source": "GO:CC",
+        "p_value": 1.4775566941221338e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "site of polarized growth",
+        "source": "GO:CC",
+        "p_value": 1.6249780754171386e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell projection organization",
+        "source": "GO:BP",
+        "p_value": 1.6697024830556326e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of DNA-templated transcription",
+        "source": "GO:BP",
+        "p_value": 1.8077601570366328e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to epidermal growth factor stimulus",
+        "source": "GO:BP",
+        "p_value": 1.8131069237038885e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA-templated transcription",
+        "source": "GO:BP",
+        "p_value": 1.8489351418250324e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "plasma membrane bounded cell projection organization",
+        "source": "GO:BP",
+        "p_value": 2.022338625860605e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-substrate junction assembly",
+        "source": "GO:BP",
+        "p_value": 2.171746570693582e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of metaphase/anaphase transition of cell cycle",
+        "source": "GO:BP",
+        "p_value": 2.171746570693582e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription coactivator activity",
+        "source": "GO:MF",
+        "p_value": 2.2111854821066103e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell junction assembly",
+        "source": "GO:BP",
+        "p_value": 2.7038028667588347e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "I band",
+        "source": "GO:CC",
+        "p_value": 3.2608593325323516e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "locomotion",
+        "source": "GO:BP",
+        "p_value": 3.2900463669044695e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of microtubule polymerization or depolymerization",
+        "source": "GO:BP",
+        "p_value": 3.298717148964631e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "membrane",
+        "source": "GO:CC",
+        "p_value": 3.3938865370883477e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA replication",
+        "source": "GO:BP",
+        "p_value": 3.4281764616458102e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cortical cytoskeleton",
+        "source": "GO:CC",
+        "p_value": 3.511804523489585e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome condensation",
+        "source": "GO:BP",
+        "p_value": 3.7630148993209897e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "catalytic step 2 spliceosome",
+        "source": "GO:CC",
+        "p_value": 3.838655508502233e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein import into nucleus",
+        "source": "GO:BP",
+        "p_value": 4.780949085881339e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular component disassembly",
+        "source": "GO:BP",
+        "p_value": 4.922009671616634e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein-containing complex assembly",
+        "source": "GO:BP",
+        "p_value": 5.130574066365834e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of anatomical structure morphogenesis",
+        "source": "GO:BP",
+        "p_value": 5.273590022024537e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleic acid metabolic process",
+        "source": "GO:BP",
+        "p_value": 5.436564488821024e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein polymerization",
+        "source": "GO:BP",
+        "p_value": 5.61602337397984e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of anatomical structure size",
+        "source": "GO:BP",
+        "p_value": 5.743241848919646e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of response to stimulus",
+        "source": "GO:BP",
+        "p_value": 6.026924678001621e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome separation",
+        "source": "GO:BP",
+        "p_value": 6.1103052568071176e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule polymerization or depolymerization",
+        "source": "GO:BP",
+        "p_value": 6.156296015559535e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to endogenous stimulus",
+        "source": "GO:BP",
+        "p_value": 6.267080269058199e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell development",
+        "source": "GO:BP",
+        "p_value": 6.808751022224464e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of gene expression, epigenetic",
+        "source": "GO:BP",
+        "p_value": 6.942589643734809e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of mRNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 7.352668718312198e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of cell polarity",
+        "source": "GO:BP",
+        "p_value": 7.492793051992809e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear division",
+        "source": "GO:BP",
+        "p_value": 7.87362347382045e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament",
+        "source": "GO:CC",
+        "p_value": 8.018021734900692e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasmic vesicle",
+        "source": "GO:CC",
+        "p_value": 8.137684178086456e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein depolymerization",
+        "source": "GO:BP",
+        "p_value": 8.563458353070877e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-substrate junction organization",
+        "source": "GO:BP",
+        "p_value": 8.923038262633329e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein kinase activity",
+        "source": "GO:MF",
+        "p_value": 9.365581250666143e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular vesicle",
+        "source": "GO:CC",
+        "p_value": 9.658854922466114e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "import into nucleus",
+        "source": "GO:BP",
+        "p_value": 9.68982856804902e-06,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA export from nucleus",
+        "source": "GO:BP",
+        "p_value": 1.008364612319861e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA polymerase II-specific DNA-binding transcription factor binding",
+        "source": "GO:MF",
+        "p_value": 1.0215822949206117e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "rRNA processing",
+        "source": "GO:BP",
+        "p_value": 1.0263072183358969e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of programmed cell death",
+        "source": "GO:BP",
+        "p_value": 1.2155658558838696e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "alternative mRNA splicing, via spliceosome",
+        "source": "GO:BP",
+        "p_value": 1.2895763173527232e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "growth cone",
+        "source": "GO:CC",
+        "p_value": 1.4002271470787992e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle fission",
+        "source": "GO:BP",
+        "p_value": 1.5001076886261632e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of molecular function",
+        "source": "GO:BP",
+        "p_value": 1.557722256065794e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "muscle structure development",
+        "source": "GO:BP",
+        "p_value": 1.5823968201564164e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of signaling",
+        "source": "GO:BP",
+        "p_value": 1.7319831691929733e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 1.7699985183269597e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cell communication",
+        "source": "GO:BP",
+        "p_value": 1.802367614276876e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of signal transduction",
+        "source": "GO:BP",
+        "p_value": 1.844509238692485e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of catabolic process",
+        "source": "GO:BP",
+        "p_value": 1.8691816217677808e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule polymerization",
+        "source": "GO:BP",
+        "p_value": 1.8847123221989355e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein serine/threonine kinase activity",
+        "source": "GO:MF",
+        "p_value": 2.0077488001624232e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to heat",
+        "source": "GO:BP",
+        "p_value": 2.041447449019617e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cell cycle process",
+        "source": "GO:BP",
+        "p_value": 2.0587926635742795e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoskeleton-dependent intracellular transport",
+        "source": "GO:BP",
+        "p_value": 2.094776889967709e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "catabolic process",
+        "source": "GO:BP",
+        "p_value": 2.1643515630297085e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of microtubule-based process",
+        "source": "GO:BP",
+        "p_value": 2.1717897346852602e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "contractile actin filament bundle assembly",
+        "source": "GO:BP",
+        "p_value": 2.2613273026640008e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "stress fiber assembly",
+        "source": "GO:BP",
+        "p_value": 2.2613273026640008e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of apoptotic process",
+        "source": "GO:BP",
+        "p_value": 2.40630913127692e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "hippo signaling",
+        "source": "GO:BP",
+        "p_value": 2.4069982953331942e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein depolymerization",
+        "source": "GO:BP",
+        "p_value": 2.684376614216896e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of transport",
+        "source": "GO:BP",
+        "p_value": 2.7118276143154242e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription corepressor activity",
+        "source": "GO:MF",
+        "p_value": 2.7608339810151738e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "extracellular exosome",
+        "source": "GO:CC",
+        "p_value": 2.7779707229497655e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "GDP binding",
+        "source": "GO:MF",
+        "p_value": 2.8046462758532586e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neurogenesis",
+        "source": "GO:BP",
+        "p_value": 2.8182372048766455e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule cytoskeleton organization involved in mitosis",
+        "source": "GO:BP",
+        "p_value": 3.0296716262419248e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "modification-dependent protein binding",
+        "source": "GO:MF",
+        "p_value": 3.22488557598297e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin polymerization or depolymerization",
+        "source": "GO:BP",
+        "p_value": 3.3210843912475134e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of RNA biosynthetic process",
+        "source": "GO:BP",
+        "p_value": 3.386743929516405e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nervous system development",
+        "source": "GO:BP",
+        "p_value": 3.520847924898007e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "double-strand break repair",
+        "source": "GO:BP",
+        "p_value": 3.577638719322426e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell adhesion",
+        "source": "GO:BP",
+        "p_value": 3.656306042804689e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "dendrite",
+        "source": "GO:CC",
+        "p_value": 3.665794113224264e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to nitrogen compound",
+        "source": "GO:BP",
+        "p_value": 3.975710331836757e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "extracellular vesicle",
+        "source": "GO:CC",
+        "p_value": 4.065098016737641e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "dendritic tree",
+        "source": "GO:CC",
+        "p_value": 4.104088726763285e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "extracellular membrane-bounded organelle",
+        "source": "GO:CC",
+        "p_value": 4.187128359794972e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "extracellular organelle",
+        "source": "GO:CC",
+        "p_value": 4.187128359794972e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "heterochromatin formation",
+        "source": "GO:BP",
+        "p_value": 4.377693080630794e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular anatomical structure",
+        "source": "GO:CC",
+        "p_value": 4.482764593578074e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of chromosome separation",
+        "source": "GO:BP",
+        "p_value": 5.137322651992642e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of DNA-templated transcription",
+        "source": "GO:BP",
+        "p_value": 5.169920677391129e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of transcription by RNA polymerase I",
+        "source": "GO:BP",
+        "p_value": 6.762479278799321e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "preribosome",
+        "source": "GO:CC",
+        "p_value": 6.781717002165162e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "Rho protein signal transduction",
+        "source": "GO:BP",
+        "p_value": 6.888498328514006e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic spindle organization",
+        "source": "GO:BP",
+        "p_value": 6.950909983015222e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule associated complex",
+        "source": "GO:CC",
+        "p_value": 6.953549652830058e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "membrane organization",
+        "source": "GO:BP",
+        "p_value": 6.981980141186754e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cell cycle",
+        "source": "GO:BP",
+        "p_value": 7.022438339061586e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA 5'-UTR binding",
+        "source": "GO:MF",
+        "p_value": 7.20098478278463e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein serine kinase activity",
+        "source": "GO:MF",
+        "p_value": 7.60910984992639e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of stress fiber assembly",
+        "source": "GO:BP",
+        "p_value": 7.919653772266217e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "macromolecular conformation isomerase activity",
+        "source": "GO:MF",
+        "p_value": 9.001779949279681e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of hippo signaling",
+        "source": "GO:BP",
+        "p_value": 9.128198048379625e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein-containing complex disassembly",
+        "source": "GO:BP",
+        "p_value": 9.314968117714632e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neuron projection development",
+        "source": "GO:BP",
+        "p_value": 9.593553446507304e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of mRNA catabolic process",
+        "source": "GO:BP",
+        "p_value": 9.660371449289064e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "exon-exon junction complex",
+        "source": "GO:CC",
+        "p_value": 9.91022310511226e-05,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear-transcribed mRNA catabolic process",
+        "source": "GO:BP",
+        "p_value": 0.00010814400135677025,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of nucleobase-containing compound transport",
+        "source": "GO:BP",
+        "p_value": 0.0001102125122415867,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of microtubule polymerization",
+        "source": "GO:BP",
+        "p_value": 0.00011149259565450206,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of microtubule depolymerization",
+        "source": "GO:BP",
+        "p_value": 0.00011290387000063421,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of gene expression",
+        "source": "GO:BP",
+        "p_value": 0.00011499098678135516,
+        "intersecting_genes": []
+    },
+    {
+        "name": "phosphatase binding",
+        "source": "GO:MF",
+        "p_value": 0.00011529584732509756,
+        "intersecting_genes": []
+    },
+    {
+        "name": "kinesin complex",
+        "source": "GO:CC",
+        "p_value": 0.0001160305997277508,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleobase-containing compound metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.00012220945921315423,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cell cycle phase transition",
+        "source": "GO:BP",
+        "p_value": 0.00012285018099064167,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of protein depolymerization",
+        "source": "GO:BP",
+        "p_value": 0.00013342532918130827,
+        "intersecting_genes": []
+    },
+    {
+        "name": "B-WICH complex",
+        "source": "GO:CC",
+        "p_value": 0.00013588138954745538,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cellular response to stress",
+        "source": "GO:BP",
+        "p_value": 0.00013699863804679925,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to nitrogen compound",
+        "source": "GO:BP",
+        "p_value": 0.00013778570517404716,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cortical cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 0.0001385327150453254,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein kinase C binding",
+        "source": "GO:MF",
+        "p_value": 0.0001417519183868953,
+        "intersecting_genes": []
+    },
+    {
+        "name": "molecular function activator activity",
+        "source": "GO:MF",
+        "p_value": 0.00015567575310961374,
+        "intersecting_genes": []
+    },
+    {
+        "name": "epigenetic regulation of gene expression",
+        "source": "GO:BP",
+        "p_value": 0.00016060715182561634,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular component assembly",
+        "source": "GO:BP",
+        "p_value": 0.00016468168363370435,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to growth factor",
+        "source": "GO:BP",
+        "p_value": 0.00017164313853303638,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actomyosin structure organization",
+        "source": "GO:BP",
+        "p_value": 0.00017241986726396918,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to heat",
+        "source": "GO:BP",
+        "p_value": 0.00017241986726396918,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell size",
+        "source": "GO:BP",
+        "p_value": 0.00017662120786088236,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of protein-containing complex disassembly",
+        "source": "GO:BP",
+        "p_value": 0.00017776721708388787,
+        "intersecting_genes": []
+    },
+    {
+        "name": "spindle organization",
+        "source": "GO:BP",
+        "p_value": 0.00019070949817672332,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA destabilization",
+        "source": "GO:BP",
+        "p_value": 0.00020472951781290522,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mRNA 3'-UTR binding",
+        "source": "GO:MF",
+        "p_value": 0.00020661115336682002,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ATP hydrolysis activity",
+        "source": "GO:MF",
+        "p_value": 0.0002099611294989643,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cortical actin cytoskeleton",
+        "source": "GO:CC",
+        "p_value": 0.00021016829764306205,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell cycle checkpoint signaling",
+        "source": "GO:BP",
+        "p_value": 0.00022349787025984985,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin filament bundle assembly",
+        "source": "GO:BP",
+        "p_value": 0.00024252065317229856,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to oxygen-containing compound",
+        "source": "GO:BP",
+        "p_value": 0.00024298918752592305,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to hormone",
+        "source": "GO:BP",
+        "p_value": 0.0002509739688835493,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of double-strand break repair",
+        "source": "GO:BP",
+        "p_value": 0.00025146745322758584,
+        "intersecting_genes": []
+    },
+    {
+        "name": "focal adhesion assembly",
+        "source": "GO:BP",
+        "p_value": 0.00026163600370921977,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of actin filament bundle assembly",
+        "source": "GO:BP",
+        "p_value": 0.0002726961242323115,
+        "intersecting_genes": []
+    },
+    {
+        "name": "sarcomere",
+        "source": "GO:CC",
+        "p_value": 0.00028745811231067263,
+        "intersecting_genes": []
+    },
+    {
+        "name": "kinase activity",
+        "source": "GO:MF",
+        "p_value": 0.00030065130435302323,
+        "intersecting_genes": []
+    },
+    {
+        "name": "viral process",
+        "source": "GO:BP",
+        "p_value": 0.0003118188521315203,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear pore",
+        "source": "GO:CC",
+        "p_value": 0.0003140261082308053,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to abiotic stimulus",
+        "source": "GO:BP",
+        "p_value": 0.00031715527339499936,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of catalytic activity",
+        "source": "GO:BP",
+        "p_value": 0.0003276018618116743,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell adhesion",
+        "source": "GO:BP",
+        "p_value": 0.00032871103144320663,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of RNA export from nucleus",
+        "source": "GO:BP",
+        "p_value": 0.0003294746263049573,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear pore nuclear basket",
+        "source": "GO:CC",
+        "p_value": 0.00033424316774080206,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear periphery",
+        "source": "GO:CC",
+        "p_value": 0.0003371307134125668,
+        "intersecting_genes": []
+    },
+    {
+        "name": "costamere",
+        "source": "GO:CC",
+        "p_value": 0.0003402207122518864,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transport along microtubule",
+        "source": "GO:BP",
+        "p_value": 0.0003592447858692802,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA destabilization",
+        "source": "GO:BP",
+        "p_value": 0.0003976691438129582,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein stability",
+        "source": "GO:BP",
+        "p_value": 0.00040219962959563556,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein autophosphorylation",
+        "source": "GO:BP",
+        "p_value": 0.0004036955856520925,
+        "intersecting_genes": []
+    },
+    {
+        "name": "generation of neurons",
+        "source": "GO:BP",
+        "p_value": 0.0004047719156497317,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to oxygen-containing compound",
+        "source": "GO:BP",
+        "p_value": 0.00041114145922057364,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to chromosome",
+        "source": "GO:BP",
+        "p_value": 0.0004113957934648699,
+        "intersecting_genes": []
+    },
+    {
+        "name": "phosphotransferase activity, alcohol group as acceptor",
+        "source": "GO:MF",
+        "p_value": 0.0004346807144094679,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of response to stimulus",
+        "source": "GO:BP",
+        "p_value": 0.00044626206375826863,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to hormone stimulus",
+        "source": "GO:BP",
+        "p_value": 0.00046467807469545197,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleolus",
+        "source": "GO:CC",
+        "p_value": 0.0004693106455486027,
+        "intersecting_genes": []
+    },
+    {
+        "name": "intracellular protein-containing complex",
+        "source": "GO:CC",
+        "p_value": 0.00047412533043773934,
+        "intersecting_genes": []
+    },
+    {
+        "name": "pericentric heterochromatin",
+        "source": "GO:CC",
+        "p_value": 0.0004763452890626629,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of transcription by RNA polymerase II",
+        "source": "GO:BP",
+        "p_value": 0.0005130875385005323,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear protein-containing complex",
+        "source": "GO:CC",
+        "p_value": 0.0005147618499034424,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein-containing complex disassembly",
+        "source": "GO:BP",
+        "p_value": 0.0005473924670236521,
+        "intersecting_genes": []
+    },
+    {
+        "name": "P-body",
+        "source": "GO:CC",
+        "p_value": 0.0005822080896318848,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of alternative mRNA splicing, via spliceosome",
+        "source": "GO:BP",
+        "p_value": 0.0005973364369878767,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neuron development",
+        "source": "GO:BP",
+        "p_value": 0.000629212222634036,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cleavage furrow",
+        "source": "GO:CC",
+        "p_value": 0.0006388423331007409,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of autophagy",
+        "source": "GO:BP",
+        "p_value": 0.0006450091890928182,
+        "intersecting_genes": []
+    },
+    {
+        "name": "actin filament polymerization",
+        "source": "GO:BP",
+        "p_value": 0.0006479576179697832,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cell migration",
+        "source": "GO:BP",
+        "p_value": 0.0006794133373689711,
+        "intersecting_genes": []
+    },
+    {
+        "name": "somatodendritic compartment",
+        "source": "GO:CC",
+        "p_value": 0.0006800242569011851,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to growth factor stimulus",
+        "source": "GO:BP",
+        "p_value": 0.000689416240003975,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein phosphorylation",
+        "source": "GO:BP",
+        "p_value": 0.0007299684249628336,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to chemical stress",
+        "source": "GO:BP",
+        "p_value": 0.0007337135498309466,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-substrate adhesion",
+        "source": "GO:BP",
+        "p_value": 0.0007525618261472652,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of stress fiber assembly",
+        "source": "GO:BP",
+        "p_value": 0.0007760137479836948,
+        "intersecting_genes": []
+    },
+    {
+        "name": "stress granule assembly",
+        "source": "GO:BP",
+        "p_value": 0.0008047453454279203,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell division site",
+        "source": "GO:CC",
+        "p_value": 0.0008232715373161986,
+        "intersecting_genes": []
+    },
+    {
+        "name": "distal axon",
+        "source": "GO:CC",
+        "p_value": 0.0008758492276284421,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic sister chromatid separation",
+        "source": "GO:BP",
+        "p_value": 0.000901808574929744,
+        "intersecting_genes": []
+    },
+    {
+        "name": "filamentous actin",
+        "source": "GO:CC",
+        "p_value": 0.0009107944130799211,
+        "intersecting_genes": []
+    },
+    {
+        "name": "Golgi organization",
+        "source": "GO:BP",
+        "p_value": 0.0009194389338604988,
+        "intersecting_genes": []
+    },
+    {
+        "name": "multicellular organismal process",
+        "source": "GO:BP",
+        "p_value": 0.0009682152264957192,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription by RNA polymerase II",
+        "source": "GO:BP",
+        "p_value": 0.0010152525258381895,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of transport",
+        "source": "GO:BP",
+        "p_value": 0.0010464547154561564,
+        "intersecting_genes": []
+    },
+    {
+        "name": "enzyme-linked receptor protein signaling pathway",
+        "source": "GO:BP",
+        "p_value": 0.0010522542058012234,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasmic microtubule organization",
+        "source": "GO:BP",
+        "p_value": 0.0011146858954774691,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of transcription by RNA polymerase I",
+        "source": "GO:BP",
+        "p_value": 0.0011218393549987612,
+        "intersecting_genes": []
+    },
+    {
+        "name": "identical protein binding",
+        "source": "GO:MF",
+        "p_value": 0.0011537095452725792,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of protein modification process",
+        "source": "GO:BP",
+        "p_value": 0.00118365168072012,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule depolymerization",
+        "source": "GO:BP",
+        "p_value": 0.0012194848878082508,
+        "intersecting_genes": []
+    },
+    {
+        "name": "endosome",
+        "source": "GO:CC",
+        "p_value": 0.0012203917665124563,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA-templated transcription elongation",
+        "source": "GO:BP",
+        "p_value": 0.0012418675746048537,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic spindle",
+        "source": "GO:CC",
+        "p_value": 0.001252157211344718,
+        "intersecting_genes": []
+    },
+    {
+        "name": "peptidyl-amino acid modification",
+        "source": "GO:BP",
+        "p_value": 0.0012561521163572892,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein-containing complex assembly",
+        "source": "GO:BP",
+        "p_value": 0.0012894783290740956,
+        "intersecting_genes": []
+    },
+    {
+        "name": "postsynaptic specialization",
+        "source": "GO:CC",
+        "p_value": 0.0013303430154931186,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of mitotic cell cycle",
+        "source": "GO:BP",
+        "p_value": 0.001342394388687416,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of microtubule depolymerization",
+        "source": "GO:BP",
+        "p_value": 0.0014016028615307051,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neuron to neuron synapse",
+        "source": "GO:CC",
+        "p_value": 0.0014143487185619647,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of GTPase activity",
+        "source": "GO:BP",
+        "p_value": 0.0014284646432653812,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cortical actin cytoskeleton organization",
+        "source": "GO:BP",
+        "p_value": 0.0014434969326862434,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transferase activity, transferring phosphorus-containing groups",
+        "source": "GO:MF",
+        "p_value": 0.0015142864137270063,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of chromosome organization",
+        "source": "GO:BP",
+        "p_value": 0.0015742596129659154,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-cell junction organization",
+        "source": "GO:BP",
+        "p_value": 0.0016147109161944422,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin polymerization or depolymerization",
+        "source": "GO:BP",
+        "p_value": 0.001667359051489465,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to chemical stimulus",
+        "source": "GO:BP",
+        "p_value": 0.0018170467154494034,
+        "intersecting_genes": []
+    },
+    {
+        "name": "methylated histone binding",
+        "source": "GO:MF",
+        "p_value": 0.0018648979489269166,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleosome binding",
+        "source": "GO:MF",
+        "p_value": 0.0019177316440647607,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of phosphorylation",
+        "source": "GO:BP",
+        "p_value": 0.0019221874222404936,
+        "intersecting_genes": []
+    },
+    {
+        "name": "asymmetric synapse",
+        "source": "GO:CC",
+        "p_value": 0.001935029012371837,
+        "intersecting_genes": []
+    },
+    {
+        "name": "localization within membrane",
+        "source": "GO:BP",
+        "p_value": 0.0020710238083904756,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein modification process",
+        "source": "GO:BP",
+        "p_value": 0.002075163785113472,
+        "intersecting_genes": []
+    },
+    {
+        "name": "phosphate-containing compound metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.002156882568655123,
+        "intersecting_genes": []
+    },
+    {
+        "name": "apical junction complex",
+        "source": "GO:CC",
+        "p_value": 0.0021740320306753206,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of ribonucleoprotein complex localization",
+        "source": "GO:BP",
+        "p_value": 0.00217758069704372,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule end",
+        "source": "GO:CC",
+        "p_value": 0.002193717001593303,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin filament polymerization",
+        "source": "GO:BP",
+        "p_value": 0.0022578403086125857,
+        "intersecting_genes": []
+    },
+    {
+        "name": "phosphorus metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.0023303675455235,
+        "intersecting_genes": []
+    },
+    {
+        "name": "Golgi apparatus",
+        "source": "GO:CC",
+        "p_value": 0.002376335644030764,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of actin filament length",
+        "source": "GO:BP",
+        "p_value": 0.002397463698648048,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ubiquitin protein ligase binding",
+        "source": "GO:MF",
+        "p_value": 0.002425424532450734,
+        "intersecting_genes": []
+    },
+    {
+        "name": "maintenance of cell number",
+        "source": "GO:BP",
+        "p_value": 0.0024510305397825705,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ruffle membrane",
+        "source": "GO:CC",
+        "p_value": 0.0025567024070714196,
+        "intersecting_genes": []
+    },
+    {
+        "name": "methylation-dependent protein binding",
+        "source": "GO:MF",
+        "p_value": 0.0026684195616682076,
+        "intersecting_genes": []
+    },
+    {
+        "name": "hydrolase activity",
+        "source": "GO:MF",
+        "p_value": 0.0026714772408657507,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of molecular function",
+        "source": "GO:BP",
+        "p_value": 0.002721018690311374,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of Rho protein signal transduction",
+        "source": "GO:BP",
+        "p_value": 0.002732922727831215,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to insulin",
+        "source": "GO:BP",
+        "p_value": 0.002782270205642743,
+        "intersecting_genes": []
+    },
+    {
+        "name": "phosphoprotein binding",
+        "source": "GO:MF",
+        "p_value": 0.0028460352118630087,
+        "intersecting_genes": []
+    },
+    {
+        "name": "catalytic activity, acting on a nucleic acid",
+        "source": "GO:MF",
+        "p_value": 0.0028941486396598885,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell growth",
+        "source": "GO:BP",
+        "p_value": 0.0029145823458190836,
+        "intersecting_genes": []
+    },
+    {
+        "name": "isomerase activity",
+        "source": "GO:MF",
+        "p_value": 0.002975079557315113,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription by RNA polymerase I",
+        "source": "GO:BP",
+        "p_value": 0.003020657221019423,
+        "intersecting_genes": []
+    },
+    {
+        "name": "viral life cycle",
+        "source": "GO:BP",
+        "p_value": 0.0031734568393813117,
+        "intersecting_genes": []
+    },
+    {
+        "name": "early endosome",
+        "source": "GO:CC",
+        "p_value": 0.0032020120117154335,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of cell motility",
+        "source": "GO:BP",
+        "p_value": 0.003222009618652462,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic chromosome condensation",
+        "source": "GO:BP",
+        "p_value": 0.0032461695171908445,
+        "intersecting_genes": []
+    },
+    {
+        "name": "structural constituent of cytoskeleton",
+        "source": "GO:MF",
+        "p_value": 0.0033861785260013216,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear migration",
+        "source": "GO:BP",
+        "p_value": 0.003393385435223722,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of locomotion",
+        "source": "GO:BP",
+        "p_value": 0.003470728687541704,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of intracellular signal transduction",
+        "source": "GO:BP",
+        "p_value": 0.0034832034066309605,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA polymerase binding",
+        "source": "GO:MF",
+        "p_value": 0.0035023602655610705,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ubiquitin-like protein ligase binding",
+        "source": "GO:MF",
+        "p_value": 0.0035855787124825034,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein stabilization",
+        "source": "GO:BP",
+        "p_value": 0.003780111547642298,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of hydrolase activity",
+        "source": "GO:BP",
+        "p_value": 0.0038193669566215778,
+        "intersecting_genes": []
+    },
+    {
+        "name": "lamin binding",
+        "source": "GO:MF",
+        "p_value": 0.0038555126857000694,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleic acid conformation isomerase activity",
+        "source": "GO:MF",
+        "p_value": 0.004024987701793317,
+        "intersecting_genes": []
+    },
+    {
+        "name": "lncRNA binding",
+        "source": "GO:MF",
+        "p_value": 0.004406528207998145,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to peptide hormone stimulus",
+        "source": "GO:BP",
+        "p_value": 0.004621139999559458,
+        "intersecting_genes": []
+    },
+    {
+        "name": "histone deacetylase binding",
+        "source": "GO:MF",
+        "p_value": 0.004737426798307576,
+        "intersecting_genes": []
+    },
+    {
+        "name": "growth",
+        "source": "GO:BP",
+        "p_value": 0.0048492688300621,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of translational initiation",
+        "source": "GO:BP",
+        "p_value": 0.0049198279255177405,
+        "intersecting_genes": []
+    },
+    {
+        "name": "post-Golgi vesicle-mediated transport",
+        "source": "GO:BP",
+        "p_value": 0.004996263459369088,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein export from nucleus",
+        "source": "GO:BP",
+        "p_value": 0.0051780618386494896,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribonucleoprotein complex localization",
+        "source": "GO:BP",
+        "p_value": 0.005217450054973327,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of nucleocytoplasmic transport",
+        "source": "GO:BP",
+        "p_value": 0.005297987408428025,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of DNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.005381666112832188,
+        "intersecting_genes": []
+    },
+    {
+        "name": "stem cell population maintenance",
+        "source": "GO:BP",
+        "p_value": 0.005393280386847012,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to peptide hormone",
+        "source": "GO:BP",
+        "p_value": 0.00565971101837338,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neuron differentiation",
+        "source": "GO:BP",
+        "p_value": 0.005736258266676948,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribosomal small subunit biogenesis",
+        "source": "GO:BP",
+        "p_value": 0.005980020386342926,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell-substrate adhesion",
+        "source": "GO:BP",
+        "p_value": 0.00606040519129135,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic cell cycle checkpoint signaling",
+        "source": "GO:BP",
+        "p_value": 0.006194651140883199,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of microtubule polymerization or depolymerization",
+        "source": "GO:BP",
+        "p_value": 0.006483466329742825,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of hippo signaling",
+        "source": "GO:BP",
+        "p_value": 0.006520269969087485,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ribonucleoprotein complex binding",
+        "source": "GO:MF",
+        "p_value": 0.006646713027609911,
+        "intersecting_genes": []
+    },
+    {
+        "name": "DNA recombination",
+        "source": "GO:BP",
+        "p_value": 0.006834649053868791,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome localization",
+        "source": "GO:BP",
+        "p_value": 0.006874258893568238,
+        "intersecting_genes": []
+    },
+    {
+        "name": "vinculin binding",
+        "source": "GO:MF",
+        "p_value": 0.006905932718987336,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ADP binding",
+        "source": "GO:MF",
+        "p_value": 0.007026561493197909,
+        "intersecting_genes": []
+    },
+    {
+        "name": "epithelial cell development",
+        "source": "GO:BP",
+        "p_value": 0.007260489413797152,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nucleus localization",
+        "source": "GO:BP",
+        "p_value": 0.007337068651523202,
+        "intersecting_genes": []
+    },
+    {
+        "name": "heat shock protein binding",
+        "source": "GO:MF",
+        "p_value": 0.007598124850666277,
+        "intersecting_genes": []
+    },
+    {
+        "name": "vesicle membrane",
+        "source": "GO:CC",
+        "p_value": 0.007680249333385171,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of translation",
+        "source": "GO:BP",
+        "p_value": 0.007863975354937972,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule-based transport",
+        "source": "GO:BP",
+        "p_value": 0.007938981081283799,
+        "intersecting_genes": []
+    },
+    {
+        "name": "anatomical structure formation involved in morphogenesis",
+        "source": "GO:BP",
+        "p_value": 0.008288084822660437,
+        "intersecting_genes": []
+    },
+    {
+        "name": "embryo development",
+        "source": "GO:BP",
+        "p_value": 0.008548411426468401,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromatin-protein adaptor activity",
+        "source": "GO:MF",
+        "p_value": 0.009169436055103683,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear envelope organization",
+        "source": "GO:BP",
+        "p_value": 0.009235300796913757,
+        "intersecting_genes": []
+    },
+    {
+        "name": "leading edge membrane",
+        "source": "GO:CC",
+        "p_value": 0.009379551548378773,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of intracellular protein transport",
+        "source": "GO:BP",
+        "p_value": 0.0094240259317298,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transcription elongation by RNA polymerase II",
+        "source": "GO:BP",
+        "p_value": 0.009697759432173771,
+        "intersecting_genes": []
+    },
+    {
+        "name": "postsynaptic density",
+        "source": "GO:CC",
+        "p_value": 0.009837581283105199,
+        "intersecting_genes": []
+    },
+    {
+        "name": "Flemming body",
+        "source": "GO:CC",
+        "p_value": 0.010065467041338564,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA stabilization",
+        "source": "GO:BP",
+        "p_value": 0.010466334895266898,
+        "intersecting_genes": []
+    },
+    {
+        "name": "chromosome, telomeric region",
+        "source": "GO:CC",
+        "p_value": 0.010630585877140122,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of transcription by RNA polymerase II",
+        "source": "GO:BP",
+        "p_value": 0.010693128852289046,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of establishment of protein localization",
+        "source": "GO:BP",
+        "p_value": 0.010721772593141958,
+        "intersecting_genes": []
+    },
+    {
+        "name": "CRD-mediated mRNA stabilization",
+        "source": "GO:BP",
+        "p_value": 0.011001244123595976,
+        "intersecting_genes": []
+    },
+    {
+        "name": "basal cortex",
+        "source": "GO:CC",
+        "p_value": 0.011144415302914953,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ISWI-type complex",
+        "source": "GO:CC",
+        "p_value": 0.011358958656251498,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of plasma membrane bounded cell projection organization",
+        "source": "GO:BP",
+        "p_value": 0.011544486801797567,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ATP-dependent activity, acting on DNA",
+        "source": "GO:MF",
+        "p_value": 0.011667269774269028,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-matrix adhesion",
+        "source": "GO:BP",
+        "p_value": 0.011768059048428247,
+        "intersecting_genes": []
+    },
+    {
+        "name": "tight junction",
+        "source": "GO:CC",
+        "p_value": 0.011838174323310666,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of mRNA splicing, via spliceosome",
+        "source": "GO:BP",
+        "p_value": 0.012041093702265722,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to cell-cell junction",
+        "source": "GO:BP",
+        "p_value": 0.012041093702265722,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell projection organization",
+        "source": "GO:BP",
+        "p_value": 0.012085989841822646,
+        "intersecting_genes": []
+    },
+    {
+        "name": "circulatory system development",
+        "source": "GO:BP",
+        "p_value": 0.012141082325902018,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of DNA repair",
+        "source": "GO:BP",
+        "p_value": 0.012289611455764753,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell junction assembly",
+        "source": "GO:BP",
+        "p_value": 0.012320000683461235,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of establishment of protein localization",
+        "source": "GO:BP",
+        "p_value": 0.012552570503963413,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasmic translation",
+        "source": "GO:BP",
+        "p_value": 0.012650733226752212,
+        "intersecting_genes": []
+    },
+    {
+        "name": "COP9 signalosome",
+        "source": "GO:CC",
+        "p_value": 0.012976737859949027,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein export from nucleus",
+        "source": "GO:BP",
+        "p_value": 0.013007359886304012,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of phosphate metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.013968410383897742,
+        "intersecting_genes": []
+    },
+    {
+        "name": "helicase activity",
+        "source": "GO:MF",
+        "p_value": 0.014244746055061519,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of phosphorus metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.014507244138333668,
+        "intersecting_genes": []
+    },
+    {
+        "name": "proline-rich region binding",
+        "source": "GO:MF",
+        "p_value": 0.01478021380560866,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell-matrix adhesion",
+        "source": "GO:BP",
+        "p_value": 0.01601252797760858,
+        "intersecting_genes": []
+    },
+    {
+        "name": "transferase complex",
+        "source": "GO:CC",
+        "p_value": 0.01621773987023528,
+        "intersecting_genes": []
+    },
+    {
+        "name": "nuclear receptor binding",
+        "source": "GO:MF",
+        "p_value": 0.016497510469886147,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mitotic sister chromatid separation",
+        "source": "GO:BP",
+        "p_value": 0.016542666605060086,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to cytoskeleton",
+        "source": "GO:BP",
+        "p_value": 0.016542666605060086,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein export from nucleus",
+        "source": "GO:BP",
+        "p_value": 0.016542666605060086,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cell-cell junction assembly",
+        "source": "GO:BP",
+        "p_value": 0.016576303816718027,
+        "intersecting_genes": []
+    },
+    {
+        "name": "U2-type spliceosomal complex",
+        "source": "GO:CC",
+        "p_value": 0.01713909507005778,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of RNA catabolic process",
+        "source": "GO:BP",
+        "p_value": 0.017162858788882292,
+        "intersecting_genes": []
+    },
+    {
+        "name": "calmodulin binding",
+        "source": "GO:MF",
+        "p_value": 0.01719077668683641,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of mRNA processing",
+        "source": "GO:BP",
+        "p_value": 0.017671911127003805,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA polymerase core enzyme binding",
+        "source": "GO:MF",
+        "p_value": 0.01822414912813242,
+        "intersecting_genes": []
+    },
+    {
+        "name": "vesicle organization",
+        "source": "GO:BP",
+        "p_value": 0.018686508960743444,
+        "intersecting_genes": []
+    },
+    {
+        "name": "GTP binding",
+        "source": "GO:MF",
+        "p_value": 0.019275775573001138,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of focal adhesion assembly",
+        "source": "GO:BP",
+        "p_value": 0.019918631253728183,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell-substrate junction assembly",
+        "source": "GO:BP",
+        "p_value": 0.019918631253728183,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cytoplasmic vesicle membrane",
+        "source": "GO:CC",
+        "p_value": 0.020036720569082195,
+        "intersecting_genes": []
+    },
+    {
+        "name": "catalytic activity, acting on DNA",
+        "source": "GO:MF",
+        "p_value": 0.020951675470601495,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell growth",
+        "source": "GO:BP",
+        "p_value": 0.021221461146023163,
+        "intersecting_genes": []
+    },
+    {
+        "name": "dendritic spine",
+        "source": "GO:CC",
+        "p_value": 0.021593566633471145,
+        "intersecting_genes": []
+    },
+    {
+        "name": "filopodium",
+        "source": "GO:CC",
+        "p_value": 0.021745033549778837,
+        "intersecting_genes": []
+    },
+    {
+        "name": "histone reader activity",
+        "source": "GO:MF",
+        "p_value": 0.022126585998451385,
+        "intersecting_genes": []
+    },
+    {
+        "name": "cellular response to insulin stimulus",
+        "source": "GO:BP",
+        "p_value": 0.02219253972832135,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein transport",
+        "source": "GO:BP",
+        "p_value": 0.022717348811118133,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein-membrane adaptor activity",
+        "source": "GO:MF",
+        "p_value": 0.02280437993784839,
+        "intersecting_genes": []
+    },
+    {
+        "name": "autophagy",
+        "source": "GO:BP",
+        "p_value": 0.023464150133478835,
+        "intersecting_genes": []
+    },
+    {
+        "name": "process utilizing autophagic mechanism",
+        "source": "GO:BP",
+        "p_value": 0.023464150133478835,
+        "intersecting_genes": []
+    },
+    {
+        "name": "Golgi vesicle transport",
+        "source": "GO:BP",
+        "p_value": 0.02468832278873909,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of viral genome replication",
+        "source": "GO:BP",
+        "p_value": 0.025672654874973742,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of organelle assembly",
+        "source": "GO:BP",
+        "p_value": 0.025955464316408137,
+        "intersecting_genes": []
+    },
+    {
+        "name": "precatalytic spliceosome",
+        "source": "GO:CC",
+        "p_value": 0.026213957570336996,
+        "intersecting_genes": []
+    },
+    {
+        "name": "basal transcription machinery binding",
+        "source": "GO:MF",
+        "p_value": 0.026269136828002353,
+        "intersecting_genes": []
+    },
+    {
+        "name": "basal RNA polymerase II transcription machinery binding",
+        "source": "GO:MF",
+        "p_value": 0.026269136828002353,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cytokinesis",
+        "source": "GO:BP",
+        "p_value": 0.026352197857194448,
+        "intersecting_genes": []
+    },
+    {
+        "name": "plasma membrane region",
+        "source": "GO:CC",
+        "p_value": 0.02765155686447949,
+        "intersecting_genes": []
+    },
+    {
+        "name": "signal transduction in response to DNA damage",
+        "source": "GO:BP",
+        "p_value": 0.028007157408276338,
+        "intersecting_genes": []
+    },
+    {
+        "name": "ameboidal-type cell migration",
+        "source": "GO:BP",
+        "p_value": 0.028120702828138687,
+        "intersecting_genes": []
+    },
+    {
+        "name": "kinesin binding",
+        "source": "GO:MF",
+        "p_value": 0.028330523499784224,
+        "intersecting_genes": []
+    },
+    {
+        "name": "establishment of protein localization to plasma membrane",
+        "source": "GO:BP",
+        "p_value": 0.028534029242570168,
+        "intersecting_genes": []
+    },
+    {
+        "name": "translational initiation",
+        "source": "GO:BP",
+        "p_value": 0.02898653225768413,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of G1/S transition of mitotic cell cycle",
+        "source": "GO:BP",
+        "p_value": 0.029705163874346657,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of mRNA export from nucleus",
+        "source": "GO:BP",
+        "p_value": 0.02990715287395634,
+        "intersecting_genes": []
+    },
+    {
+        "name": "neuron spine",
+        "source": "GO:CC",
+        "p_value": 0.030201125181400765,
+        "intersecting_genes": []
+    },
+    {
+        "name": "endocytosis",
+        "source": "GO:BP",
+        "p_value": 0.030232948223399028,
+        "intersecting_genes": []
+    },
+    {
+        "name": "peptidyl-serine phosphorylation",
+        "source": "GO:BP",
+        "p_value": 0.030807047505567748,
+        "intersecting_genes": []
+    },
+    {
+        "name": "microtubule plus-end binding",
+        "source": "GO:MF",
+        "p_value": 0.03109841485620219,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA metabolic process",
+        "source": "GO:BP",
+        "p_value": 0.031447994931655746,
+        "intersecting_genes": []
+    },
+    {
+        "name": "muscle alpha-actinin binding",
+        "source": "GO:MF",
+        "p_value": 0.032644657567238757,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of protein transport",
+        "source": "GO:BP",
+        "p_value": 0.03272242385362411,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of chromosome separation",
+        "source": "GO:BP",
+        "p_value": 0.0341739103686375,
+        "intersecting_genes": []
+    },
+    {
+        "name": "endosomal transport",
+        "source": "GO:BP",
+        "p_value": 0.034412000261575586,
+        "intersecting_genes": []
+    },
+    {
+        "name": "sister chromatid cohesion",
+        "source": "GO:BP",
+        "p_value": 0.035334715673327376,
+        "intersecting_genes": []
+    },
+    {
+        "name": "RNA polymerase II complex binding",
+        "source": "GO:MF",
+        "p_value": 0.03613033922276923,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of protein localization to cell periphery",
+        "source": "GO:BP",
+        "p_value": 0.03615043338279445,
+        "intersecting_genes": []
+    },
+    {
+        "name": "mitotic spindle assembly",
+        "source": "GO:BP",
+        "p_value": 0.03615043338279445,
+        "intersecting_genes": []
+    },
+    {
+        "name": "double-strand break repair via homologous recombination",
+        "source": "GO:BP",
+        "p_value": 0.03656647228942971,
+        "intersecting_genes": []
+    },
+    {
+        "name": "translation regulator activity",
+        "source": "GO:MF",
+        "p_value": 0.036817295643890684,
+        "intersecting_genes": []
+    },
+    {
+        "name": "retromer complex binding",
+        "source": "GO:MF",
+        "p_value": 0.03802444988027911,
+        "intersecting_genes": []
+    },
+    {
+        "name": "synapse organization",
+        "source": "GO:BP",
+        "p_value": 0.0394269555884812,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cell migration",
+        "source": "GO:BP",
+        "p_value": 0.039537330448161656,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of chromosome organization",
+        "source": "GO:BP",
+        "p_value": 0.03968680158751804,
+        "intersecting_genes": []
+    },
+    {
+        "name": "organelle envelope",
+        "source": "GO:CC",
+        "p_value": 0.04093647553369746,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to cell junction",
+        "source": "GO:BP",
+        "p_value": 0.04164977889655708,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of viral genome replication",
+        "source": "GO:BP",
+        "p_value": 0.041790957910983445,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of actin filament polymerization",
+        "source": "GO:BP",
+        "p_value": 0.04258675961335841,
+        "intersecting_genes": []
+    },
+    {
+        "name": "protein localization to microtubule cytoskeleton",
+        "source": "GO:BP",
+        "p_value": 0.04258675961335841,
+        "intersecting_genes": []
+    },
+    {
+        "name": "molecular condensate scaffold activity",
+        "source": "GO:MF",
+        "p_value": 0.04285161012504011,
+        "intersecting_genes": []
+    },
+    {
+        "name": "wound healing",
+        "source": "GO:BP",
+        "p_value": 0.04396814041065899,
+        "intersecting_genes": []
+    },
+    {
+        "name": "positive regulation of microtubule polymerization",
+        "source": "GO:BP",
+        "p_value": 0.0449582028477864,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of DNA replication",
+        "source": "GO:BP",
+        "p_value": 0.046793862024513654,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of cell motility",
+        "source": "GO:BP",
+        "p_value": 0.04682769908455206,
+        "intersecting_genes": []
+    },
+    {
+        "name": "regulation of cell-substrate junction organization",
+        "source": "GO:BP",
+        "p_value": 0.04757481139303427,
+        "intersecting_genes": []
+    },
+    {
+        "name": "U2-type precatalytic spliceosome",
+        "source": "GO:CC",
+        "p_value": 0.04817470660425107,
+        "intersecting_genes": []
+    },
+    {
+        "name": "vesicle-mediated transport to the plasma membrane",
+        "source": "GO:BP",
+        "p_value": 0.04929760690626387,
+        "intersecting_genes": []
+    },
+    {
+        "name": "negative regulation of molecular function",
+        "source": "GO:BP",
+        "p_value": 0.04993872870777618,
+        "intersecting_genes": []
+    },
+    {
+        "name": "response to wounding",
+        "source": "GO:BP",
+        "p_value": 0.049941659367007264,
+        "intersecting_genes": []
+    }
+]

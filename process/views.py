@@ -122,6 +122,7 @@ def heatmap(request, id=None):
             protein__accession_number=accession_number, protein__project=project
         )
     else:
+        # accession number for CDK1
         phosphos = Phospho.objects.filter(
             protein__accession_number="P06493", protein__project=project
         )
