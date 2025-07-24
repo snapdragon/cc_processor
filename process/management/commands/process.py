@@ -353,7 +353,7 @@ class Command(BaseCommand):
                 genes.append(gene)
             except Exception:
                 # Some proteins just don't have a gene in uniprot, skip
-                print(f"Can't find uniprot for {accession_number}")
+                logger.info(f"Can't find uniprot for {accession_number}")
                 continue
 
         if not len(genes):

@@ -301,7 +301,7 @@ def process_scatterplot_statistics(statistics, is_protein):
             if curve_fold_log2 < 0:
                 continue
 
-            # .263 is log2(1.2), -log2(0.01) is 2
+            # .263 is log2(1.2), -log10(0.01) is 2
             if curve_fold_log2 > 0.263 and q_value_negative_log10 > 2:
                 oscillating = True
             else:

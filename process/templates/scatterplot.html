@@ -35,12 +35,12 @@
   {{ oscillating_phospho_num|json_script:"oscillating-phospho-num" }}
 
   <script>
-    protein_data = JSON.parse(document.getElementById('protein-data').textContent);
-    phospho_data = JSON.parse(document.getElementById('phospho-data').textContent);
-    protein_num = JSON.parse(document.getElementById('protein_num').textContent);
-    phospho_num = JSON.parse(document.getElementById('phospho-num').textContent);
-    oscillating_protein_num = JSON.parse(document.getElementById('oscillating-protein_num').textContent);
-    oscillating_phospho_num = JSON.parse(document.getElementById('oscillating-phospho-num').textContent);
+    protein_data = JSON.parse(document.getElementById('protein-data').textContent)
+    phospho_data = JSON.parse(document.getElementById('phospho-data').textContent)
+    protein_num = JSON.parse(document.getElementById('protein_num').textContent)
+    phospho_num = JSON.parse(document.getElementById('phospho-num').textContent)
+    oscillating_protein_num = JSON.parse(document.getElementById('oscillating-protein_num').textContent)
+    oscillating_phospho_num = JSON.parse(document.getElementById('oscillating-phospho-num').textContent)
 
     scatterplot("#proteins", protein_data, protein_num, oscillating_protein_num)
     scatterplot("#phosphos", phospho_data, phospho_num, oscillating_phospho_num)
@@ -48,31 +48,31 @@
     function scatterplot(id, data, num, oscillating_num) {
       const margin = { top: 20, right: 10, bottom: 60, left: 70 },
             width = 500 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
+            height = 500 - margin.top - margin.bottom
 
       const svg = d3.select(id)
         .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
+        .attr("transform", `translate(${margin.left},${margin.top})`)
 
-      const xScale = d3.scaleLinear().domain([0, 6]).range([0, width]);
-      const yScale = d3.scaleLinear().domain([0, 7]).range([height, 0]);
+      const xScale = d3.scaleLinear().domain([0, 6]).range([0, width])
+      const yScale = d3.scaleLinear().domain([0, 7]).range([height, 0])
 
       // Axes
       svg.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(xScale));
-      svg.append("g").call(d3.axisLeft(yScale));
+        .call(d3.axisBottom(xScale))
+      svg.append("g").call(d3.axisLeft(yScale))
 
       // Threshold lines
       svg.append("line")
         .attr("x1", xScale(.263)).attr("x2", xScale(.263))
         .attr("y1", 0).attr("y2", height)
-        .attr("stroke", "gray").attr("stroke-width", 1);
+        .attr("stroke", "gray").attr("stroke-width", 1)
 
       svg.append("line")
         .attr("x1", 0).attr("x2", width)
         .attr("y1", yScale(2)).attr("y2", yScale(2))
-        .attr("stroke", "gray").attr("stroke-width", 1);
+        .attr("stroke", "gray").attr("stroke-width", 1)
 
       // Scatter points
       svg.selectAll("circle")
@@ -82,7 +82,7 @@
         .attr("cx", d => xScale(d.x))
         .attr("cy", d => yScale(d.y))
         .attr("r", 3)
-        .attr("fill", d => d.oscillating ? "steelblue" : "lightgray");
+        .attr("fill", d => d.oscillating ? "steelblue" : "lightgray")
 
       // Labels
       svg.selectAll(".label")
@@ -114,14 +114,14 @@
         .attr("x", width / 2)
         .attr("y", height + 45)
         .attr("text-anchor", "middle")
-        .text("log₂ Curve Fold Change");
+        .text("log₂ Curve Fold Change")
 
       svg.append("text")
         .attr("transform", "rotate(-90)")
         .attr("x", -height / 2)
         .attr("y", -55)
         .attr("text-anchor", "middle")
-        .text("-log₁₀ ANOVA q-value");
+        .text("-log₁₀ ANOVA q-value")
     }
 
   </script>
