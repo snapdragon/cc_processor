@@ -1,0 +1,27 @@
+accession_number,gene_name,name
+P38936,CDKN1A,p21 (CDK inhibitor 1A)
+P46527,CDKN1B,p27 (CDK inhibitor 1B)
+P53350,PLK1,Polo-like kinase 1
+O14965,AURKA,Aurora kinase A
+Q96GD4,AURKB,Aurora kinase B
+P30260,WEE1,WEE1 G2 checkpoint kinase
+Q8TD47,PKMYT1,Membrane-associated tyrosine- and threonine-specific cdc2-inhibitory kinase (PKMYT1)
+P30304,CDC25A,Cell division cycle 25A
+O00387,CDC20,Cell division cycle 20
+P23460,PTTG1,Securin
+P06493,CCNA2,Cyclin A2
+P24864,CCNB1,Cyclin B1
+P24385,CCND1,Cyclin D1
+P30279,CCNE1,Cyclin E1
+P06400,CDK1,Cyclin-dependent kinase 1
+P24941,CDK2,Cyclin-dependent kinase 2
+P27694,CDK4,Cyclin-dependent kinase 4
+P11802,CDK6,Cyclin-dependent kinase 6
+Q99541,TP53,Tumor protein p53
+P04637,MDM2,MDM2 proto-oncogene
+Q07812,BRCA1,Breast cancer type 1 susceptibility protein
+Q13535,ATM,Ataxia telangiectasia mutated
+Q13315,CHK1,Checkpoint kinase 1 (CHEK1)
+O14757,CHK2,Checkpoint kinase 2 (CHEK2)
+P62993,PCNA,Proliferating cell nuclear antigen
+P05556,RB1,Retinoblastoma-associated protein

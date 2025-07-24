@@ -12,7 +12,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </style></head>
 <body>
-  <div class="vertical-flex">
+  <!-- <div class="vertical-flex">
     <div>
       <svg width="500" height="500" id="proteins"></svg>
     </div>
@@ -25,7 +25,10 @@
     <div class="legend">
       Phosphoproteomics results with q values &le; 0.01 and curve fold change &ge; 1.2 for {{ project.full_name }}
     </div>
-  </div>
+  </div> -->
+
+  <svg width="500" height="500" id="proteins"></svg>
+  <svg width="500" height="500" id="phosphos"></svg>
 
   {{ protein_data|json_script:"protein-data" }}
   {{ phospho_data|json_script:"phospho-data" }}
@@ -42,10 +45,10 @@
     oscillating_protein_num = JSON.parse(document.getElementById('oscillating-protein_num').textContent)
     oscillating_phospho_num = JSON.parse(document.getElementById('oscillating-phospho-num').textContent)
 
-    scatterplot("#proteins", protein_data, protein_num, oscillating_protein_num)
-    scatterplot("#phosphos", phospho_data, phospho_num, oscillating_phospho_num)
+    scatterplot("#proteins", protein_data, protein_num, oscillating_protein_num, 1.301)
+    scatterplot("#phosphos", phospho_data, phospho_num, oscillating_phospho_num, 2)
 
-    function scatterplot(id, data, num, oscillating_num) {
+    function scatterplot(id, data, num, oscillating_num, q_value_x) {
       const margin = { top: 20, right: 10, bottom: 60, left: 70 },
             width = 500 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom
@@ -71,7 +74,7 @@
 
       svg.append("line")
         .attr("x1", 0).attr("x2", width)
-        .attr("y1", yScale(2)).attr("y2", yScale(2))
+        .attr("y1", yScale(q_value_x)).attr("y2", yScale(q_value_x))
         .attr("stroke", "gray").attr("stroke-width", 1)
 
       // Scatter points

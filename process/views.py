@@ -301,12 +301,19 @@ def process_scatterplot_statistics(statistics, is_protein):
             if curve_fold_log2 < 0:
                 continue
 
-            # .263 is log2(1.2), -log10(0.01) is 2
-            if curve_fold_log2 > 0.263 and q_value_negative_log10 > 2:
-                oscillating = True
+            if is_protein:
+                # .263 is log2(1.2), -log10(0.01) is 2
+                if curve_fold_log2 > 0.263 and q_value_negative_log10 > 1.301:
+                    oscillating = True
+                else:
+                    oscillating = False
             else:
-                oscillating = False
-
+                # .263 is log2(1.2), -log10(0.01) is 2
+                if curve_fold_log2 > 0.263 and q_value_negative_log10 > 2:
+                    oscillating = True
+                else:
+                    oscillating = False
+                
             gene_name = None
 
             if is_protein:

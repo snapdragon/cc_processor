@@ -1,5 +1,4 @@
-position_abundances imputed values are slightly too high.
-    Due to empty values perhaps?
+Convert all supplementary data to csvs
 
 
 Check all constraints
