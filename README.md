@@ -1,16 +1,19 @@
 ## CC_processor
 
-Code to process proteomic and phosphoproteomic data.
-To run, the relevant files must be placed in 
+Code to process proteomic and phosphoproteomic cell cycle stage data.
+To run, the relevant files must be placed in the /data directory.
 
 # To add new datasets
 
-Create a new Project entry, SampleStage names and ColumnNames for the names of the columns in the spreadsheet(s). For examples, see the migration files.
+Create a new Project record for the project, and new Replicate, SampleStage and ColumnNames records for the names of the replicates, stages and columns in the spreadsheet(s). For examples, see the migration files.
 You may need to alter import_protein and import_phospho depending on the type of spreadsheet.
 
 
 ### To run from scratch
 ```sh
+# Build cc_processor
+docker build -t cc_processor .
+
 docker compose up
 
 # Go to the cc_processor container and set things up
@@ -40,28 +43,11 @@ docker exec -it postgres-db /bin/bash
 psql -U myuser -d main
 ```
 
-### Various DB queries
+### To run the webserver (useful for viewing charts)
 ```sh
-CREATE DATABASE dbify;
-
-# Change DB
-\c dbify
-
-# List tables
-\dt
-
-# Display the length of non-empty phospho results in order
-SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM process_runresult where phospho_result != '{}' order by json_text_length asc;
-
-# Count phosphos for a project
-SELECT p.id AS project_id,
-       p.name AS project_name,
-       COUNT(ph.id) AS phospho_count
-FROM process_project p
-JOIN process_protein pr ON pr.project_id = p.id
-JOIN process_phospho ph ON ph.protein_id = pr.id
-GROUP BY p.id, p.name;
-
+docker exec -it cc_processor /bin/bash
+python manage.py runserver 0.0.0.0:8000
+# In a browser go to http://0.0.0.0:8000/
 ```
 
 ### Import the original ICR output into the DB, useful for comparison
@@ -88,7 +74,7 @@ python manage.py runserver 0.0.0.0:8000
 pg_dump -U myuser -d dbify > db_backups/db_backup.sql
 
 # To import again
-docker exec -i postgres-db psql -U myuser -d main < db_dump/db_dump_2025_07_31.sql
+docker exec -i postgres-db psql -U myuser -d main < db_backups/db_backups.sql
 ```
 
 ### Dump tables to save retrieving again
@@ -108,4 +94,20 @@ docker cp db_data/process_peptidestartposition.sql f09f37276ef6:/process_peptide
 # To import, from outside container
 psql -U myuser -d dbify -f db_data/process_peptidestartposition.sql
 psql -U myuser -d dbify -f db_data/process_uniprotdata.sql
+```
+
+### Various DB queries
+```sh
+# Display the length of non-empty phospho results in order
+SELECT id, protein_id, LENGTH(phospho_result::text) AS json_text_length FROM process_runresult where phospho_result != '{}' order by json_text_length asc;
+
+# Count phosphos for a project
+SELECT p.id AS project_id,
+       p.name AS project_name,
+       COUNT(ph.id) AS phospho_count
+FROM process_project p
+JOIN process_protein pr ON pr.project_id = p.id
+JOIN process_phospho ph ON ph.protein_id = pr.id
+GROUP BY p.id, p.name;
+
 ```

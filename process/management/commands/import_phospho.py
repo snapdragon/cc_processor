@@ -6,7 +6,7 @@ import sys
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-import utilities_basicReader
+from lib import utilities_basicReader
 from process.constants import ABUNDANCES_RAW, PROJECT_SL
 from process.models import (
     Abundance,
@@ -18,7 +18,7 @@ from process.models import (
     Statistic,
     StatisticType,
 )
-from static_mapping import data_files_datakeys, time_points, time_points_mapping
+from lib.static_mapping import data_files_datakeys, time_points, time_points_mapping
 
 logging.basicConfig(
     level=logging.INFO,
@@ -91,20 +91,20 @@ class Command(BaseCommand):
                     print(f"Skipping contaminant {accession_number}")
                     continue
 
-                # num_invalid = 0
+                num_invalid = 0
 
-                # for col in df.columns:
-                #     col_short = re.search(r"IITI_\d{3}", col)
+                for col in df.columns:
+                    col_short = re.search(r"IITI_\d{3}", col)
 
-                #     if col_short is not None:
-                #         if cn := cns_by_name.get(col_short.group()):
-                #             reading = row[col]
+                    if col_short is not None:
+                        if cn := cns_by_name.get(col_short.group()):
+                            reading = row[col]
 
-                #             if reading != reading:
-                #                 num_invalid += 1
+                            if reading != reading:
+                                num_invalid += 1
 
-                # if num_invalid > 0:
-                #     continue
+                if num_invalid > 0:
+                    continue
 
                 if not row_no % 1000:
                     logger.info(f"Adding phospho row {row_no} {accession_number}")
@@ -503,7 +503,6 @@ def findPositionInMasterProtein(data_point):
 def parseTimeCoursePhosphoProteomics(file_path, contaminants):
     phospho_rep = {}
 
-    # TODO - delete utilites_basicReader at some point
     data_points_2 = utilities_basicReader.readTableFile(
         file_path,
         byColumn=False,

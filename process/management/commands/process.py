@@ -44,15 +44,17 @@ from process.constants import (
     ICR_ABUNDANCE_REP_2,
     P_VALUE,
     PHOSPHO_MAX_Q,
+    PHOSPHO_MAX_Q_SL,
     PHOSPHO_MEDIAN,
     PHOSPHO_REGRESSION_POSITION_ABUNDANCES_NORMALISED_LOG2_MEAN,
     PROTEIN_MAX_Q,
+    PROTEIN_MAX_Q_SL,
     PROTEIN_MEDIAN,
     PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
     PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
     Q_VALUE,
-    TOTAL_PROTEIN_INDEX_FILE,
     CCD_BATCH_SIZE,
+    PROJECT_SL,
 )
 from process.models import (
     Abundance,
@@ -72,11 +74,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-# TODO - remove on completion, it shouldn't be used
-with open(f"./data/{TOTAL_PROTEIN_INDEX_FILE}") as outfile:
-    index_protein_names = json.load(outfile)
-
 
 class Command(BaseCommand):
     help = "Processes all proteins and phosphoproteins for a given project"
@@ -273,13 +270,14 @@ class Command(BaseCommand):
             # Hits UniProt a lot, only run if necessary
             # # self._fetch_GO_locations(project)
 
-            # self._fetch_GO_enrichment(project, True)
-            # self._fetch_GO_enrichment(project, False)
+            self._fetch_GO_enrichment(project, True)
+            self._fetch_GO_enrichment(project, False)
 
             # self._generate_pcas(project)
 
 
     # # TODO - now taken care of by _get_uniprot_data
+    # TODO - not really, _get_uniprot_data needs to be changed
     # def _fetch_GO_locations(self, project):
     #     Protein.objects.filter(project=project).update(GO_locations=None)
 
@@ -324,7 +322,11 @@ class Command(BaseCommand):
         if is_protein:
             Protein.objects.filter(project=project).update(ccd=False)
 
-            max_q = PROTEIN_MAX_Q
+            # SL has three replicates so a lower threshold is needed
+            if project.name == PROJECT_SL:
+                max_q = PROTEIN_MAX_Q_SL
+            else:
+                max_q = PROTEIN_MAX_Q
 
             statistics = Statistic.objects.filter(
                 statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
@@ -333,7 +335,10 @@ class Command(BaseCommand):
         else:
             Phospho.objects.filter(protein__project=project).update(ccd=False)
 
-            max_q = PHOSPHO_MAX_Q
+            if project.name == PROJECT_SL:
+                max_q = PHOSPHO_MAX_Q_SL
+            else:
+                max_q = PHOSPHO_MAX_Q
 
             statistics = Statistic.objects.filter(
                 statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
@@ -341,6 +346,8 @@ class Command(BaseCommand):
             )
 
         num_stats = 0
+
+        print(f"MAX Q: {max_q}")
 
         for statistic in statistics:
             if not num_stats % 1000:
@@ -359,7 +366,7 @@ class Command(BaseCommand):
 
             if (
                 statistic.metrics.get(CURVE_FOLD_CHANGE) is None
-                or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 1.2
+                or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 2
             ):
                 continue
 
@@ -834,6 +841,7 @@ class Command(BaseCommand):
                 statistic__statistic_type__name=statistic_type_name,
                 statistic__phospho__protein__project=project,
                 replicate__mean = False,
+                reading__isnull=False,
             ).iterator(chunk_size=100)
 
             num_abundances = 0
@@ -860,6 +868,7 @@ class Command(BaseCommand):
                 statistic__statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
                 statistic__protein__project=project,
                 replicate__mean = False,
+                reading__isnull = False
             ).iterator(chunk_size=100)
 
             num_abundances = 0
@@ -874,11 +883,11 @@ class Command(BaseCommand):
 
                 pan = abundance.statistic.protein.accession_number
 
-                # Not all proteins have protein results, some are phospho only
-                # TODO - is this necessary? Would phospho-only results have a record?
-                # TODO - can remove this by putting value__isnull=False in the query
-                if abundance.reading is None:
-                    continue
+                # # Not all proteins have protein results, some are phospho only
+                # # TODO - is this necessary? Would phospho-only results have a record?
+                # # TODO - can remove this by putting value__isnull=False in the query
+                # if abundance.reading is None:
+                #     continue
 
                 if abundance_table.get(pan) is None:
                     abundance_table[pan] = {}
@@ -887,8 +896,8 @@ class Command(BaseCommand):
 
                 abundance_table[pan][rep_stage_name] = abundance.reading
 
-        time_course_abundance_df = pd.DataFrame(abundance_table)
-        time_course_abundance_df = time_course_abundance_df.T
+        abundance_table_df = pd.DataFrame(abundance_table)
+        abundance_table_df = abundance_table_df.T
 
         new_cols = []
 
@@ -899,27 +908,26 @@ class Command(BaseCommand):
 
         # Rearrange the column order so replicates are near eatch other
         try:
-            time_course_abundance_df = time_course_abundance_df[new_cols]
+            abundance_table_df = abundance_table_df[new_cols]
         except Exception as e:
             logger.error("DF FAILED")
-            logger.error(time_course_abundance_df)
+            logger.error(abundance_table_df)
             logger.error(e)
             exit()
 
-        return time_course_abundance_df
+        return abundance_table_df
 
-    # TODO - is this really needed any more?
-    def _tp(self, abundances):
-        """
-        Creates a list of each abundance of a stage name across replicates
-        """
-        res = []
+    # # TODO - is this really needed any more?
+    # def _tp(self, abundances):
+    #     """
+    #     Creates a list of each abundance of a stage name across replicates
+    #     """
+    #     res = []
 
-        for abundance in abundances:
-            if abundance.reading is not None:
-                res.append(abundance.reading)
+    #     for abundance in abundances:
+    #         res.append(abundance.reading)
 
-        return res
+    #     return res
 
     def _calculate_ANOVA(
         self, statistic_type_name, sample_stages, protein=None, phospho=None
@@ -935,7 +943,9 @@ class Command(BaseCommand):
         )
 
         abundances = Abundance.objects.filter(
-            statistic=stat_log2_mean, replicate__mean=False
+            statistic=stat_log2_mean,
+            replicate__mean=False,
+            reading__isnull=False,
         ).order_by("sample_stage__rank")
 
         # TODO - not a good name
@@ -943,17 +953,20 @@ class Command(BaseCommand):
 
         try:
             for sample_stage in sample_stages:
-                stage_names.append(
-                    self._tp(
-                        abundances.filter(sample_stage=sample_stage),
-                    )
-                )
+                abundances.filter(sample_stage=sample_stage),
+
+                stage_names.append([a.reading for a in abundances.filter(sample_stage=sample_stage)])
+
+                # stage_names.append(
+                #     self._tp(
+                #         abundances.filter(sample_stage=sample_stage),
+                #     )
+                # )
 
             # Each entry must have at least two points for f_oneway to work
             timepoints = [x for x in stage_names if x != [] and len(x) > 1]
 
             if len(timepoints) > 1:
-                # TODO - study f_oneway
                 one_way_anova = f_oneway(*timepoints)
 
                 f_statistic = one_way_anova[0].item()
@@ -1204,23 +1217,38 @@ class Command(BaseCommand):
     def _calculate_zero_or_min_normalisation(
         self, replicates, protein=None, phospho=None, zero_min=False
     ):
-        # TODO - can be tidied, only constants are different
         if zero_min:
-            _, stat = self._clear_and_fetch_stats(
-                ABUNDANCES_NORMALISED_ZERO_MAX, protein=protein, phospho=phospho
-            )
-
-            abundances = self._get_abundances(
-                ABUNDANCES_NORMALISED_MEDIAN, protein=protein, phospho=phospho
-            )
+            stat_type_cf = ABUNDANCES_NORMALISED_ZERO_MAX
+            stat_type_get = ABUNDANCES_NORMALISED_MEDIAN
         else:
-            _, stat = self._clear_and_fetch_stats(
-                ABUNDANCES_NORMALISED_MIN_MAX, protein=protein, phospho=phospho
-            )
+            stat_type_cf = ABUNDANCES_NORMALISED_MIN_MAX
+            stat_type_get = ABUNDANCES_NORMALISED_LOG2_MEAN
 
-            abundances = self._get_abundances(
-                ABUNDANCES_NORMALISED_LOG2_MEAN, protein=protein, phospho=phospho
-            )
+        _, stat = self._clear_and_fetch_stats(
+            ABUNDANCES_NORMALISED_ZERO_MAX, protein=protein, phospho=phospho
+        )
+
+        abundances = self._get_abundances(
+            ABUNDANCES_NORMALISED_MEDIAN, protein=protein, phospho=phospho
+        )
+
+        # # TODO - can be tidied, only constants are different
+        # if zero_min:
+        #     _, stat = self._clear_and_fetch_stats(
+        #         ABUNDANCES_NORMALISED_ZERO_MAX, protein=protein, phospho=phospho
+        #     )
+
+        #     abundances = self._get_abundances(
+        #         ABUNDANCES_NORMALISED_MEDIAN, protein=protein, phospho=phospho
+        #     )
+        # else:
+        #     _, stat = self._clear_and_fetch_stats(
+        #         ABUNDANCES_NORMALISED_MIN_MAX, protein=protein, phospho=phospho
+        #     )
+
+        #     abundances = self._get_abundances(
+        #         ABUNDANCES_NORMALISED_LOG2_MEAN, protein=protein, phospho=phospho
+        #     )
 
         for replicate in replicates:
             abs = abundances.filter(replicate=replicate)
@@ -1371,7 +1399,10 @@ class Command(BaseCommand):
     ):
         statistic = self._get_statistic(statistic_type_name, project, protein, phospho)
 
-        return Abundance.objects.filter(statistic=statistic)
+        return Abundance.objects.filter(
+            statistic=statistic,
+            reading__isnull = False
+        )
 
     def _calculate_normalised_medians(self, protein=None, phospho=None):
         _, stat_normalised_medians = self._clear_and_fetch_stats(
@@ -1756,13 +1787,13 @@ class Command(BaseCommand):
 
                 self._calculate_ANOVA(statistic_type_name, sample_stages, None, phospho)
 
-    def _add_q_value(self, info):
-        info_df = pd.DataFrame(info)
-        info_df = info_df.T
+    def _add_q_value(self, data):
+        df = pd.DataFrame(data)
+        df = df.T
 
-        info_df[Q_VALUE] = stats.false_discovery_control(info_df[P_VALUE])
+        df[Q_VALUE] = stats.false_discovery_control(df[P_VALUE])
 
-        return info_df.to_dict("index")
+        return df.to_dict("index")
 
     def _calculate_medians(
         self, project, replicates, sample_stages, is_protein, with_bugs
@@ -1859,31 +1890,31 @@ class Command(BaseCommand):
     ):
         logger.info("Calculate Fisher G Statistics")
 
-        time_course_fisher = self._create_abundance_dataframe(
+        abundance_fisher = self._create_abundance_dataframe(
             project, replicates, sample_stages, phospho, phospho_ab, phospho_reg
         )
-        time_course_fisher = time_course_fisher.dropna()
+        abundance_fisher = abundance_fisher.dropna()
 
-        for index, row in time_course_fisher.iterrows():
+        for index, row in abundance_fisher.iterrows():
             row_z = [i for i in row.tolist()]
 
             result = self._ptestg(row_z)
 
-            time_course_fisher.loc[index, G_STATISTIC] = result["obsStat"]
-            time_course_fisher.loc[index, P_VALUE] = result["pvalue"]
-            time_course_fisher.loc[index, FREQUENCY] = result["freq"]
+            abundance_fisher.loc[index, G_STATISTIC] = result["obsStat"]
+            abundance_fisher.loc[index, P_VALUE] = result["pvalue"]
+            abundance_fisher.loc[index, FREQUENCY] = result["freq"]
 
-        q_value = stats.false_discovery_control(time_course_fisher[P_VALUE])
+        q_value = stats.false_discovery_control(abundance_fisher[P_VALUE])
 
-        time_course_fisher[Q_VALUE] = q_value
+        abundance_fisher[Q_VALUE] = q_value
 
-        cols = time_course_fisher.columns
+        cols = abundance_fisher.columns
         fisher_cols = [G_STATISTIC, P_VALUE, FREQUENCY, Q_VALUE]
         ab_col = [x for x in cols if x not in fisher_cols]
-        time_course_fisher = time_course_fisher.drop(columns=ab_col)
-        time_course_fisher_dict = time_course_fisher.to_dict("index")
+        abundance_fisher = abundance_fisher.drop(columns=ab_col)
+        abundance_fisher_dict = abundance_fisher.to_dict("index")
 
-        return time_course_fisher_dict
+        return abundance_fisher_dict
 
     def _get_uniprot_data(self, project):
         logger.info("Fetching uniprot data")
@@ -1892,8 +1923,9 @@ class Command(BaseCommand):
 
         for protein in proteins:
             try:
-                # TODO - a problem with this is that, being accululative, it
+                # A problem with this is that, being accululative, it
                 #   doesn't blank all Protein GO_locations values in advance.
+                #   If it's a concern the table can be emptied.
                 UniprotData.objects.get(accession_number=protein.accession_number)
             except Exception:
                 logger.info(f"Fetching uniprot for {protein.accession_number}")
@@ -1931,7 +1963,7 @@ class Command(BaseCommand):
                         if db_ref["database"] == "GO":
                             go_id = db_ref["id"]
 
-                            term_info = db_ref["properties"][0]["value"]  # e.g., "C:cytoplasm"
+                            term_info = db_ref["properties"][0]["value"]
         
                             term_type, term_name = term_info.split(":", 1)
 

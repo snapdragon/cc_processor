@@ -216,8 +216,6 @@ def barchart(request, id):
     protein_go = project.protein_go_list
     phospho_go = project.phospho_protein_go_list
 
-    print(protein_go)
-
     protein_bar_data = process_bar_data(protein_go)
     phospho_bar_data = process_bar_data(phospho_go)
 

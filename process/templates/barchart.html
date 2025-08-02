@@ -7,24 +7,8 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-  <!-- <div class="vertical-flex">
-    <div>
-      <svg id="protein-chart" width="1100" height="500"></svg>
-    </div>
-    <div class="legend">
-      GO enrichment terms with lowest p value for oscillating proteins for {{ project.full_name }}
-    </div>
-    <div>
-      <svg id="phospho-chart" width="1100" height="500"></svg>
-    </div>
-    <div class="legend">
-      GO enrichment terms with lowest p value for oscillating phosphorylation sites for {{ project.full_name }}
-    </div>
-  </div>
-  <br> -->
-
-      <svg id="protein-chart" width="900" height="500"></svg>
-      <svg id="phospho-chart" width="900" height="500"></svg>
+    <svg id="protein-chart" width="900" height="500"></svg>
+    <svg id="phospho-chart" width="900" height="500"></svg>
 
     {{ protein_data|json_script:"protein-data" }}
     {{ phospho_data|json_script:"phospho-data" }}
@@ -41,12 +25,12 @@
 
       if (isProtein) {
         svg = d3.select(id),
-            margin = { top: 20, right: 100, bottom: 30, left: 300 },
+            margin = { top: 20, right: 100, bottom: 30, left: 360 },
             width = +svg.attr("width") - margin.left - margin.right,
             height = +svg.attr("height") - margin.top - margin.bottom;
       } else {
         svg = d3.select(id),
-            margin = { top: 20, right: 100, bottom: 30, left: 300 },
+            margin = { top: 20, right: 100, bottom: 30, left: 420 },
             width = +svg.attr("width") - margin.left - margin.right,
             height = +svg.attr("height") - margin.top - margin.bottom;
       }
