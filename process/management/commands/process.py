@@ -55,6 +55,7 @@ from process.constants import (
     Q_VALUE,
     CCD_BATCH_SIZE,
     PROJECT_SL,
+    CURVE_FOLD_CHANGE_MIN,
 )
 from process.models import (
     Abundance,
@@ -366,7 +367,7 @@ class Command(BaseCommand):
 
             if (
                 statistic.metrics.get(CURVE_FOLD_CHANGE) is None
-                or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 2
+                or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < CURVE_FOLD_CHANGE_MIN
             ):
                 continue
 

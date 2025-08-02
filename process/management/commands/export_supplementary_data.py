@@ -44,6 +44,8 @@ class Command(BaseCommand):
 
         # _output_GO_locations(project)
 
+        _output_CORUM_GO_commonalities(project)
+
 
 
 
@@ -232,15 +234,15 @@ def _output_well_known_CCDs(project):
         ccd=True
     )
 
-    important_accession_numbers = [p.accession_number for p in proteins]
+    cell_cycle_relevant_accession_numbers = [p.accession_number for p in proteins]
 
-    important_df = df[df['accession_number'].isin(important_accession_numbers)]
+    found_df = df[df['accession_number'].isin(cell_cycle_relevant_accession_numbers)]
 
-    important_df.to_csv('supplementary_data/important_CCDs_found.csv', index=False)
+    found_df.to_csv('supplementary_data/cell_cycle_relevant_CCDs_found.csv', index=False)
 
-    unimportant_df = df[~df['accession_number'].isin(important_accession_numbers)]
+    not_found_df = df[~df['accession_number'].isin(cell_cycle_relevant_accession_numbers)]
 
-    unimportant_df.to_csv('supplementary_data/important_CCDs_not_found.csv', index=False)
+    not_found_df.to_csv('supplementary_data/cell_cycle_relevant_CCDs_not_found.csv', index=False)
 
 
 def _output_GO_locations(project):

@@ -1,3 +1,10 @@
+#####################################################################
+# The code here copied from C Rega et al. 2025 is used solely for
+# comparing the results of their code to our own. It does not form
+# part of the calculations for our own code. It can safely be deleted
+# and our own code will work perfectly.
+#####################################################################
+
 import logging
 import os
 import re
@@ -204,8 +211,6 @@ class Command(BaseCommand):
                     is_contaminant=False,
                 )
                 proteins[uniprot_accession] = new_protein
-
-            # logger.info(f"Importing phosphos for protein: {uniprot_accession}")
 
             if uniprot_accession not in time_course_phospho_full:
                 time_course_phospho_full[uniprot_accession] = {
