@@ -334,10 +334,8 @@ def mean_gene_effect(request, id):
     statistics = Statistic.objects.filter(
         statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
         protein__project = project,
-    )[:500]
-
-    print("+++++ STATISTICS")
-    print(len(statistics))
+        protein__mean_gene_effect__isnull = False,
+    )
 
     protein_data = []
 
@@ -357,6 +355,9 @@ def mean_gene_effect(request, id):
             except Exception as e:
                 continue
 
+            if curve_fold_log2 < 0:
+                continue
+
             gene_name = None
 
             accession_number = statistic.protein.accession_number
@@ -367,18 +368,22 @@ def mean_gene_effect(request, id):
                 except Exception:
                     continue
 
+            if statistic.protein.mean_gene_effect > 3:
+                print(f"MGE {statistic.protein.mean_gene_effect}")
+
             datum = {
                 "x": curve_fold_log2,
                 "y": statistic.protein.mean_gene_effect,
+                "ccd": statistic.protein.ccd,
                 "label": gene_name,
             }
 
-            if project.ccd:
+            if statistic.protein.ccd:
                 ccd_data.append(datum)
             else:
                 non_ccd_data.append(datum)
 
-    print(non_ccd_data + ccd_data)
+    # print(non_ccd_data + ccd_data)
 
     return render(
         request,

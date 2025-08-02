@@ -19,9 +19,9 @@
   <script>
     protein_data = JSON.parse(document.getElementById('protein-data').textContent)
 
-    scatterplot("#proteins", protein_data, 1.301, "#0072B2")
+    scatterplot("#proteins", protein_data, "#0072B2")
 
-    function scatterplot(id, data, q_value_x, dotColor) {
+    function scatterplot(id, data, dotColor) {
       const margin = { top: 20, right: 10, bottom: 60, left: 70 },
             width = 500 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom
@@ -31,7 +31,7 @@
         .attr("transform", `translate(${margin.left},${margin.top})`)
 
       const xScale = d3.scaleLinear().domain([0, 6]).range([0, width])
-      const yScale = d3.scaleLinear().domain([0, 16]).range([height, 0])
+      const yScale = d3.scaleLinear().domain([-3, .5]).range([height, 0])
 
       // Axes
       svg.append("g")
@@ -92,7 +92,7 @@
         .attr("x", -height / 2)
         .attr("y", -55)
         .attr("text-anchor", "middle")
-        .text("-log₁₀ ANOVA q-value")
+        .text("Mean gene effect")
     }
 
   </script>

@@ -98,20 +98,20 @@ class Command(BaseCommand):
                     print(f"Skipping contaminant {accession_number}")
                     continue
 
-                num_invalid = 0
+                # num_invalid = 0
 
-                for col in df.columns:
-                    col_short = re.search(r"IITI_\d{3}", col)
+                # for col in df.columns:
+                #     col_short = re.search(r"IITI_\d{3}", col)
 
-                    if col_short is not None:
-                        if cn := cns_by_name.get(col_short.group()):
-                            reading = row[col]
+                #     if col_short is not None:
+                #         if cn := cns_by_name.get(col_short.group()):
+                #             reading = row[col]
 
-                            if reading != reading:
-                                num_invalid += 1
+                #             if reading != reading:
+                #                 num_invalid += 1
 
-                if num_invalid > 0:
-                    continue
+                # if num_invalid > 0:
+                #     continue
 
                 if not row_no % 1000:
                     logger.info(f"Adding phospho row {row_no} {accession_number}")

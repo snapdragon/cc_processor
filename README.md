@@ -23,8 +23,8 @@ python manage.py migrate
 
 # From outside the container, import the uniprot and peptide data tables
 # (not necessary but saves time)
-docker exec -i postgres-db psql -U myuser -d main < process_uniprotdata_2025_07_19.sql
-docker exec -i postgres-db psql -U myuser -d main < process_peptidestartposition_2025_07_19.sql
+docker exec -i postgres-db psql -U myuser -d main < db_data/process_uniprotdata_2025_07_19.sql
+docker exec -i postgres-db psql -U myuser -d main < db_data/process_peptidestartposition_2025_07_19.sql
 
 # From inside the cc_processor container, import and process the data
 python manage.py import_protein --project "SL"

@@ -72,23 +72,23 @@ class Command(BaseCommand):
 
             row_no += 1
 
-            if project_name == PROJECT_SL:
-                valid = True
+            # if project_name == PROJECT_SL:
+            #     valid = True
 
-                for col in df.columns:
-                    col_short = re.search(r"IITI_\d{3}", col)
+            #     for col in df.columns:
+            #         col_short = re.search(r"IITI_\d{3}", col)
 
-                    if col_short is not None:
-                        if cn := cns_by_name.get(col_short.group()):
-                            reading = row[col]
+            #         if col_short is not None:
+            #             if cn := cns_by_name.get(col_short.group()):
+            #                 reading = row[col]
 
-                            if reading != reading:
-                                valid = False
+            #                 if reading != reading:
+            #                     valid = False
 
-                if not valid:
-                    # print(f"Skipping row with at least one empty cell")
-                    # print(row)
-                    continue
+            #     if not valid:
+            #         # print(f"Skipping row with at least one empty cell")
+            #         # print(row)
+            #         continue
 
             is_contaminant = False
 
