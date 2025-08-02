@@ -10,7 +10,7 @@ import statistics
 from time import sleep
 import io
 from collections import defaultdict
-
+import re
 import numpy as np
 import pandas as pd
 import requests
@@ -260,46 +260,60 @@ class Command(BaseCommand):
             # Hits UniProt a lot, only run if necessary
             # self._get_uniprot_data(project)
 
-            # self._find_CCDs(project, True)
-            # self._find_CCDs(project, False)
+            self._find_CCDs(project, True)
+            self._find_CCDs(project, False)
 
-            # self._find_mitotic_cell_cycle(project, True)
-            # self._find_mitotic_cell_cycle(project, False)
+            self._find_mitotic_cell_cycle(project, True)
+            self._find_mitotic_cell_cycle(project, False)
 
-            # self._fetch_corum_complexes(project)
+            self._fetch_corum_complexes(project)
 
             # Hits UniProt a lot, only run if necessary
             # # self._fetch_GO_locations(project)
 
-            # self._fetch_GO_enrichment(project, True)
-            # self._fetch_GO_enrichment(project, False)
+            self._fetch_GO_enrichment(project, True)
+            self._fetch_GO_enrichment(project, False)
 
-            # self._generate_pcas(project)
+            self._generate_pcas(project)
 
+            # To run this download Achilles_gene_effect.csv and put it in data/
             self._fetch_mean_gene_effect(project)
 
 
-    def _fetch_mean_gene_effect(project):
+    def _fetch_mean_gene_effect(self, project):
         proteins = Protein.objects.filter(
             project = project
         )
 
+        accession_numbers = [p.accession_number for p in proteins]
+
         uniprots = UniprotData.objects.filter(
-            accession_number__in = [p.accession_number for p in proteins]
+            accession_number__in = accession_numbers
         )
 
         genes = [u.gene_name for u in uniprots]
 
         df = pd.read_csv('data/Achilles_gene_effect.csv', index_col=0)
 
+        # Strip extra data from column names: keep only gene symbol before the first space or parentheses
+        def clean_column(col):
+            return re.match(r'^[^\s(]+', col).group(0) if re.match(r'^[^\s(]+', col) else col
+
+        # Apply cleaning
+        df.columns = [clean_column(col) for col in df.columns]
+
         gene_effects = df[df.columns.intersection(genes)]
 
         # Compute mean gene effect for each gene
         mean_gene_effects = gene_effects.mean()
 
-        print("\nMean Gene Effect scores:")
-        print(mean_gene_effects)
+        for gene, effect in mean_gene_effects.items():
+            ud = uniprots.filter(gene_name=gene).first()
 
+            protein = proteins.filter(accession_number = ud.accession_number).first()
+
+            protein.mean_gene_effect = effect
+            protein.save()
 
 
 

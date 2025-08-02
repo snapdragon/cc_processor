@@ -71,7 +71,12 @@ python manage.py runserver 0.0.0.0:8000
 
 ### Dump entire DB
 ``` sh
-pg_dump -U myuser -d main > db_backup.sql
+pg_dump -U myuser -d main \
+  -t process_project -t process_replicate -t process_samplestage \
+  -t process_columnname -t process_protein -t process_phospho \
+  -t process_statistictype -t process_statistic -t process_abundance -t \
+  -t process_uniprotdata -t process_peptidestartposition \
+  --data-only -F c -f db_backup.sql
 
 # From outside container
 docker cp postgres-db:/db_backup.sql db_backups/db_backup.sql
@@ -89,6 +94,10 @@ drop table process_columnname;
 drop table process_samplestage;
 drop table process_replicate;
 drop table process_project;
+delete from django_migrations where app = 'process';
+
+# Run the django migration from inside cc_processor
+python manage.py migrate
 
 # Then exit the postgres-db container and run this locally
 docker exec -i postgres-db psql -U myuser -d main < db_backups/db_backup.sql

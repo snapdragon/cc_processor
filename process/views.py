@@ -320,6 +320,79 @@ def scatterplot(request, id):
 
 
 
+
+
+def mean_gene_effect(request, id):
+    project = Project.objects.get(id=id)
+
+    protein_data = []
+
+    updatas = UniprotData.objects.all()
+
+    updata = {u.accession_number:u.gene_name for u in updatas}
+
+    statistics = Statistic.objects.filter(
+        statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
+        protein__project = project,
+    )[:500]
+
+    print("+++++ STATISTICS")
+    print(len(statistics))
+
+    protein_data = []
+
+    ccd_data = []
+    non_ccd_data = []
+
+    important_accession_numbers = ["P24385", "O96020", "P14635", "P20248", "P30281", "P06493", "P24941", "Q00534"]
+
+    for statistic in statistics:
+        if (
+            statistic.metrics.get(ANOVA) is not None
+            and statistic.metrics[ANOVA].get(Q_VALUE)
+            and statistic.metrics.get(CURVE_FOLD_CHANGE)
+        ):
+            try:
+                curve_fold_log2 = log2(abs(statistic.metrics[CURVE_FOLD_CHANGE]))
+            except Exception as e:
+                continue
+
+            gene_name = None
+
+            accession_number = statistic.protein.accession_number
+
+            if accession_number in important_accession_numbers:
+                try:
+                    gene_name = updata[accession_number]
+                except Exception:
+                    continue
+
+            datum = {
+                "x": curve_fold_log2,
+                "y": statistic.protein.mean_gene_effect,
+                "label": gene_name,
+            }
+
+            if project.ccd:
+                ccd_data.append(datum)
+            else:
+                non_ccd_data.append(datum)
+
+    print(non_ccd_data + ccd_data)
+
+    return render(
+        request,
+        "mean_gene_effect.html",
+        {
+            "project": project,
+            "protein_data": non_ccd_data + ccd_data,
+        },
+    )
+
+
+
+
+
 def lingress(request, id):
     project = Project.objects.get(id=id)
 
