@@ -260,21 +260,47 @@ class Command(BaseCommand):
             # Hits UniProt a lot, only run if necessary
             # self._get_uniprot_data(project)
 
-            self._find_CCDs(project, True)
-            self._find_CCDs(project, False)
+            # self._find_CCDs(project, True)
+            # self._find_CCDs(project, False)
 
-            self._find_mitotic_cell_cycle(project, True)
-            self._find_mitotic_cell_cycle(project, False)
+            # self._find_mitotic_cell_cycle(project, True)
+            # self._find_mitotic_cell_cycle(project, False)
 
             # self._fetch_corum_complexes(project)
 
             # Hits UniProt a lot, only run if necessary
             # # self._fetch_GO_locations(project)
 
-            self._fetch_GO_enrichment(project, True)
-            self._fetch_GO_enrichment(project, False)
+            # self._fetch_GO_enrichment(project, True)
+            # self._fetch_GO_enrichment(project, False)
 
             # self._generate_pcas(project)
+
+            self._fetch_mean_gene_effect(project)
+
+
+    def _fetch_mean_gene_effect(project):
+        proteins = Protein.objects.filter(
+            project = project
+        )
+
+        uniprots = UniprotData.objects.filter(
+            accession_number__in = [p.accession_number for p in proteins]
+        )
+
+        genes = [u.gene_name for u in uniprots]
+
+        df = pd.read_csv('data/Achilles_gene_effect.csv', index_col=0)
+
+        gene_effects = df[df.columns.intersection(genes)]
+
+        # Compute mean gene effect for each gene
+        mean_gene_effects = gene_effects.mean()
+
+        print("\nMean Gene Effect scores:")
+        print(mean_gene_effects)
+
+
 
 
     # # TODO - now taken care of by _get_uniprot_data

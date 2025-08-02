@@ -1,9 +1,9 @@
-GO Term,Name
+GO_term,name
 GO:0072686,Mitotic spindle
 GO:0000922,Spindle pole
 GO:0005813,Centrosome
 GO:0000776,Kinetochore
-GO:0000775,Chromosome, centromeric region
+GO:0000775,Chromosome
 GO:0032154,Cleavage furrow
 GO:0030496,Midbody
 GO:0005826,Contractile ring

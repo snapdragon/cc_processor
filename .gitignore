@@ -180,3 +180,4 @@ cython_debug/
 /db_backups
 ~$riteup.docx
 Writeup.docx
+data/Achilles_gene_effect.csv
