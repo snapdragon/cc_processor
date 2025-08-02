@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <style>
+      .legend {
+        margin-left: 20px;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</style></head>
+<body>
+  <svg width="500" height="500" id="proteins"></svg>
+  <svg width="600" height="500" id="boxplot"></svg>
+
+  {{ protein_data|json_script:"protein-data" }}
+  {{ boxplot_data|json_script:"boxplot-data" }}
+
+  <script>
+    protein_data = JSON.parse(document.getElementById('protein-data').textContent)
+
+    scatterplot("#proteins", protein_data, "#0072B2")
+
+    function scatterplot(id, data, dotColor) {
+      const margin = { top: 20, right: 10, bottom: 60, left: 70 },
+            width = 500 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom
+
+      const svg = d3.select(id)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`)
+
+      const xScale = d3.scaleLinear().domain([0, 6]).range([0, width])
+      const yScale = d3.scaleLinear().domain([-3, .5]).range([height, 0])
+
+      // Axes
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).ticks(6))
+      svg.append("g").call(d3.axisLeft(yScale))
+
+      // Scatter points
+      svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 3)
+        .attr("fill", d => d.ccd ? dotColor : "lightgray")
+
+      // Labels
+      svg.selectAll(".label")
+        .data(data.filter(d => d.label))
+        .enter()
+        .append("text")
+        .attr("x", d => xScale(d.x) + 5)
+        .attr("y", d => yScale(d.y))
+        .text(d => d.label)
+        .attr("fill", "#8B0000")
+        .style("font-weight", "bold")
+        .style("font-size", "24px")
+        .attr("stroke", "white")
+        .attr("stroke-width", 4)
+        .attr("paint-order", "stroke")
+        .attr("dominant-baseline", "middle")
+
+      // Axis labels
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 45)
+        .attr("text-anchor", "middle")
+        .text("log₂ Curve Fold Change")
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -55)
+        .attr("text-anchor", "middle")
+        .text("Mean gene effect")
+    }
+
+
+
+  data = JSON.parse(document.getElementById('boxplot-data').textContent)
+
+const svg = d3.select("#boxplot");
+
+const margin = { top: 20, right: 10, bottom: 60, left: 170 },
+            width = 600 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom
+
+
+const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+const categories = [...new Set(data.map(d => d.category))];
+
+const x = d3.scaleBand()
+  .domain(categories)
+  .range([0, width])
+  .padding(0.4);
+
+const y = d3.scaleLinear()
+  .domain([-3, 0.5])
+  .range([height, 0]);
+
+// Compute summary stats
+function computeBoxenStats(values) {
+  values.sort(d3.ascending);
+  const q1 = d3.quantile(values, 0.25);
+  const median = d3.quantile(values, 0.5);
+  const q3 = d3.quantile(values, 0.75);
+  const iqr = q3 - q1;
+  const min = d3.min(values);
+  const max = d3.max(values);
+
+  return { q1, median, q3, min, max, iqr };
+}
+
+// Draw each box
+categories.forEach(cat => {
+  const group = data.filter(d => d.category === cat).map(d => d.mean_gene_effect);
+  const stats = computeBoxenStats(group);
+  const boxWidth = x.bandwidth();
+
+  const center = x(cat) + boxWidth / 2;
+
+  // Draw box
+  g.append("rect")
+    .attr("x", center - boxWidth / 2)
+    .attr("y", y(stats.q3))
+    .attr("width", boxWidth)
+    .attr("height", y(stats.q1) - y(stats.q3))
+    .attr("fill", "#777")
+
+  // Median line
+  g.append("line")
+    .attr("x1", center - boxWidth / 2)
+    .attr("x2", center + boxWidth / 2)
+    .attr("y1", y(stats.median))
+    .attr("y2", y(stats.median))
+    .attr("stroke", "#777");
+
+  // Whiskers
+  g.append("line")
+    .attr("x1", center)
+    .attr("x2", center)
+    .attr("y1", y(stats.min))
+    .attr("y2", y(stats.max))
+    .attr("stroke", "#777");
+
+  // Add min/max caps
+  g.append("line")
+    .attr("x1", center - boxWidth / 4)
+    .attr("x2", center + boxWidth / 4)
+    .attr("y1", y(stats.min))
+    .attr("y2", y(stats.min))
+    .attr("stroke", "#777");
+
+  g.append("line")
+    .attr("x1", center - boxWidth / 4)
+    .attr("x2", center + boxWidth / 4)
+    .attr("y1", y(stats.max))
+    .attr("y2", y(stats.max))
+    .attr("stroke", "#777");
+});
+
+// Axes
+g.append("g")
+  .attr("transform", `translate(0,${height})`)
+  .call(d3.axisBottom(x))
+  .selectAll("text")
+  .attr("transform", `translate(-35,15)`)
+  .style("text-anchor", "start");
+
+g.append("g")
+  .call(d3.axisLeft(y));
+
+g.append("text")
+  .attr("text-anchor", "middle")
+  .attr("transform", `translate(-55,${height / 2})rotate(-90)`)
+  .text("Mean Gene Effect");
+
+
+
+
+
+  </script>
+</body>
+</html>

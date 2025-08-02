@@ -44,6 +44,8 @@ class Command(BaseCommand):
 
         # _output_GO_locations(project)
 
+        _output_CORUM_GO_commonalities(project)
+
 
 
 
@@ -108,7 +110,7 @@ def _output_complex(proteins, filename):
 
     for key in sorted_keys:
         results.append({
-            "id": key,
+            "CORUM_id": key,
             "complex_name": complex_ids[key],
             "count": len(complexes[key]),
             "accession_numbers": complexes[key],
@@ -232,32 +234,56 @@ def _output_well_known_CCDs(project):
         ccd=True
     )
 
-    important_accession_numbers = [p.accession_number for p in proteins]
+    cell_cycle_relevant_accession_numbers = [p.accession_number for p in proteins]
 
-    important_df = df[df['accession_number'].isin(important_accession_numbers)]
+    found_df = df[df['accession_number'].isin(cell_cycle_relevant_accession_numbers)]
 
-    important_df.to_csv('supplementary_data/important_CCDs_found.csv', index=False)
+    found_df.to_csv('supplementary_data/cell_cycle_relevant_CCDs_found.csv', index=False)
 
-    unimportant_df = df[~df['accession_number'].isin(important_accession_numbers)]
+    not_found_df = df[~df['accession_number'].isin(cell_cycle_relevant_accession_numbers)]
 
-    unimportant_df.to_csv('supplementary_data/important_CCDs_not_found.csv', index=False)
+    not_found_df.to_csv('supplementary_data/cell_cycle_relevant_CCDs_not_found.csv', index=False)
 
 
-def _output_GO_locations(project):
-    # TODO - need phospho protein lists too?
-    proteins = Protein.objects.filter(
-        project=project,
-        ccd=True,
-    ).exclude(corum_results=None)
+def _output_CORUM_GO_commonalities(project):
+    # Strip out non-relevant CORUM complexes
 
-    _output_locations(proteins, "supplementary_data/GO_locations_CCD.csv")
+    ccr_CORUM_df = pd.read_csv('supplementary_data/cell_cycle_relevant_CORUM_complexes.csv')
+    CORUM_CCD_complexes_df = pd.read_csv("supplementary_data/CORUM_CCD_complexes.csv")
 
-    proteins = Protein.objects.filter(
-        project=project,
-        mitotic_cell_cycle=True,
-    ).exclude(corum_results=None)
+    common_CORUMs_df = CORUM_CCD_complexes_df[CORUM_CCD_complexes_df['CORUM_id'].isin(ccr_CORUM_df['CORUM_id'])].copy()
 
-    _output_locations(proteins, "supplementary_data/GO_locations_mitotic_cell_cycle.csv")
+    # Strip out non-relevant GO locations
+
+    ccr_GO_df = pd.read_csv('supplementary_data/cell_cycle_relevant_GO_cellular_locations.csv')
+    GO_locations_CCD_df = pd.read_csv("supplementary_data/GO_locations_CCD.csv")
+
+    common_GO_locations_df = GO_locations_CCD_df[GO_locations_CCD_df['GO_term'].isin(ccr_GO_df['GO_term'])].copy()
+
+    # Parse and flatten accession numbers from CORUM
+    corum_accessions = set()
+    for acc_list in common_CORUMs_df['accession_numbers']:
+        parsed = json.loads(acc_list.replace("'", '"'))
+        print("CORUM")
+        print(parsed)
+        corum_accessions.update(parsed)
+
+    # Parse and flatten accession numbers from GO
+    go_accessions = set()
+    for acc_list in common_GO_locations_df['accession_numbers']:
+        parsed = json.loads(acc_list.replace("'", '"'))
+        print("GO")
+        print(parsed)
+        go_accessions.update(parsed)
+
+    # Find intersection
+    common_accessions = corum_accessions.intersection(go_accessions)
+
+    print(f"Number of common accession numbers: {len(common_accessions)}")
+    print("Common accession numbers:")
+    for acc in sorted(common_accessions):
+        print(acc)
+
 
 
 def _output_locations(proteins, filename):
@@ -278,8 +304,8 @@ def _output_locations(proteins, filename):
 
     for key in sorted_keys:
         results.append({
-            "id": key,
-            "location_name": location_ids[key],
+            "GO_term": key,
+            "name": location_ids[key],
             "count": len(locations[key]),
             "accession_numbers": locations[key],
         })

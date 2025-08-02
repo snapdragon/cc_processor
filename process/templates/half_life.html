@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js with Django</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</style></head>
+<body>
+  <svg width="600" height="500" id="boxplot"></svg>
+
+  {{ boxplot_data|json_script:"boxplot-data" }}
+
+  <script>
+    data = JSON.parse(document.getElementById('boxplot-data').textContent)
+
+    const svg = d3.select("#boxplot");
+
+    const margin = { top: 20, right: 10, bottom: 60, left: 170 },
+      width = 600 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const categories = [...new Set(data.map(d => d.category))];
+
+    const x = d3.scaleBand()
+      .domain(categories)
+      .range([0, width])
+      .padding(0.4);
+
+    const y = d3.scaleLinear()
+      .domain([0, 35])
+      .range([height, 0]);
+
+    function computeBoxenStats(values) {
+      values.sort(d3.ascending);
+      const q1 = d3.quantile(values, 0.25);
+      const median = d3.quantile(values, 0.5);
+      const q3 = d3.quantile(values, 0.75);
+      const iqr = q3 - q1;
+      const min = d3.min(values);
+      const max = d3.max(values);
+
+      return { q1, median, q3, min, max, iqr };
+    }
+
+    // Draw each box
+    categories.forEach(cat => {
+      const group = data.filter(d => d.category === cat).map(d => d.mean_gene_effect);
+      const stats = computeBoxenStats(group);
+      const boxWidth = x.bandwidth();
+
+      const center = x(cat) + boxWidth / 2;
+
+      // Draw box
+      g.append("rect")
+        .attr("x", center - boxWidth / 2)
+        .attr("y", y(stats.q3))
+        .attr("width", boxWidth)
+        .attr("height", y(stats.q1) - y(stats.q3))
+        .attr("fill", "#777")
+
+      // Median line
+      g.append("line")
+        .attr("x1", center - boxWidth / 2)
+        .attr("x2", center + boxWidth / 2)
+        .attr("y1", y(stats.median))
+        .attr("y2", y(stats.median))
+        .attr("stroke", "#777");
+
+      // Whiskers
+      g.append("line")
+        .attr("x1", center)
+        .attr("x2", center)
+        .attr("y1", y(stats.min))
+        .attr("y2", y(stats.max))
+        .attr("stroke", "#777");
+
+      // Add min/max caps
+      g.append("line")
+        .attr("x1", center - boxWidth / 4)
+        .attr("x2", center + boxWidth / 4)
+        .attr("y1", y(stats.min))
+        .attr("y2", y(stats.min))
+        .attr("stroke", "#777");
+
+      g.append("line")
+        .attr("x1", center - boxWidth / 4)
+        .attr("x2", center + boxWidth / 4)
+        .attr("y1", y(stats.max))
+        .attr("y2", y(stats.max))
+        .attr("stroke", "#777");
+    });
+
+    // Axes
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .attr("transform", `translate(-35,15)`)
+      .style("text-anchor", "start");
+
+    g.append("g")
+      .call(d3.axisLeft(y));
+
+    g.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", `translate(-55,${height / 2})rotate(-90)`)
+      .text("Half-life (hours)");
+
+  </script>
+</body>
+</html>

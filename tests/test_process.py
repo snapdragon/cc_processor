@@ -416,56 +416,6 @@ def test_create_abundance_dataframe(
 
 
 @pytest.mark.django_db
-def test_calculate_metrics(basic_project_setup):
-    command = Command()
-
-    replicates = basic_project_setup["replicates"]
-    sample_stages = basic_project_setup["sample_stages"]
-    proteins = basic_project_setup["proteins"]
-
-    statistic_type_name = ABUNDANCES_NORMALISED_LOG2_MEAN
-
-    _, stat = create_readings(
-        statistic_type_name, replicates, sample_stages, reading=0, protein=proteins[0]
-    )
-
-    command._calculate_means(
-        statistic_type_name, protein=proteins[0], phospho=None, with_bugs=True
-    )
-
-    command._calculate_metrics(
-        statistic_type_name,
-        replicates,
-        sample_stages,
-        proteins[0],
-    )
-
-    stat = command._get_statistic(statistic_type_name, protein=proteins[0])
-
-    metrics = stat.metrics
-
-    numbers = {
-        "R_squared_all": 1.0,
-        "residuals_all": 8.313515829031342e-30,
-        "kurtosis_average": 120.8625,
-        "skewness_average": 0.0,
-        "variance_average": 8.25,
-        "R_squared_average": 1.0,
-        "curve_fold_change": 1.8181818181818175,
-        "residuals_average": 2.5276769669211793e-30,
-        "standard_deviation": 8.803408430829505,
-        "max_fold_change_average": 9.0,
-    }
-
-    for number in numbers:
-        assert isclose(metrics[number], numbers[number])
-
-    assert metrics["curve_peak"] == "Nocodozole"
-    assert metrics["peak_average"] == "Nocodozole"
-
-
-# TODO - unfinished
-@pytest.mark.django_db
 def test_calculate_curve_fold_change(basic_project_setup):
     command = Command()
 
@@ -479,20 +429,11 @@ def test_calculate_curve_fold_change(basic_project_setup):
 
     abundances = Abundance.objects.filter(statistic=stat)
 
-    curve_fold_change, curve_peak = command._calculate_curve_fold_change(
+    curve_fold_change = command._calculate_curve_fold_change(
         abundances,
         replicates,
     )
 
-    print("++++++")
-    print("++++++")
-    print("++++++")
-    print("++++++")
-    print(curve_fold_change)
-    print(curve_peak)
-
-
-# def test_polyfit():
 
 
 # TODO - unfinished

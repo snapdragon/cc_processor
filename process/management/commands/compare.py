@@ -19,6 +19,9 @@ from process.constants import (
     PROTEIN_OSCILLATION_ABUNDANCES_LOG2_MEAN,
     PROTEIN_OSCILLATION_ABUNDANCES_ZERO_MAX,
     Q_VALUE,
+    CURVE_FOLD_CHANGE,
+    CURVE_PEAK,
+    STANDARD_DEVIATION,
 )
 from process.models import (
     Abundance,
@@ -30,19 +33,20 @@ from process.models import (
 )
 
 # TODO - move to constants file
-METRICS_STRING_FIELDS = ["peak_average", "curve_peak"]
+# METRICS_STRING_FIELDS = ["peak_average", "curve_peak"]
+METRICS_STRING_FIELDS = []
 
 METRICS_NUMBER_FIELDS = [
-    "standard_deviation",
-    "variance_average",
-    "skewness_average",
-    "kurtosis_average",
-    "max_fold_change_average",
-    "residuals_average",
-    "R_squared_average",
-    "residuals_all",
-    "R_squared_all",
-    "curve_fold_change",
+    STANDARD_DEVIATION,
+    # "variance_average",
+    # "skewness_average",
+    # "kurtosis_average",
+    # "max_fold_change_average",
+    # "residuals_average",
+    # "R_squared_average",
+    # "residuals_all",
+    # "R_squared_all",
+    CURVE_FOLD_CHANGE,
 ]
 
 METRICS_ANOVA_FIELDS = [

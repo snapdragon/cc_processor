@@ -4,6 +4,7 @@ from sklearn.decomposition import PCA
 import json
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from scipy.stats import mannwhitneyu
 
 from django.shortcuts import render
 
@@ -29,7 +30,7 @@ from process.models import (
 
 
 def index(request):
-    projects = Project.objects.all()
+    projects = Project.objects.all().order_by("id")
 
     return render(request, "index.html", {"projects": projects})
 
@@ -317,6 +318,152 @@ def scatterplot(request, id):
             "oscillating_phospho_num": oscillating_phospho_num,
         },
     )
+
+
+
+
+
+def mean_gene_effect(request, id):
+    project = Project.objects.get(id=id)
+
+    updatas = UniprotData.objects.all()
+
+    updata = {u.accession_number:u.gene_name for u in updatas}
+
+    statistics = Statistic.objects.filter(
+        statistic_type__name=ABUNDANCES_NORMALISED_LOG2_MEAN,
+        protein__project = project,
+        protein__mean_gene_effect__isnull = False,
+    )
+
+    protein_data = []
+
+    ccd_data = []
+    non_ccd_data = []
+    boxplot_data = []
+
+    important_accession_numbers = ["P24385", "O96020", "P14635", "P20248", "P30281", "P06493", "P24941", "Q00534"]
+
+    for statistic in statistics:
+        if (
+            statistic.metrics.get(ANOVA) is not None
+            and statistic.metrics[ANOVA].get(Q_VALUE)
+            and statistic.metrics.get(CURVE_FOLD_CHANGE)
+        ):
+            try:
+                curve_fold_log2 = log2(abs(statistic.metrics[CURVE_FOLD_CHANGE]))
+            except Exception as e:
+                continue
+
+            if curve_fold_log2 < 0:
+                continue
+
+            gene_name = None
+
+            accession_number = statistic.protein.accession_number
+
+            if accession_number in important_accession_numbers:
+                try:
+                    gene_name = updata[accession_number]
+                except Exception:
+                    continue
+
+            datum = {
+                "x": curve_fold_log2,
+                "y": statistic.protein.mean_gene_effect,
+                "ccd": statistic.protein.ccd,
+                "label": gene_name,
+            }
+
+            if statistic.protein.ccd:
+                ccd_data.append(datum)
+
+                boxplot_data.append({
+                    "category": "Oscillating",
+                    "mean_gene_effect": statistic.protein.mean_gene_effect
+                })
+            else:
+                non_ccd_data.append(datum)
+
+                boxplot_data.append({
+                    "category": "Stable",
+                    "mean_gene_effect": statistic.protein.mean_gene_effect
+                })
+
+    statistic, p_value = mannwhitneyu(
+        [d["y"] for d in ccd_data],
+        [d["y"] for d in non_ccd_data],
+        alternative='two-sided'
+    )
+
+    print(f"U statistic: {statistic}")
+    print(f"P-value: {p_value}")
+
+    return render(
+        request,
+        "mean_gene_effect.html",
+        {
+            "project": project,
+            "protein_data": non_ccd_data + ccd_data,
+            "boxplot_data": boxplot_data,
+        },
+    )
+
+
+
+def half_life(request, id):
+    project = Project.objects.get(id=id)
+
+    excel_file = pd.ExcelFile("data/mmc3.xlsx")
+    df = pd.read_excel(excel_file, sheet_name=1)
+
+    half_lives = dict(zip(df['Uniprot ID'], df['Half-life']))
+
+    proteins = Protein.objects.filter(
+        project = project,
+        mean_gene_effect__isnull = False,
+    )
+
+    boxplot_data = []
+
+    for protein in proteins:
+        accession_number = protein.accession_number
+
+        if half_lives.get(protein.accession_number) is None:
+            continue
+
+        half_life = half_lives[accession_number]
+
+        if protein.ccd:
+            boxplot_data.append({
+                "category": "Oscillating",
+                "mean_gene_effect": half_life,
+            })
+        else:
+            boxplot_data.append({
+                "category": "Stable",
+                "mean_gene_effect": half_life,
+            })
+
+    statistic, p_value = mannwhitneyu(
+        [b["mean_gene_effect"] for b in boxplot_data if b["category"] == "Oscillating"],
+        [b["mean_gene_effect"] for b in boxplot_data if b["category"] == "Stable"],
+        alternative='two-sided'
+    )
+
+    print(f"U statistic: {statistic}")
+    print(f"P-value: {p_value}")
+
+    return render(
+        request,
+        "half_life.html",
+        {
+            "project": project,
+            "boxplot_data": boxplot_data,
+        },
+    )
+
+
 
 
 

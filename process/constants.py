@@ -28,6 +28,8 @@ PHOSPHORYLATION_ABUNDANCES = "phosphorylation_abundances"
 PHOSPHO_REGRESSION = "phospho_regression"
 PHOSPHORYLATION_SITE = "phosphorylation_site"
 CURVE_FOLD_CHANGE = "curve_fold_change"
+CURVE_PEAK = "curve_peak"
+STANDARD_DEVIATION = "standard_deviation"
 PROTEIN_PHOSPHO_CORRELATION = "protein-phospho-correlation"
 # TODO - misspelled, but it's difficult to replace it in the fixture json files
 PHOSPHO_PROTEIN_CFC_RATIO = "phosho-protein-cfc_ratio"
@@ -103,9 +105,12 @@ ICR_ABUNDANCE_REP_1 = "abundance_rep_1"
 ICR_ABUNDANCE_REP_2 = "abundance_rep_2"
 
 PROTEIN_MAX_Q = 0.05
-PROTEIN_MAX_Q_SL = 0.005
+PROTEIN_MAX_Q_SL = 0.05
+# PROTEIN_MAX_Q_SL = 0.005
 PHOSPHO_MAX_Q = 0.01
-PHOSPHO_MAX_Q_SL = 0.001
+PHOSPHO_MAX_Q_SL = 0.01
+# PHOSPHO_MAX_Q_SL = 0.001
+CURVE_FOLD_CHANGE_MIN = 1.2
 
 PROJECT_SL = "SL"
 PROJECT_ICR = "ICR"

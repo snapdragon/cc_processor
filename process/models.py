@@ -92,6 +92,7 @@ class Protein(models.Model):
     phospho_mitotic_cell_cycle = models.BooleanField(default=False)
     corum_results = models.JSONField(null=True, blank=True)
     GO_locations = models.JSONField(null=True, blank=True)
+    mean_gene_effect = models.FloatField(null=True, blank=True)
 
     class Meta:
         constraints = [

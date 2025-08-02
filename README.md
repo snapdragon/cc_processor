@@ -23,8 +23,8 @@ python manage.py migrate
 
 # From outside the container, import the uniprot and peptide data tables
 # (not necessary but saves time)
-docker exec -i postgres-db psql -U myuser -d main < process_uniprotdata_2025_07_19.sql
-docker exec -i postgres-db psql -U myuser -d main < process_peptidestartposition_2025_07_19.sql
+docker exec -i postgres-db psql -U myuser -d main < db_data/process_uniprotdata_2025_07_19.sql
+docker exec -i postgres-db psql -U myuser -d main < db_data/process_peptidestartposition_2025_07_19.sql
 
 # From inside the cc_processor container, import and process the data
 python manage.py import_protein --project "SL"
@@ -71,10 +71,36 @@ python manage.py runserver 0.0.0.0:8000
 
 ### Dump entire DB
 ``` sh
-pg_dump -U myuser -d dbify > db_backups/db_backup.sql
+pg_dump -U myuser -d main \
+  -t process_project -t process_replicate -t process_samplestage \
+  -t process_columnname -t process_protein -t process_phospho \
+  -t process_statistictype -t process_statistic -t process_abundance -t \
+  -t process_uniprotdata -t process_peptidestartposition \
+  --data-only -F c -f db_backup.sql
 
-# To import again
-docker exec -i postgres-db psql -U myuser -d main < db_backups/db_backups.sql
+# From outside container
+docker cp postgres-db:/db_backup.sql db_backups/db_backup.sql
+
+# To import again, first go to the postgres container and log in to psql
+# Then run these statements. You will see various errors, ignore them
+drop table process_peptidestartposition;
+drop table process_uniprotdata;
+drop table process_abundance;
+drop table process_statistic;
+drop table process_statistictype;
+drop table process_phospho;
+drop table process_protein;
+drop table process_columnname;
+drop table process_samplestage;
+drop table process_replicate;
+drop table process_project;
+delete from django_migrations where app = 'process';
+
+# Run the django migration from inside cc_processor
+python manage.py migrate
+
+# Then exit the postgres-db container and run this locally
+docker exec -i postgres-db psql -U myuser -d main < db_backups/db_backup.sql
 ```
 
 ### Dump tables to save retrieving again
@@ -84,12 +110,12 @@ pg_dump -d main -t process_uniprotdata > uniprot_data.sql
 pg_dump -d main -t process_peptidestartposition > peptidestartposition.sql
 
 # From outside container
-docker cp f09f37276ef6:/process_uniprotdata.sql db_data/process_uniprotdata.sql
-docker cp f09f37276ef6:/process_peptidestartposition.sql db_data/process_peptidestartposition.
+docker cp postgres-db:/process_uniprotdata.sql db_data/process_uniprotdata.sql
+docker cp postgres-db:/process_peptidestartposition.sql db_data/process_peptidestartposition.
 
 # From outside container
-docker cp db_data/process_uniprotdata.sql f09f37276ef6:/process_uniprotdata.sql 
-docker cp db_data/process_peptidestartposition.sql f09f37276ef6:/process_peptidestartposition.sql 
+docker cp db_data/process_uniprotdata.sql postgres-db:/process_uniprotdata.sql 
+docker cp db_data/process_peptidestartposition.sql postgres-db:/process_peptidestartposition.sql 
 
 # To import, from outside container
 psql -U myuser -d dbify -f db_data/process_peptidestartposition.sql

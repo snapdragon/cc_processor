@@ -10,7 +10,7 @@ import statistics
 from time import sleep
 import io
 from collections import defaultdict
-
+import re
 import numpy as np
 import pandas as pd
 import requests
@@ -35,6 +35,7 @@ from process.constants import (
     ABUNDANCES_RAW,
     ANOVA,
     CURVE_FOLD_CHANGE,
+    CURVE_PEAK,
     DEFAULT_FISHER_STATS,
     F_STATISTICS,
     FISHER_G,
@@ -55,6 +56,8 @@ from process.constants import (
     Q_VALUE,
     CCD_BATCH_SIZE,
     PROJECT_SL,
+    CURVE_FOLD_CHANGE_MIN,
+    STANDARD_DEVIATION,
 )
 from process.models import (
     Abundance,
@@ -265,7 +268,7 @@ class Command(BaseCommand):
             self._find_mitotic_cell_cycle(project, True)
             self._find_mitotic_cell_cycle(project, False)
 
-            # self._fetch_corum_complexes(project)
+            self._fetch_corum_complexes(project)
 
             # Hits UniProt a lot, only run if necessary
             # # self._fetch_GO_locations(project)
@@ -273,7 +276,47 @@ class Command(BaseCommand):
             self._fetch_GO_enrichment(project, True)
             self._fetch_GO_enrichment(project, False)
 
-            # self._generate_pcas(project)
+            self._generate_pcas(project)
+
+            # To run this download Achilles_gene_effect.csv and put it in data/
+            self._fetch_mean_gene_effect(project)
+
+
+    def _fetch_mean_gene_effect(self, project):
+        proteins = Protein.objects.filter(
+            project = project
+        )
+
+        accession_numbers = [p.accession_number for p in proteins]
+
+        uniprots = UniprotData.objects.filter(
+            accession_number__in = accession_numbers
+        )
+
+        genes = [u.gene_name for u in uniprots]
+
+        df = pd.read_csv('data/Achilles_gene_effect.csv', index_col=0)
+
+        # Strip extra data from column names: keep only gene symbol before the first space or parentheses
+        def clean_column(col):
+            return re.match(r'^[^\s(]+', col).group(0) if re.match(r'^[^\s(]+', col) else col
+
+        # Apply cleaning
+        df.columns = [clean_column(col) for col in df.columns]
+
+        gene_effects = df[df.columns.intersection(genes)]
+
+        # Compute mean gene effect for each gene
+        mean_gene_effects = gene_effects.mean()
+
+        for gene, effect in mean_gene_effects.items():
+            ud = uniprots.filter(gene_name=gene).first()
+
+            protein = proteins.filter(accession_number = ud.accession_number).first()
+
+            protein.mean_gene_effect = effect
+            protein.save()
+
 
 
     # # TODO - now taken care of by _get_uniprot_data
@@ -347,8 +390,6 @@ class Command(BaseCommand):
 
         num_stats = 0
 
-        print(f"MAX Q: {max_q}")
-
         for statistic in statistics:
             if not num_stats % 1000:
                 logger.info(f"Generating relevance {num_stats}")
@@ -366,7 +407,7 @@ class Command(BaseCommand):
 
             if (
                 statistic.metrics.get(CURVE_FOLD_CHANGE) is None
-                or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < 2
+                or self._round(statistic.metrics[CURVE_FOLD_CHANGE], 1) < CURVE_FOLD_CHANGE_MIN
             ):
                 continue
 
@@ -455,9 +496,9 @@ class Command(BaseCommand):
 
                             protein.save()
                         except Exception:
-                            print(f"Can't get protein for accession_number {accession_number}")
+                            logger.info(f"Can't get protein for accession_number {accession_number}")
             else:
-                print("+++ NOT FOUND")
+                logger.info("Not found")
 
 
 
@@ -478,7 +519,7 @@ class Command(BaseCommand):
             )
             df["subunits_uniprot_id"] = df["subunits_uniprot_id"].fillna("")
         except FileNotFoundError:
-            print("CORUM file not found.")
+            logger.error("CORUM file not found.")
             return None
 
         corum_results = {accession_number: [] for accession_number in accession_numbers}
@@ -637,9 +678,10 @@ class Command(BaseCommand):
 
 
         if False:
+            pass
             # Code for imputing values
-            print("Dimensions before imputation:", df.shape)
-            print("Missing values per column:", df.isnull().sum().sum())
+            # print("Dimensions before imputation:", df.shape)
+            # print("Missing values per column:", df.isnull().sum().sum())
 
             # # Impute missing values using median strategy
             # # You can change strategy to 'mean', 'most_frequent', or 'constant'
@@ -650,19 +692,19 @@ class Command(BaseCommand):
             #     columns=df.columns
             # )
 
-            from sklearn.impute import KNNImputer
+            # from sklearn.impute import KNNImputer
     
-            imputer = KNNImputer(n_neighbors=5)
-            df_imputed = pd.DataFrame(
-                imputer.fit_transform(df),
-                index=df.index,
-                columns=df.columns
-            )
+            # imputer = KNNImputer(n_neighbors=5)
+            # df_imputed = pd.DataFrame(
+            #     imputer.fit_transform(df),
+            #     index=df.index,
+            #     columns=df.columns
+            # )
 
-            print("Dimensions after imputation:", df_imputed.shape)
-            print("Missing values after imputation:", df_imputed.isnull().sum().sum())
+            # print("Dimensions after imputation:", df_imputed.shape)
+            # print("Missing values after imputation:", df_imputed.isnull().sum().sum())
 
-            df_T = df_imputed.T
+            # df_T = df_imputed.T
         else:
             df = df.dropna()
 
@@ -992,35 +1034,43 @@ class Command(BaseCommand):
         protein=None,
         phospho=None,
     ):
-        metrics = {}
-
         if protein:
             stat = self._get_statistic(statistic_type_name, protein=protein)
         else:
             stat = self._get_statistic(statistic_type_name, phospho=phospho)
 
-        abundances_all = Abundance.objects.filter(statistic=stat).order_by(
-            "replicate__id", "sample_stage__rank"
-        )
+        # abundances_all = Abundance.objects.filter(statistic=stat).order_by(
+        #     "replicate__id", "sample_stage__rank"
+        # )
 
         # Clear previous metrics
         stat.metrics = {}
         stat.save()
 
-        abundances_non_mean = abundances_all.filter(replicate__mean=False)
+        # abundances_non_mean = abundances_all.filter(replicate__mean=False)
+        abundances_non_mean = Abundance.objects.filter(
+            statistic=stat,
+            replicate__mean=False
+        ).order_by(
+            "replicate__id", "sample_stage__rank"
+        )
 
-        abundance_averages = {
-            a.sample_stage.name: a.reading
-            for a in abundances_all.filter(replicate__mean=True)
-            if a.reading is not None
-        }
-        abundance_averages_list = [val for val in abundance_averages.values()]
+        # abundance_averages = {
+        #     a.sample_stage.name: a.reading
+        #     for a in abundances_all.filter(replicate__mean=True)
+        #     if a.reading is not None
+        # }
+        # abundance_averages_list = [val for val in abundance_averages.values()]
 
         if len(abundances_non_mean.values("replicate__id").distinct()) < 2:
             # There aren't as least two replicates to calculate, give up
             return
 
-        if not len(abundance_averages_list) or not len(abundances_non_mean):
+        # if not len(abundance_averages_list) or not len(abundances_non_mean):
+        #     # Nothing to work with
+        #     return
+
+        if not len(abundances_non_mean):
             # Nothing to work with
             return
 
@@ -1028,119 +1078,150 @@ class Command(BaseCommand):
             [a.reading for a in abundances_non_mean if a.reading is not None]
         )
 
+        metrics = {
+            STANDARD_DEVIATION: std,
+        }
+
+        # try:
+        #     polyfit_result = np.polyfit(
+        #         range(0, len(abundance_averages)),
+        #         abundance_averages_list,
+        #         2,
+        #         full=True,
+        #     )
+
+        #     if len(polyfit_result[1]):
+        #         residuals = polyfit_result[1][0]
+        #     else:
+        #         # TODO - is this a meaningful value? It's just the mean.
+        #         residuals = int(len(sample_stages) / 2)
+
+        #     r_squared = self._polyfit(
+        #         range(0, len(abundance_averages)), abundance_averages_list, 2
+        #     )
+
+        #     # TODO - why does this happen?
+        #     # Converted to None as NaN can't be turned to json.
+        #     if math.isnan(r_squared) or math.isinf(r_squared):
+        #         r_squared = None
+
+        #     max_fold_change = max(abundance_averages.values()) - min(
+        #         abundance_averages.values()
+        #     )
+
+        #     residuals_all, r_squared_all = self._calculate_residuals_R2_all(
+        #         abundances_non_mean,
+        #         replicates,
+        #     )
+
+        #     metrics = {
+        #         STANDARD_DEVIATION: std,
+        #         "variance_average": round(moment(abundance_averages_list, moment=2), 2),
+        #         "skewness_average": moment(abundance_averages_list, moment=3),
+        #         "kurtosis_average": moment(abundance_averages_list, moment=4),
+        #         "peak_average": max(abundance_averages, key=abundance_averages.get),
+        #         "max_fold_change_average": max_fold_change,
+        #         "residuals_average": residuals,
+        #         "R_squared_average": r_squared,
+        #         "residuals_all": residuals_all,
+        #         "R_squared_all": r_squared_all,
+        #     }
+
+        # except Exception as e:
+        #     # We aren't too bothered by the loss of these
+        #     pass
+
         try:
-            polyfit_result = np.polyfit(
-                range(0, len(abundance_averages)),
-                abundance_averages_list,
-                2,
-                full=True,
-            )
+            # curve_fold_change, curve_peak = self._calculate_curve_fold_change(
+            #     abundances_non_mean,
+            #     replicates,
+            # )
 
-            if len(polyfit_result[1]):
-                residuals = polyfit_result[1][0]
-            else:
-                # TODO - is this a meaningful value? It's just the mean.
-                residuals = int(len(sample_stages) / 2)
-
-            r_squared = self._polyfit(
-                range(0, len(abundance_averages)), abundance_averages_list, 2
-            )
-
-            # TODO - why does this happen?
-            # Converted to None as NaN can't be turned to json.
-            if math.isnan(r_squared) or math.isinf(r_squared):
-                r_squared = None
-
-            max_fold_change = max(abundance_averages.values()) - min(
-                abundance_averages.values()
-            )
-
-            curve_fold_change, curve_peak = self._calculate_curve_fold_change(
+            curve_fold_change = self._calculate_curve_fold_change(
                 abundances_non_mean,
                 replicates,
             )
 
-            residuals_all, r_squared_all = self._calculate_residuals_R2_all(
-                abundances_non_mean,
-                replicates,
-            )
-
-            metrics = {
-                "standard_deviation": std,
-                "variance_average": round(moment(abundance_averages_list, moment=2), 2),
-                "skewness_average": moment(abundance_averages_list, moment=3),
-                "kurtosis_average": moment(abundance_averages_list, moment=4),
-                "peak_average": max(abundance_averages, key=abundance_averages.get),
-                "max_fold_change_average": max_fold_change,
-                "residuals_average": residuals,
-                "R_squared_average": r_squared,
-                "residuals_all": residuals_all,
-                "R_squared_all": r_squared_all,
-                CURVE_FOLD_CHANGE: curve_fold_change,
-                "curve_peak": curve_peak,
-            }
-
+            metrics[CURVE_FOLD_CHANGE] = curve_fold_change
+            # metrics[CURVE_PEAK]: curve_peak
         except Exception as e:
-            logger.error("Error in _calculate_metrics")
-            logger.error(e)
+            print(f"Unable to calculate curve fold change")
+            print(e)
+            pass
 
         stat.metrics = metrics
         stat.save()
 
-    # TODO - this is straight up lifted from ICR, change and ideally use a library
-    # _calcResidualsR2All
-    def _calculate_residuals_R2_all(self, abundances, replicates):
-        residuals_all = None
-        r_squared_all = None
+    # # TODO - this is straight up lifted from ICR, change and ideally use a library
+    # # _calcResidualsR2All
+    # def _calculate_residuals_R2_all(self, abundances, replicates):
+    #     r_all = None
+    #     r_sq_all = None
 
-        x, y, _ = self._generate_xs_ys(abundances, replicates)
+    #     x, y, _ = self._generate_xs_ys(abundances, replicates)
 
-        if len(x) != len(y):
-            return residuals_all, r_squared_all
+    #     if len(x) != len(y):
+    #         return r_all, r_sq_all
 
-        p = np.poly1d(np.polyfit(x, y, 2))
-        curve_abundances = p(x)
-        residuals_all = np.polyfit(x, y, 2, full=True)[1][0]
-        r_squared_all = round(r2_score(y, curve_abundances), 2)
+    #     p = np.poly1d(np.polyfit(x, y, 2))
+    #     curve_abundances = p(x)
+    #     r_all = np.polyfit(x, y, 2, full=True)[1][0]
+    #     r_sq_all = round(r2_score(y, curve_abundances), 2)
 
-        return residuals_all.item(), r_squared_all
+    #     return r_all.item(), r_sq_all
 
-    # TODO - this is straight up lifted from ICR, change and ideally use a library
     def _calculate_curve_fold_change(self, abundances, replicates):
-        curve_fold_change = None
-        curve_peak = None
+        # curve_fold_change = None
+        # curve_peak = None
 
-        x, y, stage_names_map = self._generate_xs_ys(
+        # x, y, stage_names_map = self._generate_xs_ys(
+        #     abundances,
+        #     replicates,
+        # )
+
+        x, y = self._generate_xs_ys(
             abundances,
             replicates,
         )
 
-        if len(x) == len(y):
-            p = np.poly1d(np.polyfit(x, y, 2))
-            curve_abundances = p(x)
+        if len(x) < 3:
+            # Too few values
+            return
 
-            # find the timepoint peak of the curve
-            curve_index = x[list(curve_abundances).index(max(curve_abundances))]
-            for time_point, index in stage_names_map.items():
-                if index == curve_index:
-                    curve_peak = time_point
+        if len(x) != len(y):
+            # Length of values not equal
+            return
 
-            # Calculate the fold change from the curve
-            curve_fold_change = max(curve_abundances) / max(0.05, min(curve_abundances))
-            curve_fold_change = curve_fold_change.item()
+        if np.all(y == y[0]):
+            # All the values the same, curve fold must be one
+            return 1
 
-        return curve_fold_change, curve_peak
+        p = np.poly1d(np.polyfit(x, y, 2))
+        curve_abundances = p(x)
 
-    # TODO - this is straight up lifted from ICR. Replace it, ideally with a library call
-    def _polyfit(self, x, y, degree):
-        coeffs = np.polyfit(x, y, degree)
-        p = np.poly1d(coeffs)
-        yhat = p(x)
-        ybar = np.mean(y)
-        ssres = np.sum((y - yhat) ** 2)
-        sstot = np.sum((y - ybar) ** 2)
-        r_squared = 1 - (ssres / sstot)
-        return round(r_squared, 2)
+        # # find the timepoint peak of the curve
+        # curve_index = x[list(curve_abundances).index(max(curve_abundances))]
+        # for time_point, index in stage_names_map.items():
+        #     if index == curve_index:
+        #         curve_peak = time_point
+
+        # Calculate the fold change from the curve
+        curve_fold_change = max(curve_abundances) / max(0.05, min(curve_abundances))
+        curve_fold_change = curve_fold_change.item()
+
+        # return curve_fold_change, curve_peak
+        return curve_fold_change
+
+    # # TODO - this is straight up lifted from ICR. Replace it, ideally with a library call
+    # def _polyfit(self, x, y, degree):
+    #     coeffs = np.polyfit(x, y, degree)
+    #     p = np.poly1d(coeffs)
+    #     yhat = p(x)
+    #     ybar = np.mean(y)
+    #     ssres = np.sum((y - yhat) ** 2)
+    #     sstot = np.sum((y - ybar) ** 2)
+    #     r_squared = 1 - (ssres / sstot)
+    #     return round(r_squared, 2)
 
     def _impute(
         # TODO - all these pr types are wrong, and also probably bad variable names
@@ -1231,24 +1312,6 @@ class Command(BaseCommand):
         abundances = self._get_abundances(
             ABUNDANCES_NORMALISED_MEDIAN, protein=protein, phospho=phospho
         )
-
-        # # TODO - can be tidied, only constants are different
-        # if zero_min:
-        #     _, stat = self._clear_and_fetch_stats(
-        #         ABUNDANCES_NORMALISED_ZERO_MAX, protein=protein, phospho=phospho
-        #     )
-
-        #     abundances = self._get_abundances(
-        #         ABUNDANCES_NORMALISED_MEDIAN, protein=protein, phospho=phospho
-        #     )
-        # else:
-        #     _, stat = self._clear_and_fetch_stats(
-        #         ABUNDANCES_NORMALISED_MIN_MAX, protein=protein, phospho=phospho
-        #     )
-
-        #     abundances = self._get_abundances(
-        #         ABUNDANCES_NORMALISED_LOG2_MEAN, protein=protein, phospho=phospho
-        #     )
 
         for replicate in replicates:
             abs = abundances.filter(replicate=replicate)
@@ -1505,23 +1568,26 @@ class Command(BaseCommand):
         # TODO - why do we use the second replicate?
         abundances = abundances.filter(replicate=replicates[1])
 
-        stage_names_map = {}
+        # stage_names_map = {}
 
         x = []
         y = []
         for i, abundance in enumerate(abundances):
-            stage_names_map[abundance.sample_stage.name] = i
+            # stage_names_map[abundance.sample_stage.name] = abundance.sample_stage.rank - 1
 
-            x.append(stage_names_map[abundance.sample_stage.name])
-            if abundance.reading is not None:
-                y.append(abundance.reading)
-        x.sort()
+            # x.append(stage_names_map[abundance.sample_stage.name])
 
-        return x, y, stage_names_map
+            x.append(i)
+
+            # if abundance.reading is not None:
+            y.append(abundance.reading)
+        # x.sort()
+
+        # return x, y, stage_names_map
+        return x, y
 
     def _add_oscillations(self, project, replicates, sample_stages, with_bugs):
-        # TODO - check all logging statements for similarity to ICR
-        logger.info("Adding Protein Oscillation Normalised Abundances")
+        logger.info("Adding protein oscillations")
 
         self._generate_protein_oscillation_metrics(
             project, replicates, sample_stages, with_bugs
@@ -1888,7 +1954,7 @@ class Command(BaseCommand):
         phospho_ab=False,
         phospho_reg=False,
     ):
-        logger.info("Calculate Fisher G Statistics")
+        logger.info("Calculating Fisher G statistics")
 
         abundance_fisher = self._create_abundance_dataframe(
             project, replicates, sample_stages, phospho, phospho_ab, phospho_reg

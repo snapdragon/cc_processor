@@ -1,3 +1,10 @@
+#####################################################################
+# The code here copied from C Rega et al. 2025 is used solely for
+# comparing the results of their code to our own. It does not form
+# part of the calculations for our own code. It can safely be deleted
+# and our own code will work perfectly.
+#####################################################################
+
 import logging
 import os
 import re
@@ -91,20 +98,20 @@ class Command(BaseCommand):
                     print(f"Skipping contaminant {accession_number}")
                     continue
 
-                num_invalid = 0
+                # num_invalid = 0
 
-                for col in df.columns:
-                    col_short = re.search(r"IITI_\d{3}", col)
+                # for col in df.columns:
+                #     col_short = re.search(r"IITI_\d{3}", col)
 
-                    if col_short is not None:
-                        if cn := cns_by_name.get(col_short.group()):
-                            reading = row[col]
+                #     if col_short is not None:
+                #         if cn := cns_by_name.get(col_short.group()):
+                #             reading = row[col]
 
-                            if reading != reading:
-                                num_invalid += 1
+                #             if reading != reading:
+                #                 num_invalid += 1
 
-                if num_invalid > 0:
-                    continue
+                # if num_invalid > 0:
+                #     continue
 
                 if not row_no % 1000:
                     logger.info(f"Adding phospho row {row_no} {accession_number}")
@@ -204,8 +211,6 @@ class Command(BaseCommand):
                     is_contaminant=False,
                 )
                 proteins[uniprot_accession] = new_protein
-
-            # logger.info(f"Importing phosphos for protein: {uniprot_accession}")
 
             if uniprot_accession not in time_course_phospho_full:
                 time_course_phospho_full[uniprot_accession] = {

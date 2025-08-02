@@ -58,5 +58,25 @@ Scatterplots by q value and curve fold change
     {% endfor %}
 </ul>
 
+Mean gene effects
+
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'mean_gene_effect' project.pk %}">{{ project.full_name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
+
+Protein half-life
+
+<ul>
+    {% for project in projects %}
+        <li><a href="{% url 'half_life' project.pk %}">{{ project.full_name }}</a></li>
+    {% empty %}
+        <li>No projects available.</li>
+    {% endfor %}
+</ul>
+
 </body>
 </html>

@@ -16,6 +16,8 @@ urlpatterns = [
     path("pca/<int:id>/", views.pca, name="pca"),
     path("barchart/<int:id>/", views.barchart, name="barchart"),
     path("scatterplot/<int:id>/", views.scatterplot, name="scatterplot"),
+    path("mean_gene_effect/<int:id>/", views.mean_gene_effect, name="mean_gene_effect"),
+    path("half_life/<int:id>/", views.half_life, name="half_life"),
     path("lingress/<int:id>/", views.lingress, name="lingress"),
     path("admin/", admin.site.urls),
 ]
